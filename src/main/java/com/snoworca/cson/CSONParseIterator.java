@@ -2,80 +2,80 @@ package com.snoworca.cson;
 
 
 class CSONParseIterator implements CSONBufferReader.ParseCallback {
-	String mSelectKey = null;
-	CSONElement mCurrentElement;
-	CSONElement mRoot;
-	byte[] mVersion;
+	String selectKey = null;
+	CSONElement currentElement;
+	CSONElement root;
+	byte[] versionRaw;
 	
 	public CSONElement release() {
-		CSONElement result = mRoot;
-		mSelectKey = null;
-		mCurrentElement = null;
-		mRoot = null;
+		CSONElement result = root;
+		selectKey = null;
+		currentElement = null;
+		root = null;
 		return result;
 	}
 	
 	
 	
 	@Override
-	public void onVersion(byte[] version) {
-		this.mVersion = version;
+	public void onVersion(byte[] versionRaw) {
+		this.versionRaw = versionRaw;
 	}
 	
 	@Override
 	public void onValue(Object value) {	
 		if(value == null) value = new NullValue();
-		if(mCurrentElement.getType() == CSONElement.ElementType.Object) {
-			((CSONObject)mCurrentElement).put(mSelectKey, value);
-			mSelectKey = null;
+		if(currentElement.getType() == CSONElement.ElementType.Object) {
+			((CSONObject) currentElement).put(selectKey, value);
+			selectKey = null;
 		} else {
-			((CSONArray)mCurrentElement).push(value);
+			((CSONArray) currentElement).push(value);
 		}
 	}
 	
 	@Override
 	public void onOpenObject() {
 		CSONObject obj = new CSONObject();
-		obj.setVersion(this.mVersion);
-		if(mCurrentElement == null) 
+		obj.setVersion(this.versionRaw);
+		if(currentElement == null)
 		{
-			mCurrentElement = obj;
+			currentElement = obj;
 			return;
 		}				
-		else if(mCurrentElement.getType() == CSONElement.ElementType.Object) {
-			((CSONObject)mCurrentElement).put(mSelectKey, obj);
-			mSelectKey = null;
+		else if(currentElement.getType() == CSONElement.ElementType.Object) {
+			((CSONObject) currentElement).put(selectKey, obj);
+			selectKey = null;
 		} else {
-			((CSONArray)mCurrentElement).add(obj);
+			((CSONArray) currentElement).add(obj);
 		}
-		obj.setParents(mCurrentElement);
-		mCurrentElement = obj;
+		obj.setParents(currentElement);
+		currentElement = obj;
 	}
 	
 	@Override
 	public void onOpenArray() {
 		CSONArray obj = new CSONArray();
-		obj.setVersion(this.mVersion);
-		if(mCurrentElement == null) 
+		obj.setVersion(this.versionRaw);
+		if(currentElement == null)
 		{
-			mCurrentElement = obj;
+			currentElement = obj;
 			return;
 		}		
-		else if(mCurrentElement.getType() == CSONElement.ElementType.Object) {
-			((CSONObject)mCurrentElement).put(mSelectKey, obj);
-			mSelectKey = null;
+		else if(currentElement.getType() == CSONElement.ElementType.Object) {
+			((CSONObject) currentElement).put(selectKey, obj);
+			selectKey = null;
 		} else {
-			((CSONArray)mCurrentElement).add(obj);
+			((CSONArray) currentElement).add(obj);
 		}
-		obj.setParents(mCurrentElement);
-		mCurrentElement = obj;
+		obj.setParents(currentElement);
+		currentElement = obj;
 		
 		
 	}
 	
 	@Override
 	public void onKey(String key) {
-		mSelectKey = key;
+		selectKey = key;
 	}
 	
 	@Override
@@ -89,12 +89,12 @@ class CSONParseIterator implements CSONBufferReader.ParseCallback {
 	}
 	
 	private void onCloseCSONElement() {
-		CSONElement parents =  mCurrentElement.getParents();
+		CSONElement parents =  currentElement.getParents();
 		if(parents ==null) {
-			mRoot = mCurrentElement;
+			root = currentElement;
 			return;
 		}
-		mCurrentElement = parents;
+		currentElement = parents;
 	}
 
 	

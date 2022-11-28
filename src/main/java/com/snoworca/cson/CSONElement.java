@@ -1,11 +1,13 @@
 package com.snoworca.cson;
 
+import java.nio.ByteBuffer;
+
 public class CSONElement {
 	
 	public enum ElementType { Object, Array };
 	
 	private CSONElement mParents = null;
-	private byte[] mVersion = CSONDataType.VER;
+	private byte[] versionRaw = CSONDataType.VER_RAW;
 	private ElementType mType = ElementType.Object;
 	
 	protected void setParents(CSONElement parents) {
@@ -25,11 +27,11 @@ public class CSONElement {
 	}
 	
 	public String getVersion() {
-		return new StringBuilder().append(mVersion[0]).append(".").append(mVersion[1]).append(".").append(mVersion[2]).toString();
+		return Short.toString(ByteBuffer.wrap(versionRaw).getShort());
 	}
 	
-	protected void setVersion(byte[] version) {
-		mVersion = version;
+	protected void setVersion(byte[] versionRaw) {
+		this.versionRaw = versionRaw;
 	}
 	
 	

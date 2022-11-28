@@ -17,17 +17,15 @@ public class CSONBufferReader {
 		ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
 		ArrayDeque<Byte> TypeStack = new ArrayDeque<Byte>();
 		TypeStack.addLast(CSONDataType.TYPE_NULL);
-		byte[] header = new byte[CSONDataType.TYPE_HEADER.length];
-		byte[] version = new byte[CSONDataType.VER.length];
-		byteBuffer.get(header, 0, header.length); 
-		byteBuffer.get(version, 0, version.length); 
+		byte prefix = 0;
+		byte[] version = new byte[CSONDataType.VER_RAW.length];
+		prefix = byteBuffer.get();
+		byteBuffer.get(version, 0, version.length);
 		
-		for(int i = 0; i < CSONDataType.TYPE_HEADER.length; ++i) {
-			if(CSONDataType.TYPE_HEADER[i] != header[i]) {
-				throw new CSONParseException();
-			}
+		if(prefix != CSONDataType.PREFIX) {
+			throw new CSONParseException("CSON Prefix does not match.");
 		}
-		
+
 		callback.onVersion(version);
  		byte type = byteBuffer.get(); 
 		if(type == CSONDataType.TYPE_OPEN_OBJECT) {

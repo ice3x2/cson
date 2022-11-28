@@ -20,8 +20,8 @@ public class CSONWriter {
 	public CSONWriter() {
 		mTypeStack.addLast(ObjectType.None);
 		try {
-			mBufferStream.write(CSONDataType.TYPE_HEADER);
-			mBufferStream.write(CSONDataType.VER);
+			mBufferStream.write(CSONDataType.PREFIX);
+			mBufferStream.write(CSONDataType.VER_RAW);
 		} catch (IOException ignored) {}
 	}
 
@@ -387,7 +387,7 @@ public class CSONWriter {
 			 throw new CSONWriteException();
 		 }
 		 byte[] buffer = writer.toByteArray(); 
-		 int headerSize = CSONDataType.TYPE_HEADER.length + CSONDataType.VER.length;
+		 int headerSize = 1/*prefix size*/ + CSONDataType.VER_RAW.length;
 		 mBufferStream.write(buffer, headerSize, buffer.length - headerSize);
 		 return this;
 	 }

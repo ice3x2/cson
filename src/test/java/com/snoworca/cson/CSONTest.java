@@ -2,17 +2,18 @@ package com.snoworca.cson;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
-class CSONTest {
+
+public class CSONTest {
 
     @Test
     public void jsonStringParsingTest() {
@@ -111,8 +112,8 @@ class CSONTest {
             assertEquals(jao.getBoolean("true"), cao.getBoolean("true"));
             assertEquals(jao.getBoolean("false"), cao.getBoolean("false"));
             assertEquals(jao.getInt("random"), cao.getInteger("random"));
-            assertEquals(jao.getDouble("float"), cao.getDouble("float"));
-            assertEquals(jao.getFloat("float"), cao.getFloat("float"));
+            assertEquals(Double.valueOf(jao.getDouble("float")),Double.valueOf(cao.getDouble("float")));
+            assertEquals(Float.valueOf(jao.getFloat("float")),Float.valueOf(cao.getFloat("float")));
             assertEquals(jao.getInt("float"), cao.getInteger("float"));
         }
     }
@@ -169,8 +170,8 @@ class CSONTest {
             assertEquals(jao.getBoolean("true"), cao.getBoolean("true"));
             assertEquals(jao.getBoolean("false"), cao.getBoolean("false"));
             assertEquals(jao.getInt("random"), cao.getInteger("random"));
-            assertEquals(jao.getDouble("float"), cao.getDouble("float"));
-            assertEquals(jao.getFloat("float"), cao.getFloat("float"));
+            assertEquals(Double.valueOf(jao.getDouble("float")),Double.valueOf(cao.getDouble("float")));
+            assertEquals(Float.valueOf(jao.getFloat("float")),Float.valueOf(cao.getFloat("float")));
             assertEquals(jao.getInt("float"), cao.getInteger("float"));
         }
     }
