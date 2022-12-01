@@ -5,7 +5,7 @@ package com.snoworca.cson;
 import java.util.*;
 
 
-public class CSONArray  extends CSONElement  implements Collection<Object> {
+public class CSONArray  extends CSONElement  implements Collection<Object>, Cloneable {
 	
 	public CSONArray() {
 		super(ElementType.Array);
@@ -466,6 +466,33 @@ public class CSONArray  extends CSONElement  implements Collection<Object> {
 		
 	}
 
+
+	protected void write(JSONWriter writer) {
+		writer.openArray();
+		for(int i = 0, n = mList.size(); i < n; ++i) {
+			Object obj = mList.get(i);
+			if(obj == null || obj instanceof NullValue) writer.nullValue();
+			else if(obj instanceof CSONArray)  {
+				((CSONArray)obj).write(writer);
+			}
+			else if(obj instanceof CSONObject)  {
+				((CSONObject)obj).write(writer);
+			}
+			else if(obj instanceof Byte)	writer.add((byte)obj);
+			else if(obj instanceof Short)	writer.add((short)obj);
+			else if(obj instanceof Character) writer.add((char)obj);
+			else if(obj instanceof Integer) writer.add((int)obj);
+			else if(obj instanceof Float) writer.add((float)obj);
+			else if(obj instanceof Long) writer.add((long)obj);
+			else if(obj instanceof Double) writer.add((double)obj);
+			else if(obj instanceof String) writer.add((String)obj);
+			else if(obj instanceof byte[]) writer.add((byte[])obj);
+			else if(obj instanceof Boolean) writer.add((boolean)obj);
+		}
+		writer.closeArray();
+
+	}
+
 	protected void writeJSONString(StringBuilder strBuilder) {
 		strBuilder.append("[");
 		for(int i = 0, n = mList.size(),np = n - 1 ; i < n; ++i) {
@@ -482,13 +509,33 @@ public class CSONArray  extends CSONElement  implements Collection<Object> {
 		}
 		strBuilder.append("]");
 	}
+
+
 	
 	@Override
 	public String toString() {
-		StringBuilder stringBuilder = new StringBuilder();
-		writeJSONString(stringBuilder);
-		return stringBuilder.toString();
+		JSONWriter jsonWriter  = new JSONWriter();
+		write(jsonWriter);
+		return jsonWriter.toString();
 	}
-	
+
+
+	public CSONArray clone() {
+		CSONArray array = new CSONArray();
+		for(int i = 0, n = mList.size(); i < n; ++i) {
+			Object obj = mList.get(i);
+			if(obj instanceof CSONArray) array.add(((CSONArray)obj).clone());
+			else if(obj instanceof CSONObject) array.add(((CSONObject)obj).clone());
+			else if(obj instanceof CharSequence) array.add(((CharSequence)obj).toString());
+			else if(obj instanceof byte[]) {
+				byte[] bytes = (byte[])obj;
+				byte[] newBytes = new byte[bytes.length];
+				System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+				array.add(newBytes);
+			}
+			else array.add(obj);
+		}
+		return array;
+	}
 
 }

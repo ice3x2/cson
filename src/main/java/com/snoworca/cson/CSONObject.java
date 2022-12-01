@@ -2,11 +2,13 @@ package com.snoworca.cson;
 
 
 
+import com.sun.org.apache.xpath.internal.operations.String;
+
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class CSONObject extends CSONElement {
+public class CSONObject extends CSONElement implements Cloneable {
 
 	private LinkedHashMap<String, Object> mDataMap = new LinkedHashMap<>();
 
@@ -312,9 +314,12 @@ public class CSONObject extends CSONElement {
 
 	@Override
 	public String toString() {
-		StringBuilder stringBuilder = new StringBuilder();
-		writeJSONString(stringBuilder);
-		return stringBuilder.toString();
+		//StringBuilder stringBuilder = new StringBuilder();
+		//writeJSONString(stringBuilder);
+		//return stringBuilder.toString();
+		JSONWriter jsonWriter  = new JSONWriter();
+		write(jsonWriter);
+		return jsonWriter.toString();
 	}
 
 	public byte[] toBytes() {
@@ -354,6 +359,38 @@ public class CSONObject extends CSONElement {
 		writer.closeObject();
 	}
 
+	protected void write(JSONWriter writer) {
+		Iterator<Entry<String, Object>> iter = mDataMap.entrySet().iterator();
+		writer.openObject();
+		while(iter.hasNext()) {
+			Entry<String, Object> entry = iter.next();
+			String key = entry.getKey();
+			Object obj = entry.getValue();
+			if(obj == null || obj instanceof NullValue) writer.key(key).nullValue();
+			else if(obj instanceof CSONArray)  {
+				writer.key(key);
+				((CSONArray)obj).write(writer);
+			}
+			else if(obj instanceof CSONObject)  {
+				writer.key(key);
+				((CSONObject)obj).write(writer);
+			}
+			else if(obj instanceof Byte)	writer.key(key).value((byte)obj);
+			else if(obj instanceof Short)	writer.key(key).value((short)obj);
+			else if(obj instanceof Character) writer.key(key).value((char)obj);
+			else if(obj instanceof Integer) writer.key(key).value((int)obj);
+			else if(obj instanceof Float) writer.key(key).value((float)obj);
+			else if(obj instanceof Long) writer.key(key).value((long)obj);
+			else if(obj instanceof Double) writer.key(key).value((double)obj);
+			else if(obj instanceof String) writer.key(key).value((String)obj);
+			else if(obj instanceof Boolean) writer.key(key).value((boolean)obj);
+			else if(obj instanceof BigDecimal) writer.key(key).value(obj);
+			else if(obj instanceof byte[]) writer.key(key).value((byte[])obj);
+		}
+		writer.closeObject();
+	}
+
+
 	protected void writeJSONString(StringBuilder strBuilder) {
 
 		strBuilder.append("{");
@@ -376,6 +413,28 @@ public class CSONObject extends CSONElement {
 
 		}
 		strBuilder.append("}");
+	}
+
+	public CSONObject clone() {
+		CSONObject csonObject = new CSONObject();
+		Iterator<Entry<String, Object>> iter = mDataMap.entrySet().iterator();
+
+		while(iter.hasNext()) {
+			Entry<String, Object> entry = iter.next();
+			String key = entry.getKey();
+			Object obj = entry.getValue();
+			if(obj instanceof CSONArray) csonObject.put(key, ((CSONArray)obj).clone());
+			else if(obj instanceof CSONObject) csonObject.put(key, ((CSONObject)obj).clone());
+			else if(obj instanceof CharSequence) csonObject.put(key, ((CharSequence)obj).toString());
+			else if(obj instanceof byte[]) {
+				byte[] bytes = (byte[])obj;
+				byte[] newBytes = new byte[bytes.length];
+				System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+				csonObject.put(key, newBytes);
+			}
+			else csonObject.put(key, obj);
+		}
+		return csonObject;
 	}
 
 
