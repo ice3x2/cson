@@ -1,5 +1,5 @@
 package com.snoworca.cson;
 
 enum ObjectType {
-	None, Array,ObjectKey,ObjectValue, Object
+	None, Array,ObjectKey,ObjectValue, Object,OpenObject,OpenArray
 }
