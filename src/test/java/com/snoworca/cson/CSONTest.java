@@ -137,7 +137,6 @@ public class CSONTest {
         CSONObject fromOverBuffer = new CSONObject(overBuffer);
         assertArrayEquals(csonObject.toBytes(), fromOverBuffer.toBytes());
 
-
     }
 
 
