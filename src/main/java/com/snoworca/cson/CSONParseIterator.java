@@ -24,12 +24,11 @@ class CSONParseIterator implements CSONBufferReader.ParseCallback {
 	
 	@Override
 	public void onValue(Object value) {	
-		if(value == null) value = new NullValue();
 		if(currentElement.getType() == CSONElement.ElementType.Object) {
 			((CSONObject) currentElement).put(selectKey, value);
 			selectKey = null;
 		} else {
-			((CSONArray) currentElement).push(value);
+			((CSONArray) currentElement).put(value);
 		}
 	}
 	

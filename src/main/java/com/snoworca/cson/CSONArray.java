@@ -2,6 +2,7 @@ package com.snoworca.cson;
 
 
 
+import java.math.BigDecimal;
 import java.util.*;
 
 
@@ -94,10 +95,10 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			for (;;) {
 				if (x.nextClean() == ',') {
 					x.back();
-					this.mList.add(null);
+					addAtJSONParsing(null);
 				} else {
 					x.back();
-					this.mList.add(x.nextValue());
+					addAtJSONParsing(x.nextValue());
 				}
 				switch (x.nextClean()) {
 					case 0:
@@ -123,22 +124,20 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		}
 	}
 
+	private void addAtJSONParsing(Object value) {
+		if(value instanceof String && CSONElement.isBase64String((String)value)) {
+			value = CSONElement.base64StringToByteArray((String)value);
+		}
+		mList.add(value);
+	}
+
 
 	public CSONArray(String source) throws CSONException {
 		this(new JSONTokener(source));
 	}
 	
-	public CSONArray push(Object e) {
-		if(e == null) mList.add(new NullValue());
-		else if(e instanceof Number) {
-			mList.add(e);	
-		} else if(e instanceof String) {
-			mList.add(e);
-		} else if(e instanceof CharSequence) {
-			mList.add(e.toString());
-		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONElement || e instanceof byte[] || e instanceof NullValue) {
-			mList.add(e);
-		}
+	public CSONArray put(Object e) {
+		add(e);
 		return this;
 	}
 	
@@ -147,11 +146,15 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	@Override
 	public boolean add(Object e) {
+		if(e == null || e instanceof  NullValue) mList.add(new NullValue());
 		if(e instanceof Number) {
 			return mList.add(e);	
 		} else if(e instanceof CharSequence) {
 			return mList.add(e.toString());
-		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONArray || e instanceof CSONObject || e instanceof byte[] ) {
+		} else if(e instanceof CSONArray) {
+			if(e == this) e = ((CSONArray)e).clone();
+			mList.add(e);
+		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONObject || e instanceof byte[] ) {
 			return mList.add(e);
 		}
 		return false; 
@@ -186,14 +189,32 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		}
 		
 	}
-	
-	public CSONArray optArray(int index) {
+
+	public CSONArray optArray(int index, CSONArray def) {
 		try {
 			return DataConverter.toArray(mList.get(index));
 		} catch (IndexOutOfBoundsException e) {
-			return null;
+			return def;
 		}
-		
+	}
+
+	public CSONArray optArray(int index) {
+		return optArray(index, null);
+	}
+
+	public CSONArray optArrayWrap(int index) {
+		try {
+			Object object = mList.get(index);
+			if (object instanceof CSONArray) {
+				return (CSONArray) object;
+			} else if (object == null) {
+				return new CSONArray();
+			}
+			return new CSONArray().put(object);
+		} catch (IndexOutOfBoundsException e) {
+			return new CSONArray();
+		}
+
 	}
 	
 	public CSONObject getObject(int index) {
@@ -224,9 +245,29 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return optInteger(index, 0);
 	}
 	
-	public Integer optInteger(int index, int def) {
+	public int optInteger(int index, int def) {
 		try {
 			return DataConverter.toInteger(mList.get(index), def);
+		} catch (IndexOutOfBoundsException e) {
+			return def;
+		}
+	}
+
+	public long getLong(int index) {
+		try {
+			return DataConverter.toLong(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			throw new CSONIndexNotFoundException(e);
+		}
+	}
+
+	public long optLong(int index) {
+		return optLong(index, 0);
+	}
+
+	public long optLong(int index, long def) {
+		try {
+			return DataConverter.toLong(mList.get(index), def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -249,6 +290,72 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			return DataConverter.toShort(mList.get(index),def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
+		}
+	}
+
+	public char getChar(int index) {
+		try {
+			return DataConverter.toChar(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			throw new CSONIndexNotFoundException(e);
+		}
+	}
+
+	public char optChar(int index) {
+		return optChar(index, '\0');
+	}
+
+	public char optChar(int index, char def) {
+		try {
+			return DataConverter.toChar(mList.get(index),def);
+		} catch (IndexOutOfBoundsException e) {
+			return def;
+		}
+	}
+
+
+	public short getByte(int index) {
+		try {
+			return DataConverter.toByte(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			throw new CSONIndexNotFoundException(e);
+		}
+	}
+
+	public byte optByte(int index, byte def) {
+		try {
+			return DataConverter.toByte(mList.get(index), def);
+		} catch (IndexOutOfBoundsException e) {
+			return def;
+		}
+	}
+
+	public byte optByte(int index) {
+		try {
+			return DataConverter.toByte(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			return 0;
+		}
+	}
+
+
+	public double getDouble(int index) {
+		try {
+			return DataConverter.toDouble(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			throw new CSONIndexNotFoundException(e);
+		}
+	}
+
+	public double optDouble(int index) {
+		return optDouble(index, 0);
+	}
+
+	public double optDouble(int index, double def) {
+		try {
+			return DataConverter.toDouble(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			return Double.NaN;
 		}
 	}
 	
@@ -297,7 +404,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return optString(index, null);
 	}
 	
-	public byte[] getBuffer(int index) {
+	public byte[] getByteArray(int index) {
 		try {			
 			byte[] buffer = (byte[]) mList.get(index);
 			return buffer;
@@ -305,6 +412,23 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			throw new CSONIndexNotFoundException(e);
 		}
 	}
+
+	public byte[] optByteArray(int index) {
+		try {
+			return DataConverter.toByteArray(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		}
+	}
+
+	public byte[] optByteArray(int index,byte[] def) {
+		try {
+			return DataConverter.toByteArray(mList.get(index));
+		} catch (IndexOutOfBoundsException e) {
+			return def;
+		}
+	}
+
 	
 	public boolean getBoolean(int index) {
 		try {			
@@ -444,7 +568,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		writer.openArray();
 		for(int i = 0, n = mList.size(); i < n; ++i) {
 			Object obj = mList.get(i);
-			if(obj == null || obj instanceof NullValue) writer.nullValue();
+			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONArray)  {
 				((CSONArray)obj).write(writer);
 			}
@@ -471,7 +595,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		writer.openArray();
 		for(int i = 0, n = mList.size(); i < n; ++i) {
 			Object obj = mList.get(i);
-			if(obj == null || obj instanceof NullValue) writer.nullValue();
+			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONArray)  {
 				((CSONArray)obj).write(writer);
 			}
@@ -536,6 +660,49 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			else array.add(obj);
 		}
 		return array;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof CSONArray)) return false;
+		CSONArray csonObject = (CSONArray)obj;
+		if(csonObject.size() != size()) return false;
+
+		for(int i = 0, n = mList.size(); i < n; ++i) {
+			Object compareValue = csonObject.mList.get(i);
+			Object value = mList.get(i);
+			if((value == null || value instanceof NullValue) && (compareValue != null && !(compareValue instanceof NullValue)) ) {
+				return false;
+			}
+			else if(value instanceof CharSequence && (!(compareValue instanceof CharSequence) || !value.toString().equals(compareValue.toString())) ) {
+				return false;
+			}
+			else if(value instanceof Boolean && (!(compareValue instanceof Boolean) || (Boolean)value != (Boolean)compareValue)) {
+				return false;
+			}
+			else if(value instanceof Number) {
+				boolean valueIsFloat = (value instanceof Float || value instanceof Double);
+				boolean compareValueIsFloat = (compareValue instanceof Float || compareValue instanceof Double);
+				if(valueIsFloat != compareValueIsFloat) {
+					return false;
+				}
+				BigDecimal v1 = BigDecimal.valueOf(((Number)value).doubleValue());
+				BigDecimal v2 = BigDecimal.valueOf(((Number)compareValue).doubleValue());
+				if(v1.compareTo(v2) != 0) {
+					return false;
+				}
+			}
+			else if(value instanceof CSONArray && (!(compareValue instanceof CSONArray) || !((CSONArray)value).equals(compareValue))) {
+				return false;
+			}
+			else if(value instanceof CSONObject && (!(compareValue instanceof CSONObject) || !((CSONObject)value).equals(compareValue))) {
+				return false;
+			}
+			else if(value instanceof byte[] && (!(compareValue instanceof byte[]) || !Arrays.equals((byte[])value, (byte[])compareValue))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

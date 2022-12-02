@@ -103,6 +103,10 @@ public class CSONBufferReader {
 						continue;
 					}
 					return;
+				case CSONDataType.TYPE_NULL:
+					callback.onValue(readValue(valueType, byteBuffer));
+					isReadObject = true;
+					continue;
 				case CSONDataType.TYPE_BYTE:
 				case CSONDataType.TYPE_BOOLEAN:
 				case CSONDataType.TYPE_CHAR:
@@ -112,7 +116,7 @@ public class CSONBufferReader {
 				case CSONDataType.TYPE_LONG:
 				case CSONDataType.TYPE_DOUBLE:
 				case CSONDataType.TYPE_BIGDECIMAL:
-				case CSONDataType.TYPE_NULL:
+				//case CSONDataType.TYPE_NULL:
 					callback.onValue(readValue(valueType, byteBuffer));
 					isReadObject = true;
 					continue;
@@ -171,6 +175,10 @@ public class CSONBufferReader {
 						isReadObject = true;
 						continue;
 					}
+				case CSONDataType.TYPE_NULL:
+					callback.onValue(readValue(type, byteBuffer));
+					isReadObject = false;
+					continue;
 				case CSONDataType.TYPE_BYTE:
 				case CSONDataType.TYPE_BOOLEAN:
 				case CSONDataType.TYPE_CHAR:
@@ -180,7 +188,7 @@ public class CSONBufferReader {
 				case CSONDataType.TYPE_LONG:
 				case CSONDataType.TYPE_DOUBLE:
 				case CSONDataType.TYPE_BIGDECIMAL:
-				case CSONDataType.TYPE_NULL:
+
 					callback.onValue(readValue(type, byteBuffer));
 					isReadObject = false;
 					continue;

@@ -1,8 +1,6 @@
 package com.snoworca.cson;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 
 
@@ -38,7 +36,7 @@ public class JSONWriter {
 
 		typeStack.addLast(ObjectType.ObjectKey);
 		stringBuilder.append('"');
-		stringBuilder.append(key);
+		stringBuilder.append(DataConverter.escapeJSONString(key));
 		stringBuilder.append("\":");
 		return this;
 	 }
@@ -56,6 +54,7 @@ public class JSONWriter {
 		 typeStack.removeLast();
 		 return this;
 	 }
+
 	 
 	 public JSONWriter value(String value) {
 		 if(value== null) {
@@ -67,7 +66,7 @@ public class JSONWriter {
 		 }
 		 typeStack.removeLast();
 		 stringBuilder.append('"');
-		 stringBuilder.append(value);
+		 stringBuilder.append(DataConverter.escapeJSONString(value));
 		 stringBuilder.append('"');
 		 return this;
 	 }
@@ -81,7 +80,7 @@ public class JSONWriter {
 			 throw new CSONWriteException();
 		 }
 		 typeStack.removeLast();
-		 stringBuilder.append('"');
+		 stringBuilder.append("\"base64,");
 		 stringBuilder.append(Base64.encode(value));
 		 stringBuilder.append('"');
 		 return this;
@@ -96,16 +95,16 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		typeStack.removeLast();
-		if(value instanceof CharSequence) {
+		if(value instanceof CharSequence || value instanceof Character) {
 			stringBuilder.append('"');
-			stringBuilder.append(value);
+			stringBuilder.append(DataConverter.escapeJSONString(value.toString()));
 			stringBuilder.append('"');
 		} else if(value instanceof Number) {
 			stringBuilder.append(value);
 		} else if(value instanceof Boolean) {
 			stringBuilder.append(value);
 		} else if(value instanceof byte[]) {
-			stringBuilder.append('"');
+			stringBuilder.append("\"base64,");
 			stringBuilder.append(Base64.encode((byte[])value));
 			stringBuilder.append('"');
 		} else if(value instanceof CSONElement) {
@@ -169,7 +168,9 @@ public class JSONWriter {
 			 throw new CSONWriteException();
 		 }
 		 typeStack.removeLast();
+		 stringBuilder.append('"');
 		 stringBuilder.append(value);
+		 stringBuilder.append('"');
 		 return this;
 	 }
 	 
@@ -220,7 +221,7 @@ public class JSONWriter {
 		 }
 		 checkAndAppendInArray();
 		 stringBuilder.append('"');
-		 stringBuilder.append(value);
+		 stringBuilder.append(DataConverter.escapeJSONString(value));
 		 stringBuilder.append('"');
 
 		 return this;
@@ -232,7 +233,7 @@ public class JSONWriter {
 			 return this;
 		 }
 		 checkAndAppendInArray();
-		 stringBuilder.append('"');
+		 stringBuilder.append("\"base64,");
 		 stringBuilder.append(Base64.encode(value));
 		 stringBuilder.append('"');
 		 return this;
@@ -286,16 +287,16 @@ public class JSONWriter {
 			return this;
 		}
 		checkAndAppendInArray();
-		if(value instanceof CharSequence) {
+		if(value instanceof CharSequence || value instanceof Character) {
 			stringBuilder.append('"');
-			stringBuilder.append(value);
+			stringBuilder.append(DataConverter.escapeJSONString(value.toString()));
 			stringBuilder.append('"');
 		} else if(value instanceof Number) {
 			stringBuilder.append(value);
 		} else if(value instanceof Boolean) {
 			stringBuilder.append(value);
 		} else if(value instanceof byte[]) {
-			stringBuilder.append('"');
+			stringBuilder.append("\"base64,");
 			stringBuilder.append(Base64.encode((byte[])value));
 			stringBuilder.append('"');
 		} else if(value instanceof CSONElement) {
@@ -332,16 +333,26 @@ public class JSONWriter {
 	 
 	 
 	 public JSONWriter openArray() {
-		 if(typeStack.getLast() != ObjectType.ObjectKey && typeStack.getLast() != ObjectType.Array && typeStack.getLast() != ObjectType.None) {
+		 ObjectType type = typeStack.getLast();
+		 if(type == ObjectType.OpenArray) {
+			 typeStack.removeLast();
+			 typeStack.addLast(ObjectType.Array);
+		 }
+		 else if(type == ObjectType.Array) {
+			 stringBuilder.append(',');
+		 }
+		 else if(type != ObjectType.ObjectKey && type != ObjectType.None) {
 			 throw new CSONWriteException();
 		 }
+
 		 typeStack.addLast(ObjectType.OpenArray);
 		 stringBuilder.append('[');
 		 return this;
 	 }
 	 
 	 public JSONWriter closeArray() {
-		 if(typeStack.getLast() != ObjectType.Array) {
+		 ObjectType type = typeStack.getLast();
+		 if(type != ObjectType.Array && type != ObjectType.OpenArray) {
 			 throw new CSONWriteException();
 		 }
 		 typeStack.removeLast();
@@ -353,8 +364,14 @@ public class JSONWriter {
 	 }
 	 
 	 public JSONWriter openObject() {
-		 if(!typeStack.isEmpty() && typeStack.getLast() == ObjectType.Object) {
+		 ObjectType type = typeStack.isEmpty() ? null : typeStack.getLast();
+		 if(type == ObjectType.Object) {
 			 throw new CSONWriteException();
+		 } else if(type == ObjectType.Array) {
+			 stringBuilder.append(',');
+		 } else if(type == ObjectType.OpenArray) {
+			 typeStack.removeLast();
+			 typeStack.add(ObjectType.Array);
 		 }
 		 typeStack.addLast(ObjectType.OpenObject);
 		 stringBuilder.append('{');
@@ -372,7 +389,8 @@ public class JSONWriter {
 		 stringBuilder.append('}');
 		 return this;
 	 }
-	 
+
+	 @Override
 	 public String toString() {
 		 if(!typeStack.isEmpty()) {
 			 throw new CSONWriteException();

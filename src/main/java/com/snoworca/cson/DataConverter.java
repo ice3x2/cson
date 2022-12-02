@@ -2,6 +2,7 @@ package com.snoworca.cson;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 class DataConverter {
 	
@@ -46,7 +47,7 @@ class DataConverter {
 	final static short toShort(Object value) {
 		return toShort(value, (short) 0);
 	}
-	
+
 	final static short toShort(Object value, short def) {
 		try {
 			if (value instanceof Number) {
@@ -57,6 +58,25 @@ class DataConverter {
 				return Short.parseShort((String) value);
 			} else if (value instanceof byte[] && ((byte[]) value).length > 1) {
 				return ByteBuffer.wrap((byte[]) value).getShort();
+			}
+		} catch (Throwable e) {}
+		return def;
+	}
+
+	final static byte toByte(Object value) {
+		return toByte(value, (byte) 0);
+	}
+
+	final static byte toByte(Object value, byte def) {
+		try {
+			if (value instanceof Number) {
+				return ((Number) value).byteValue();
+			} else if (value instanceof Character) {
+				return (byte)((Character) value).charValue();
+			} else if (value instanceof String) {
+				return Byte.parseByte((String) value);
+			} else if (value instanceof byte[] && ((byte[]) value).length > 1) {
+				return ((byte[])value)[0];
 			}
 		} catch (Throwable e) {}
 		return def;
@@ -141,6 +161,9 @@ class DataConverter {
 			return (char)(((Boolean)value) ? 1 : 0);
 		}
 		else if(value instanceof String) {
+			if(((String)value).length() == 1) {
+				return ((String) value).charAt(0);
+			}
   			return (char) Short.parseShort((String) value);
 		} 
 		else if(value instanceof byte[] && ((byte[])value).length > 1 ) {
@@ -152,7 +175,7 @@ class DataConverter {
 	
 	
 	final static  String toString(Object value) {
-		if(value == null) return null;
+		if(value == null  || value instanceof NullValue) return null;
 		if(value instanceof String) { 
 			return (String) value;
 		}
@@ -183,6 +206,44 @@ class DataConverter {
 			}
 		}catch (Throwable e) {}
 		return def;
+	}
+
+
+
+	public static byte[] toByteArray(Object obj) {
+		if(obj == null || obj instanceof NullValue) return null;
+		if(obj instanceof byte[]) {
+			return (byte[])obj;
+		}
+		else if(obj instanceof CharSequence) {
+			return ((String)obj).getBytes(StandardCharsets.UTF_8);
+		}
+		else if(obj instanceof Boolean) {
+			return ByteBuffer.allocate(1).put((byte)(((Boolean)obj) ? 1 : 0)).array();
+		}
+		else if(obj instanceof Character) {
+			return ByteBuffer.allocate(2).putChar(((Character)obj)).array();
+		}
+		else if(obj instanceof Double) {
+			return ByteBuffer.allocate(8).putDouble(((Double)obj)).array();
+		}
+		else if(obj instanceof Short) {
+			return ByteBuffer.allocate(2).putShort(((Short)obj)).array();
+		}
+		else if(obj instanceof Byte) {
+			return ByteBuffer.allocate(1).put(((Byte)obj)).array();
+		}
+		else if(obj instanceof Float) {
+			return ByteBuffer.allocate(4).putFloat(((Float)obj)).array();
+		}
+		else if(obj instanceof Integer) {
+			return ByteBuffer.allocate(4).putInt(((Integer)obj)).array();
+		}
+		else if(obj instanceof Long) {
+			return ByteBuffer.allocate(8).putLong(((Long)obj)).array();
+		}
+		return null;
+
 	}
 	
 	
