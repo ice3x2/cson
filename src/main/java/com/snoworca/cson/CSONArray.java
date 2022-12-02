@@ -12,7 +12,10 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		super(ElementType.Array);
 	}
 
-
+	public CSONArray(int size) {
+		super(ElementType.Array);
+		this.mList.ensureCapacity(size);
+	}
 
 	public CSONArray(Collection<?> objects) {
 		super(ElementType.Array);
