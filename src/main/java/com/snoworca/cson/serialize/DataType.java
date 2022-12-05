@@ -3,7 +3,10 @@ package com.snoworca.cson.serialize;
 import java.util.Collection;
 
 public class DataType {
+    public final static byte TYPE_UNKNOWN = -1;
+
     public final static byte TYPE_NULL = 0;
+
     public final static byte TYPE_BYTE = 1;
     public final static byte TYPE_SHORT = 2;
     public final static byte TYPE_CHAR = 3;
@@ -17,6 +20,10 @@ public class DataType {
     public final static byte TYPE_COLLECTION = 13;
     public final static byte TYPE_CSON_OBJECT = 31;
     public final static byte TYPE_OBJECT = 30;
+
+    public static boolean isObjectType(byte type) {
+        return type == TYPE_OBJECT || type == TYPE_CSON_OBJECT || type == -1;
+    }
 
     public static byte getDataType(Class<?> type) {
         if(Byte.TYPE.isAssignableFrom(type) || Byte.class.isAssignableFrom(type)) {

@@ -7,9 +7,26 @@ import java.util.*;
 public class TypeInfo {
     private Class<?> type;
     private ArrayList<FieldInfo> fieldInfos;
+    private Map<String, FieldInfo> filedInfoMap;
 
     protected ArrayList<FieldInfo> getFieldInfos() {
         return fieldInfos;
+    }
+
+    protected FieldInfo getFieldInfo(String name) {
+        if(filedInfoMap == null) getFieldInfoMap();
+        return filedInfoMap.get(name);
+    }
+
+    protected Map<String, FieldInfo> getFieldInfoMap() {
+        if(filedInfoMap == null) {
+            filedInfoMap = new HashMap<>();
+            for(int i = 0, n = fieldInfos.size(); i < n; i++) {
+                FieldInfo fieldInfo = fieldInfos.get(i);
+                filedInfoMap.put(fieldInfo.getName(), fieldInfo);
+            }
+        }
+        return filedInfoMap;
     }
 
     public static TypeInfo create(Class<?> type) {

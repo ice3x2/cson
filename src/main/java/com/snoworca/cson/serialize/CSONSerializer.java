@@ -10,11 +10,34 @@ import java.util.Collection;
 
 public class CSONSerializer {
 
-    public static CSONObject toCSON(Object object) {
+    public static CSONObject toCSONObject(Object object) {
         TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(object.getClass());
         CSONObject csonObject = new CSONObject();
         serialize(object, typeInfo, csonObject);
         return csonObject;
+    }
+
+
+    public static CSONArray toCSONArray(Collection<?> collection) {
+        CSONArray csonArray = new CSONArray();
+        for(Object object : collection) {
+            if(object instanceof Number || object instanceof Character ||
+                    object instanceof Boolean || object instanceof String || object instanceof byte[]) {
+                csonArray.add(object);
+            }
+            else if(object instanceof CharSequence) {
+                csonArray.add(object.toString());
+            }
+            else if(object instanceof Collection) {
+                CSONArray childArray = toCSONArray((Collection<?>)object);
+                csonArray.add(childArray);
+            }
+            else {
+                CSONObject csonObject = toCSONObject(object);
+                csonArray.add(csonObject);
+            }
+        }
+        return csonArray;
     }
 
     private static void serialize(Object object, TypeInfo typeInfo, CSONObject csonObject) {
@@ -25,7 +48,8 @@ public class CSONSerializer {
                injectCSONObject(fieldInfo,object, csonObject);
            }
            else if(fieldInfo.isArray()) {
-               if(fieldInfo.getComponentType() == DataType.TYPE_BYTE && !fieldInfo.isByteArrayToCSONArray()) {
+               FieldInfo.ComponentInfo componentInfo = fieldInfo.getComponentInfo(0);
+               if(componentInfo.getType() == DataType.TYPE_BYTE && !fieldInfo.isByteArrayToCSONArray()) {
                    injectCSONValue(fieldInfo,object, csonObject);
                    continue;
                }
@@ -51,7 +75,7 @@ public class CSONSerializer {
                 return;
             }
             CSONArray csonArray =  fieldInfo.isArray() ? arrayObjectToCSONArray(fieldInfo, value) :
-                                   fieldInfo.isCollection() ? collectionToCSONArray(fieldInfo, (Collection<?>)value) : null;
+                                   fieldInfo.isCollection() ? collectionToCSONArray(fieldInfo,0, (Collection<?>)value) : null;
             csonObject.put(fieldInfo.getName(), csonArray);
             return;
         } catch (IllegalAccessException e) {}
@@ -59,34 +83,48 @@ public class CSONSerializer {
     }
 
 
-    private static CSONArray collectionToCSONArray(FieldInfo info, Collection<?> collectionObject) {
+    private static CSONArray collectionToCSONArray(FieldInfo fieldInfo,int index, Collection<?> collectionObject) {
         CSONArray csonArray = new CSONArray();
-        byte componentType = info.getComponentType();
+        FieldInfo.ComponentInfo componentInfo = fieldInfo.getComponentInfo(index);
+        byte componentType = componentInfo.getType();
         if(componentType == DataType.TYPE_CSON_OBJECT) {
             for(Object value : collectionObject) {
-                CSONObject csonObject = CSONSerializer.toCSON(value);
+                CSONObject csonObject = CSONSerializer.toCSONObject(value);
                 csonArray.put(csonObject);
             }
         } else if(componentType < 0) {
             for(Object value : collectionObject) {
                 if(value.getClass().getAnnotation(Cson.class) != null) {
-                    CSONObject csonObject = CSONSerializer.toCSON(value);
+                    CSONObject csonObject = CSONSerializer.toCSONObject(value);
                     csonArray.put(csonObject);
-                } else {
+                }
+                else if(value instanceof Collection) {
+                    CSONArray childArray = toCSONArray((Collection<?>) value);
+                    csonArray.put(childArray);
+                }
+                else {
                     csonArray.put(value);
                 }
             }
-        } else {
+        } else if(componentType == DataType.TYPE_COLLECTION) {
+            for(Object value : collectionObject) {
+                Collection<?> collectionValue = (Collection<?>)value;
+                CSONArray csonArrayValue = collectionToCSONArray(fieldInfo, index + 1,collectionValue);
+                csonArrayValue.put(csonArrayValue);
+            }
+        }
+        else {
             for(Object value : collectionObject) {
                 csonArray.put(value);
             }
         }
-
         return csonArray;
     }
 
+
+
     private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj) {
-        byte type = info.getComponentType();
+        byte type = info.getComponentInfo(0).getType();
         CSONArray csonArray = new CSONArray();
         if(info.isPrimitive()) {
             if (type == DataType.TYPE_BYTE) {
@@ -185,7 +223,7 @@ public class CSONSerializer {
                     if(obj == null) {
                         csonArray.put(null);
                     } else {
-                        CSONObject value = CSONSerializer.toCSON(obj);
+                        CSONObject value = CSONSerializer.toCSONObject(obj);
                         csonArray.put(value);
                     }
                 }
@@ -201,7 +239,7 @@ public class CSONSerializer {
         try {
             value = field.get(object);
             if(value != null) {
-                value = CSONSerializer.toCSON(value);
+                value = CSONSerializer.toCSONObject(value);
             }
         } catch (IllegalAccessException e) {}
         csonObject.put(fieldInfo.getName(), value);

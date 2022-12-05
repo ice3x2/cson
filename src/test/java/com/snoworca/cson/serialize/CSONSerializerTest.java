@@ -5,10 +5,8 @@ import com.snoworca.cson.CSONObject;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Random;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.junit.Assert.assertEquals;
 
@@ -102,6 +100,10 @@ public class CSONSerializerTest  {
         @Value
         private Collection<Child> childCollection = new ArrayList<>();
 
+
+        @Value
+        private Collection<ConcurrentLinkedQueue Queue<Set<Child>>> childCollection = new ArrayList<>();
+
         @Value
         private Collection childObjectCollection = new ArrayList<>();
 
@@ -139,7 +141,7 @@ public class CSONSerializerTest  {
     @Test
     public void testClassSerializeTest() {
         TestClass tc = new TestClass();
-        CSONObject csonObject = CSONSerializer.toCSON(tc);
+        CSONObject csonObject = CSONSerializer.toCSONObject(tc);
         assertEquals(tc.iv, csonObject.get("iv"));
         assertEquals(tc.ib, csonObject.get("ib1"));
         assertEquals(tc.is, csonObject.get("is"));
