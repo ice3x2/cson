@@ -1,0 +1,15 @@
+ext {
+    PUBLISH_GROUP_ID = 'com.snoworca'
+    PUBLISH_VERSION = '0.0.1'
+    PUBLISH_ARTIFACT_ID = 'cson'
+    PUBLISH_DESCRIPTION = 'Binary Json Library'
+    PUBLISH_URL = 'https://github.com/ice3x2/cson'
+    PUBLISH_LICENSE_NAME = 'MIT License'
+    PUBLISH_LICENSE_URL = 'https://github.com/MangKyu/spring-boot-test-automock/blob/master/LICENSE'
+    PUBLISH_DEVELOPER_ID = 'ice3x2'
+    PUBLISH_DEVELOPER_NAME = 'Sungbeom Hong'
+    PUBLISH_DEVELOPER_EMAIL = 'ice3x2@gmail.com'
+    PUBLISH_SCM_CONNECTION = 'scm:git:github.com/ice3x2/cson.git'
+    PUBLISH_SCM_DEVELOPER_CONNECTION = 'scm:git:ssh://github.com:ice3x2/cson.git'
+    PUBLISH_SCM_URL = 'https://github.com/ice3x2/cson/tree/master'
+}

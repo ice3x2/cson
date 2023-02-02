@@ -101,8 +101,10 @@ public class CSONSerializerTest  {
         private Collection<Child> childCollection = new ArrayList<>();
 
 
+        /**TODO
         @Value
         private Collection<ConcurrentLinkedQueue Queue<Set<Child>>> childCollection = new ArrayList<>();
+         **/
 
         @Value
         private Collection childObjectCollection = new ArrayList<>();
