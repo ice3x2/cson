@@ -39,9 +39,24 @@ class DataConverter {
 			} else if (value instanceof byte[] && ((byte[]) value).length > 3) {
 				return ByteBuffer.wrap((byte[]) value).getInt();
 			}
-		} catch (Throwable e) {}
+		} catch (Throwable e) {
+			Double v = toInfinityOrNaN(value);
+			if(v != null) {
+				return v.intValue();
+			}
+		}
 		return def;
+	}
 
+	public static Double toInfinityOrNaN(Object value) {
+		if("Infinity".equalsIgnoreCase((String) value) || "+Infinity".equalsIgnoreCase((String) value)) {
+			return Double.POSITIVE_INFINITY;
+		} else if("-Infinity".equalsIgnoreCase((String) value)) {
+			return Double.NEGATIVE_INFINITY;
+		} else if("NaN".equalsIgnoreCase((String) value)) {
+			return Double.NaN;
+		}
+		return null;
 	}
 
 	final static short toShort(Object value) {
@@ -59,7 +74,12 @@ class DataConverter {
 			} else if (value instanceof byte[] && ((byte[]) value).length > 1) {
 				return ByteBuffer.wrap((byte[]) value).getShort();
 			}
-		} catch (Throwable e) {}
+		} catch (Throwable e) {
+			Double v = toInfinityOrNaN(value);
+			if(v != null) {
+				return v.shortValue();
+			}
+		}
 		return def;
 	}
 
@@ -78,7 +98,12 @@ class DataConverter {
 			} else if (value instanceof byte[] && ((byte[]) value).length > 1) {
 				return ((byte[])value)[0];
 			}
-		} catch (Throwable e) {}
+		} catch (Throwable e) {
+			Double v = toInfinityOrNaN(value);
+			if(v != null) {
+				return v.byteValue();
+			}
+		}
 		return def;
 	}
 
@@ -100,7 +125,12 @@ class DataConverter {
 			} else if (value instanceof byte[] && ((byte[]) value).length > 3) {
 				return ByteBuffer.wrap((byte[]) value).getFloat();
 			}
-		}catch (Throwable e) {}
+		}catch (Throwable e) {
+			Double v = toInfinityOrNaN(value);
+			if(v != null) {
+				return v.floatValue();
+			}
+		}
 		return def;
 	}
 
@@ -119,7 +149,12 @@ class DataConverter {
 			} else if (value instanceof byte[] && ((byte[]) value).length > 7) {
 				return ByteBuffer.wrap((byte[]) value).getDouble();
 			}
-		} catch (Throwable e) {}
+		} catch (Throwable e) {
+			Double v = toInfinityOrNaN(value);
+			if(v != null) {
+				return v;
+			}
+		}
 		return def;
 	}
 
@@ -142,7 +177,12 @@ class DataConverter {
 			} else if (value instanceof byte[] && ((byte[]) value).length > 7) {
 				return ByteBuffer.wrap((byte[]) value).getLong();
 			}
-		} catch (Throwable e) {}
+		} catch (Throwable e) {
+			Double v = toInfinityOrNaN(value);
+			if(v != null) {
+				return v.longValue();
+			}
+		}
 		return def;
 	}
 

@@ -297,6 +297,8 @@ public class JSONTokener {
     public String nextString(char quote) throws CSONException {
         char c;
         StringBuilder sb = new StringBuilder();
+
+
         for (;;) {
             c = this.next();
             switch (c) {
@@ -329,6 +331,19 @@ public class JSONTokener {
                                 throw this.syntaxError("Illegal escape.", e);
                             }
                             break;
+                        case '\r' :
+                            if(quote == '"') {
+                                c = this.next();
+                                if(c != '\n') {
+                                    throw this.syntaxError("Illegal escape.");
+                                }
+                                sb.append('\r');
+                            }
+                        case '\n' :
+                            if(quote == '"') {
+                                sb.append('\n');
+                                break;
+                            }
                         case '"':
                         case '\'':
                         case '\\':
@@ -438,10 +453,35 @@ public class JSONTokener {
          */
 
         StringBuilder sb = new StringBuilder();
+
+        if(c == '/') {
+            c = next();
+            if(c == '/') {
+                while(c != '\n' && c != '\r' && c != 0) {
+                    c = next();
+                }
+            } else if(c == '*') {
+                while(c != 0) {
+                    c = next();
+                    if(c == '*') {
+                        if(next() == '/') {
+                            break;
+                        }
+                        back();
+                    }
+                }
+            } else {
+                throw this.syntaxError("Unrecognized comment.");
+            }
+
+            return nextValue();
+        }
+
         while (c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
             sb.append(c);
             c = this.next();
         }
+
         if (!this.eof) {
             this.back();
         }
