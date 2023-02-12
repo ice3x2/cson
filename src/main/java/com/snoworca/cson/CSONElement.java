@@ -5,6 +5,9 @@ import java.util.regex.Pattern;
 
 public class CSONElement {
 
+	protected static final String HEAD_COMMENT_KEY  = "";
+	protected static final String TAIL_COMMENT_KEY  = " ";
+
 	private final static Pattern BASE64_PREFIX_REPLACE_PATTERN = Pattern.compile("(?i)^base64,");
 	private final static Pattern BASE64_PREFIX_PATTERN = Pattern.compile("^((?i)base64,)([a-zA-Z0-9+/]*={0,2})$");
 

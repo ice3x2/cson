@@ -337,11 +337,10 @@ public class JSONTokener {
                                 if(c != '\n') {
                                     throw this.syntaxError("Illegal escape.");
                                 }
-                                sb.append('\r');
+                                break;
                             }
                         case '\n' :
                             if(quote == '"') {
-                                sb.append('\n');
                                 break;
                             }
                         case '"':
@@ -411,6 +410,33 @@ public class JSONTokener {
         }
     }
 
+    public String nextToFromString(String strDelimiters) throws CSONException {
+        char c;
+        char[] delimiters = strDelimiters.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        int equalCount = 0;
+        int delimiterEndIndex = delimiters.length - 1;
+        for (;;) {
+            c = this.next();
+            if (delimiters[equalCount] == c) {
+                if(equalCount == delimiterEndIndex) {
+                    return sb.substring(0,sb.length() - delimiterEndIndex).trim();
+                }
+                equalCount++;
+            }
+            else if(equalCount > 0 && delimiters[0] == c) {
+                equalCount = 1;
+            }
+            else {
+
+                equalCount = 0;
+            }
+            sb.append(c);
+        }
+    }
+
+
+
 
     /**
      * Get the next value. The value can be a Boolean, Double, Integer,
@@ -454,28 +480,6 @@ public class JSONTokener {
 
         StringBuilder sb = new StringBuilder();
 
-        if(c == '/') {
-            c = next();
-            if(c == '/') {
-                while(c != '\n' && c != '\r' && c != 0) {
-                    c = next();
-                }
-            } else if(c == '*') {
-                while(c != 0) {
-                    c = next();
-                    if(c == '*') {
-                        if(next() == '/') {
-                            break;
-                        }
-                        back();
-                    }
-                }
-            } else {
-                throw this.syntaxError("Unrecognized comment.");
-            }
-
-            return nextValue();
-        }
 
         while (c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
             sb.append(c);
