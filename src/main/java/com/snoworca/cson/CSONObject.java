@@ -246,25 +246,33 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return commentObject.getKeyComment();
 	}
 
-	public CommentObject getValueComment(String key) {
+
+	public String getValueComment(String key) {
 		CommentObject commentObject = commentMap.get(key);
-		return commentObject;
+		return commentObject == null ? null : commentObject.getValueComment();
 	}
 
 
 	protected char nextComment(JSONTokener x, StringBuilder commentBuilder) throws CSONException {
 		x.back();
 		char next = x.next();
+		boolean isMultiLine = false;
 		while(next == '/') {
 			char nextC = x.next();
 			if(nextC == '/') {
 				String strComment = x.nextTo('\n');
-				commentBuilder.append(strComment).append('\n');
+				if(isMultiLine) commentBuilder.append("\n");
+				commentBuilder.append(strComment);
+				isMultiLine = true;
 				next = x.nextClean();
 			} else if(nextC == '*') {
 				String strComment = x.nextToFromString("*/");
-				commentBuilder.append(strComment).append('\n');
+				if(isMultiLine) commentBuilder.append("\n");
+				commentBuilder.append(strComment);
+				isMultiLine = true;
 				next = x.nextClean();
+			} else  {
+				next = nextC;
 			}
 		}
 		return next;
@@ -275,33 +283,52 @@ public class CSONObject extends CSONElement implements Cloneable {
 		commentMap.put(key, commentObject);
 	}
 
+	private char readComment(JSONTokener x, StringBuilder commentBuilder) {
+		commentBuilder.setLength(0);
+		char nextClean = x.nextClean();
+		if(nextClean  == '/') {
+			nextClean = nextComment(x, commentBuilder);
+			return nextClean;
+		}
+		return nextClean;
+	}
+
 
 	protected CSONObject(JSONTokener x) throws CSONException {
 		super(ElementType.Object);
 		char c;
 		String key = null;
-		StringBuilder commentBuilder = new StringBuilder();
-		StringBuilder valueCommentBuilder = new StringBuilder();
-		CommentObject lastCommentObject = new CommentObject();
 
-		char nextClean = x.nextClean();
-		if(nextClean != '{') {
-			nextClean = nextComment(x, commentBuilder);
-			if(commentBuilder.length() > 0) {
-				headCommentObject.setBeforeKey(commentBuilder.toString().trim());
-				commentBuilder.setLength(0);
-			}
+		//StringBuilder valueCommentBuilder = new StringBuilder();
+		CommentObject lastCommentObject = new CommentObject();
+		StringBuilder commentBuilder = new StringBuilder();
+
+		char nextClean = readComment(x, commentBuilder);
+		if(commentBuilder.length() > 0) {
+			this.headCommentObject.setBeforeKey(commentBuilder.toString().trim());
 		}
 		if (nextClean != '{') {
 			throw x.syntaxError("A JSONObject text must begin with '{'");
 		}
 		for (;;) {
 			char prev = x.getPrevious();
-			c = x.nextClean();
+			c = readComment(x, commentBuilder);
+			if(commentBuilder.length() > 0) {
+				lastCommentObject.setBeforeKey(commentBuilder.toString().trim());
+			}
+
 			switch (c) {
 				case 0:
 					throw x.syntaxError("A JSONObject text must end with '}'");
 				case '}':
+					if(lastCommentObject.getBeforeKey() != null) {
+						tailCommentObject.setBeforeKey(lastCommentObject.getBeforeKey());
+						lastCommentObject.setBeforeKey(null);
+					}
+					readComment(x, commentBuilder);
+					if(commentBuilder.length() > 0) {
+						this.tailCommentObject.setAfterKey(commentBuilder.toString().trim());
+					}
 					return;
 				case '{':
 				case '[':
@@ -309,42 +336,28 @@ public class CSONObject extends CSONElement implements Cloneable {
 						throw x.syntaxError("A JSON Object can not directly nest another JSON Object or JSON Array.");
 					}
 					// fall through
-				case '/':
-					c = nextComment(x,commentBuilder);
+					readComment(x, commentBuilder);
 					if(commentBuilder.length() > 0) {
 						lastCommentObject.setBeforeKey(commentBuilder.toString().trim());
-						commentBuilder.setLength(0);
-					}
-					if(c == '}') {
-						tailCommentObject.setBeforeKey(lastCommentObject.getBeforeKey());
-						commentBuilder.setLength(0);
-						c = nextTailComment(x, commentBuilder);
-						if(c != 0) {
-							throw x.syntaxError("A JSONObject text must end with '}'");
-						}
-						return;
 					}
 				default:
 					x.back();
 					key = x.nextValue().toString();
 			}
 
-			// The key is followed by ':'.
-
-			c = x.nextClean();
-			if(c == '/') {
-				c = nextComment(x, commentBuilder);
-				if(commentBuilder.length() > 0) {
-					lastCommentObject.setAfterKey(commentBuilder.toString().trim());
-					commentBuilder.setLength(0);
-				}
+			c = readComment(x, commentBuilder);
+			if(commentBuilder.length() > 0) {
+				lastCommentObject.setAfterKey(commentBuilder.toString().trim());
 			}
+
+			// The key is followed by ':'.
+			//c = x.nextClean();
 			if (c != ':') {
 				throw x.syntaxError("Expected a ':' after a key");
 			}
 
+			char next;
 			// Use syntaxError(..) to include error location
-
 			if (key != null) {
 				// Check if key exists
 				if (this.opt(key) != null) {
@@ -352,47 +365,52 @@ public class CSONObject extends CSONElement implements Cloneable {
 					throw x.syntaxError("Duplicate key \"" + key + "\"");
 				}
 
-				c = x.nextClean();
-				if(c == '/') {
-					nextComment(x, commentBuilder);
-					if(commentBuilder.length() > 0) {
-						lastCommentObject.setBeforeValue(commentBuilder.toString().trim());
-						commentBuilder.setLength(0);
-					}
+				readComment(x, commentBuilder);
+				if(commentBuilder.length() > 0) {
+					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
 				}
 				x.back();
-
-				// Only add value if non-null
 				Object value = x.nextValue();
-				this.putAtJSONParsing(key, value);
-
-				c = x.nextClean();
-				if(c == '/') {
-					nextComment(x, commentBuilder);
-					if(commentBuilder.length() > 0) {
-						lastCommentObject.setAfterValue(commentBuilder.toString().trim());
-						commentBuilder.setLength(0);
-					}
+				if(value instanceof CSONObject) {
+					System.out.println("");
+					continue;
 				}
-				x.back();
+
+
+				next = readComment(x, commentBuilder);
+				if(commentBuilder.length() > 0) {
+					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
+				}
+
+				this.putAtJSONParsing(key, value);
 
 				if(lastCommentObject.hasComment()) {
 					putCommentObject(key, lastCommentObject);
 					lastCommentObject = new CommentObject();
 				}
-
+			} else {
+				next = readComment(x, commentBuilder);
+				if(commentBuilder.length() > 0) {
+					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
+				}
 			}
 
 
-			switch (x.nextClean()) {
+			switch (next) {
 				case ';':
 				case ',':
-					if (x.nextClean() == '}') {
-						return;
+					readComment(x, commentBuilder);
+					if(commentBuilder.length() > 0) {
+						tailCommentObject.setBeforeKey(commentBuilder.toString().trim());
 					}
 					x.back();
 					break;
 				case '}':
+					readComment(x, commentBuilder);
+					if(commentBuilder.length() > 0) {
+						tailCommentObject.setAfterKey(commentBuilder.toString().trim());
+					}
+					x.back();
 					return;
 				default:
 					throw x.syntaxError("Expected a ',' or '}'");
@@ -428,17 +446,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 					throw x.syntaxError("Expected a ',' or '}'");
 			}*/
 		}
-	}
-
-	private char nextTailComment(JSONTokener x, StringBuilder commentBuilder)  {
-		char c = x.nextClean();
-		if(c == '/') {
-			c = nextComment(x, commentBuilder);
-			if(commentBuilder.length() > 0) {
-				tailCommentObject.setAfterKey(commentBuilder.toString().trim());
-			}
-		}
-		return c;
 	}
 
 

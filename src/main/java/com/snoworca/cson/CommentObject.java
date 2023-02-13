@@ -23,7 +23,7 @@ public class CommentObject {
         } else if(commentAfterKey == null) {
             return commentBeforeKey;
         } else {
-            return commentBeforeKey + "\n\n" + commentAfterKey;
+            return commentBeforeKey + "\n" + commentAfterKey;
         }
     }
 
@@ -35,7 +35,7 @@ public class CommentObject {
         } else if(commentAfterValue == null) {
             return commentBeforeValue;
         } else {
-            return commentBeforeValue + "\n\n" + commentAfterValue;
+            return commentBeforeValue + "\n" + commentAfterValue;
         }
     }
 
@@ -75,11 +75,20 @@ public class CommentObject {
 
     @Override
     public String toString() {
-        return "Comment{" +
-                "commentBeforeKey='" + commentBeforeKey + '\'' +
-                ", commentAfterKey='" + commentAfterKey + '\'' +
-                ", commentBeforeValue='" + commentBeforeValue + '\'' +
-                ", commentAfterValue='" + commentAfterValue + '\'' +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        if(commentBeforeKey != null) {
+            sb.append(commentBeforeKey).append("\n");
+        }
+        if(commentAfterKey != null) {
+            sb.append(commentAfterKey).append("\n");
+        }
+        if(commentBeforeValue != null) {
+            sb.append(commentBeforeValue).append("\n");
+        }
+        if(commentAfterValue != null) {
+            sb.append(commentAfterValue).append("\n");
+        }
+
+        return sb.toString();
     }
 }

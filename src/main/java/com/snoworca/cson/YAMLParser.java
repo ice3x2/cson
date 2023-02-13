@@ -1,12 +1,8 @@
 package com.snoworca.cson;
 
-import sun.tools.jconsole.JConsole;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 
 public class YAMLParser {
 
@@ -70,11 +66,7 @@ public class YAMLParser {
             }
         }
 
-
         return csonObject;
-
-
-
 
         }
 
