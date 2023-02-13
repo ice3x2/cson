@@ -367,12 +367,26 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 				readComment(x, commentBuilder);
 				if(commentBuilder.length() > 0) {
-					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
+					lastCommentObject.setBeforeValue(commentBuilder.toString().trim());
 				}
 				x.back();
 				Object value = x.nextValue();
+				this.putAtJSONParsing(key, value);
 				if(value instanceof CSONObject) {
-					System.out.println("");
+					CSONObject objectValue = (CSONObject)value;
+					String commentAfterKey = objectValue.tailCommentObject.getAfterKey();
+					if(commentAfterKey != null) {
+						lastCommentObject.setAfterValue(commentAfterKey);
+					}
+					String commentHead = lastCommentObject.getBeforeValue();
+					if(commentHead != null) {
+						objectValue.getHeadCommentObject().setBeforeKey(commentHead);
+					}
+					if(lastCommentObject.hasComment()) {
+						putCommentObject(key, lastCommentObject);
+						lastCommentObject = new CommentObject();
+					}
+
 					continue;
 				}
 
@@ -382,7 +396,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
 				}
 
-				this.putAtJSONParsing(key, value);
 
 				if(lastCommentObject.hasComment()) {
 					putCommentObject(key, lastCommentObject);
@@ -401,7 +414,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 				case ',':
 					readComment(x, commentBuilder);
 					if(commentBuilder.length() > 0) {
-						tailCommentObject.setBeforeKey(commentBuilder.toString().trim());
+						lastCommentObject.setBeforeKey(commentBuilder.toString().trim());
 					}
 					x.back();
 					break;
