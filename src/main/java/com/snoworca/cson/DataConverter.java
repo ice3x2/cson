@@ -35,7 +35,7 @@ class DataConverter {
 			} else if (value instanceof Boolean) {
 				return ((Boolean) value) ? 1 : 0;
 			} else if (value instanceof String) {
-				return Integer.parseInt((String) value);
+				return Integer.parseInt( ((String)value).trim());
 			} else if (value instanceof byte[] && ((byte[]) value).length > 3) {
 				return ByteBuffer.wrap((byte[]) value).getInt();
 			}

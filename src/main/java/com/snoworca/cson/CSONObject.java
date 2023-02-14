@@ -10,9 +10,9 @@ import java.util.Map.Entry;
 public class CSONObject extends CSONElement implements Cloneable {
 
 	private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
-	private LinkedHashMap<String, CommentObject> commentMap = new LinkedHashMap<>();
-	private CommentObject tailCommentObject = new CommentObject();
-	private CommentObject headCommentObject = new CommentObject();
+	private final LinkedHashMap<String, KeyValueValueCommentObject> commentMap = new LinkedHashMap<>();
+	private final KeyValueValueCommentObject tailKeyValueCommentObject = new KeyValueValueCommentObject();
+	private final KeyValueValueCommentObject headKeyValueCommentObject = new KeyValueValueCommentObject();
 
 
 	public CSONObject(byte[] buffer) {
@@ -59,12 +59,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 		super(ElementType.Object);
 	}
 
-	private void putAtJSONParsing(String key, Object value) {
-		if(value instanceof String && CSONElement.isBase64String((String)value)) {
-			value = CSONElement.base64StringToByteArray((String)value);
-		}
-		put(key, value);
-	}
 
 	public CSONObject put(String key, Object value) {
 		if(value == null) {
@@ -213,252 +207,73 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 
 
-	public CommentObject getCommentObject(String key) {
-		CommentObject c = commentMap.get(key);
+	public KeyValueValueCommentObject getCommentObject(String key) {
+		KeyValueValueCommentObject c = commentMap.get(key);
 		return c;
 	}
 
+
+
+	public void putComment(String key, String comment) {
+		KeyValueValueCommentObject keyValueCommentObject = commentMap.get(key);
+		if(keyValueCommentObject == null) {
+			keyValueCommentObject = new KeyValueValueCommentObject();
+			commentMap.put(key, keyValueCommentObject);
+		}
+		keyValueCommentObject.setBeforeKey(comment);
+	}
+
+
+	public void putCommentObject(String key, KeyValueValueCommentObject keyValueCommentObject) {
+		commentMap.put(key, keyValueCommentObject);
+	}
 
 
 
 
 
 	public String getHeadComment() {
-		return headCommentObject.getKeyComment();
+		return headKeyValueCommentObject.getKeyComment();
 	}
 
-	public CommentObject getHeadCommentObject() {
-		return headCommentObject;
+	public void setHeadComment(String comment) {
+		headKeyValueCommentObject.setBeforeKey(comment);
+	}
+
+	public void setTailComment(String comment) {
+		tailKeyValueCommentObject.setAfterKey(comment);
+	}
+
+	public KeyValueValueCommentObject getHeadCommentObject() {
+		return headKeyValueCommentObject;
 	}
 
 	public String getTailComment() {
-		return tailCommentObject.getKeyComment();
+		return tailKeyValueCommentObject.getKeyComment();
 	}
 
-	public CommentObject getTailCommentObject() {
-		return tailCommentObject;
+	public KeyValueValueCommentObject getTailCommentObject() {
+		return tailKeyValueCommentObject;
 	}
 
 
 	public String getKeyComment(String key) {
-		CommentObject commentObject = commentMap.get(key);
-		if(commentObject == null) return null;
-		return commentObject.getKeyComment();
+		KeyValueValueCommentObject keyValueCommentObject = commentMap.get(key);
+		if(keyValueCommentObject == null) return null;
+		return keyValueCommentObject.getKeyComment();
 	}
 
 
 	public String getValueComment(String key) {
-		CommentObject commentObject = commentMap.get(key);
-		return commentObject == null ? null : commentObject.getValueComment();
+		KeyValueValueCommentObject keyValueCommentObject = commentMap.get(key);
+		return keyValueCommentObject == null ? null : keyValueCommentObject.getValueComment();
 	}
 
-
-	protected char nextComment(JSONTokener x, StringBuilder commentBuilder) throws CSONException {
-		x.back();
-		char next = x.next();
-		boolean isMultiLine = false;
-		while(next == '/') {
-			char nextC = x.next();
-			if(nextC == '/') {
-				String strComment = x.nextTo('\n');
-				if(isMultiLine) commentBuilder.append("\n");
-				commentBuilder.append(strComment);
-				isMultiLine = true;
-				next = x.nextClean();
-			} else if(nextC == '*') {
-				String strComment = x.nextToFromString("*/");
-				if(isMultiLine) commentBuilder.append("\n");
-				commentBuilder.append(strComment);
-				isMultiLine = true;
-				next = x.nextClean();
-			} else  {
-				next = nextC;
-			}
-		}
-		return next;
-	}
-
-
-	public void putCommentObject(String key, CommentObject commentObject) {
-		commentMap.put(key, commentObject);
-	}
-
-	private char readComment(JSONTokener x, StringBuilder commentBuilder) {
-		commentBuilder.setLength(0);
-		char nextClean = x.nextClean();
-		if(nextClean  == '/') {
-			nextClean = nextComment(x, commentBuilder);
-			return nextClean;
-		}
-		return nextClean;
-	}
 
 
 	protected CSONObject(JSONTokener x) throws CSONException {
 		super(ElementType.Object);
-		char c;
-		String key = null;
-
-		//StringBuilder valueCommentBuilder = new StringBuilder();
-		CommentObject lastCommentObject = new CommentObject();
-		StringBuilder commentBuilder = new StringBuilder();
-
-		char nextClean = readComment(x, commentBuilder);
-		if(commentBuilder.length() > 0) {
-			this.headCommentObject.setBeforeKey(commentBuilder.toString().trim());
-		}
-		if (nextClean != '{') {
-			throw x.syntaxError("A JSONObject text must begin with '{'");
-		}
-		for (;;) {
-			char prev = x.getPrevious();
-			c = readComment(x, commentBuilder);
-			if(commentBuilder.length() > 0) {
-				lastCommentObject.setBeforeKey(commentBuilder.toString().trim());
-			}
-
-			switch (c) {
-				case 0:
-					throw x.syntaxError("A JSONObject text must end with '}'");
-				case '}':
-					if(lastCommentObject.getBeforeKey() != null) {
-						tailCommentObject.setBeforeKey(lastCommentObject.getBeforeKey());
-						lastCommentObject.setBeforeKey(null);
-					}
-					readComment(x, commentBuilder);
-					if(commentBuilder.length() > 0) {
-						this.tailCommentObject.setAfterKey(commentBuilder.toString().trim());
-					}
-					return;
-				case '{':
-				case '[':
-					if(prev=='{') {
-						throw x.syntaxError("A JSON Object can not directly nest another JSON Object or JSON Array.");
-					}
-					// fall through
-					readComment(x, commentBuilder);
-					if(commentBuilder.length() > 0) {
-						lastCommentObject.setBeforeKey(commentBuilder.toString().trim());
-					}
-				default:
-					x.back();
-					key = x.nextValue().toString();
-			}
-
-			c = readComment(x, commentBuilder);
-			if(commentBuilder.length() > 0) {
-				lastCommentObject.setAfterKey(commentBuilder.toString().trim());
-			}
-
-			// The key is followed by ':'.
-			//c = x.nextClean();
-			if (c != ':') {
-				throw x.syntaxError("Expected a ':' after a key");
-			}
-
-			char next;
-			// Use syntaxError(..) to include error location
-			if (key != null) {
-				// Check if key exists
-				if (this.opt(key) != null) {
-					// key already exists
-					throw x.syntaxError("Duplicate key \"" + key + "\"");
-				}
-
-				readComment(x, commentBuilder);
-				if(commentBuilder.length() > 0) {
-					lastCommentObject.setBeforeValue(commentBuilder.toString().trim());
-				}
-				x.back();
-				Object value = x.nextValue();
-				this.putAtJSONParsing(key, value);
-				if(value instanceof CSONObject) {
-					CSONObject objectValue = (CSONObject)value;
-					String commentAfterKey = objectValue.tailCommentObject.getAfterKey();
-					if(commentAfterKey != null) {
-						lastCommentObject.setAfterValue(commentAfterKey);
-					}
-					String commentHead = lastCommentObject.getBeforeValue();
-					if(commentHead != null) {
-						objectValue.getHeadCommentObject().setBeforeKey(commentHead);
-					}
-					if(lastCommentObject.hasComment()) {
-						putCommentObject(key, lastCommentObject);
-						lastCommentObject = new CommentObject();
-					}
-
-					continue;
-				}
-
-
-				next = readComment(x, commentBuilder);
-				if(commentBuilder.length() > 0) {
-					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
-				}
-
-
-				if(lastCommentObject.hasComment()) {
-					putCommentObject(key, lastCommentObject);
-					lastCommentObject = new CommentObject();
-				}
-			} else {
-				next = readComment(x, commentBuilder);
-				if(commentBuilder.length() > 0) {
-					lastCommentObject.setAfterValue(commentBuilder.toString().trim());
-				}
-			}
-
-
-			switch (next) {
-				case ';':
-				case ',':
-					readComment(x, commentBuilder);
-					if(commentBuilder.length() > 0) {
-						lastCommentObject.setBeforeKey(commentBuilder.toString().trim());
-					}
-					x.back();
-					break;
-				case '}':
-					readComment(x, commentBuilder);
-					if(commentBuilder.length() > 0) {
-						tailCommentObject.setAfterKey(commentBuilder.toString().trim());
-					}
-					x.back();
-					return;
-				default:
-					throw x.syntaxError("Expected a ',' or '}'");
-			}
-
-
-			// Pairs are separated by ','.
-/*
-			switch (c) {
-				case ';':
-				case ',':
-					x.next();
-					c = x.nextClean();
-					if(c == '/') {
-						c = nextComment(x, commentBuilder);
-					}
-					if (c == '}') {
-						c = nextTailComment(x, commentBuilder);
-						if(c == '0') {
-							return;
-						}
-						else {
-							throw x.syntaxError("Expected a ',' or '}'");
-						}
-					}
-					break;
-				case '}':
-					c= nextTailComment(x, commentBuilder);
-					if(c == 0) {
-						return;
-					}
-				default:
-					throw x.syntaxError("Expected a ',' or '}'");
-			}*/
-		}
+		JSONParser.parseObject(x, this);
 	}
 
 
@@ -672,7 +487,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	protected void writeJSONString(StringBuilder strBuilder) {
 
-		strBuilder.append("{");
 
 		Iterator<Entry<String, Object>> iter = dataMap.entrySet().iterator();
 		while(iter.hasNext()) {

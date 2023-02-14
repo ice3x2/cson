@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import static org.junit.Assert.*;
 
@@ -56,10 +58,21 @@ public class CSONObjectTest {
     }
 
     @Test
-    public void cloneAndEqualsTest() {
+    public void cloneAndEqualsTest() throws  Exception {
+
+        JSONObject jsonObject = new JSONObject("{\"key\": \"va \\\" \\n \\r lue\"}");
+
+        CSONObject csonObjectA = new CSONObject("{\"key\": \"va \\\" \\n \\r lue\"}");
+        System.out.println(csonObjectA.toString());
+        new CSONObject(csonObjectA.toString());
+
+        System.out.println("--------------------------------------------------");
+
         CSONObject csonObject = makeCSOObject();
         CSONObject csonObject2 = csonObject.clone();
         assertEquals(csonObject, csonObject2);
+        System.out.println(csonObject.toString());
+        JSONObject jsonObject1 = new JSONObject(csonObject.toString());
         assertEquals(csonObject2,new CSONObject(csonObject.toString()));
         assertEquals(csonObject2,new CSONObject(csonObject.toBytes()));
     }

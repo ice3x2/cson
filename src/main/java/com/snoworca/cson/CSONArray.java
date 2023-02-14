@@ -7,51 +7,56 @@ import java.util.*;
 
 
 public class CSONArray  extends CSONElement  implements Collection<Object>, Cloneable {
-	
+
+	private final KeyValueValueCommentObject tailKeyValueCommentObject = new KeyValueValueCommentObject();
+	private final KeyValueValueCommentObject headKeyValueCommentObject = new KeyValueValueCommentObject();
+
+	private ArrayList<Object> list = new ArrayList<>();
+	private ArrayList<KeyValueValueCommentObject> keyValueCommentObjectList = new ArrayList<>();
+
+
 	public CSONArray() {
 		super(ElementType.Array);
 	}
 
 	public CSONArray(int size) {
 		super(ElementType.Array);
-		this.mList.ensureCapacity(size);
+		this.list.ensureCapacity(size);
 	}
 
 	public CSONArray(Collection<?> objects) {
 		super(ElementType.Array);
-		mList.addAll(objects);
+		list.addAll(objects);
 	}
 
-	private ArrayList<Object> mList = new ArrayList<Object>();
-	
 	public CSONArray(byte[] buffer) {
 		super(ElementType.Array);
-		this.mList = ((CSONArray)CSONParser.parse(buffer)).mList;
+		this.list = ((CSONArray)CSONParser.parse(buffer)).list;
 	}
 
 	public CSONArray(byte[] buffer,int offset, int len) {
 		super(ElementType.Array);
-		this.mList = ((CSONArray)CSONParser.parse(buffer, offset, len)).mList;
+		this.list = ((CSONArray)CSONParser.parse(buffer, offset, len)).list;
 	}
 	
 	@Override
 	public int size() {
-		return mList.size();
+		return list.size();
 	}
 	
 	@Override
 	public boolean isEmpty() {
-		return mList.isEmpty();
+		return list.isEmpty();
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return mList.contains(o);
+		return list.contains(o);
 	}
 
 	@Override
 	public Iterator<Object> iterator() {
-		return mList.iterator();
+		return list.iterator();
 	}
 
 	@Override
@@ -66,8 +71,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 	public List<Object> toList() {
-		List<Object> results = new ArrayList<Object>(this.mList.size());
-		for (Object element : this.mList) {
+		List<Object> results = new ArrayList<Object>(this.list.size());
+		for (Object element : this.list) {
 			if (element == null) {
 				results.add(null);
 			} else if (element instanceof CSONArray) {
@@ -82,56 +87,76 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	protected CSONArray(JSONTokener x) throws CSONException {
-		super(ElementType.Array);
-		if (x.nextClean() != '[') {
-			throw x.syntaxError("A JSONArray text must start with '['");
-		}
+	public String getHeadComment() {
+		return headKeyValueCommentObject.getKeyComment();
+	}
 
-		char nextChar = x.nextClean();
-		if (nextChar == 0) {
-			// array is unclosed. No ']' found, instead EOF
-			throw x.syntaxError("Expected a ',' or ']'");
+	public KeyValueValueCommentObject getHeadCommentObject() {
+		return headKeyValueCommentObject;
+	}
+
+	public String getTailComment() {
+		return tailKeyValueCommentObject.getKeyComment();
+	}
+
+	public KeyValueValueCommentObject getTailCommentObject() {
+		return tailKeyValueCommentObject;
+	}
+
+
+
+	public String getComment(int index) {
+		KeyValueValueCommentObject keyValueCommentObject = getCommentObject(index);
+		if(keyValueCommentObject == null) return null;
+		return keyValueCommentObject.getValueComment();
+	}
+
+
+	public KeyValueValueCommentObject getCommentObject(int index) {
+		if(keyValueCommentObjectList.size() <= list.size()) {
+			ensureCapacityOfCommentObjects();
 		}
-		if (nextChar != ']') {
-			x.back();
-			for (;;) {
-				if (x.nextClean() == ',') {
-					x.back();
-					addAtJSONParsing(null);
-				} else {
-					x.back();
-					addAtJSONParsing(x.nextValue());
-				}
-				switch (x.nextClean()) {
-					case 0:
-						// array is unclosed. No ']' found, instead EOF
-						throw x.syntaxError("Expected a ',' or ']'");
-					case ',':
-						nextChar = x.nextClean();
-						if (nextChar == 0) {
-							// array is unclosed. No ']' found, instead EOF
-							throw x.syntaxError("Expected a ',' or ']'");
-						}
-						if (nextChar == ']') {
-							return;
-						}
-						x.back();
-						break;
-					case ']':
-						return;
-					default:
-						throw x.syntaxError("Expected a ',' or ']'");
-				}
-			}
+		if(index >= list.size()) {
+			return null;
+		}
+		return keyValueCommentObjectList.get(index);
+	}
+
+	public void setCommentObject(int index, KeyValueValueCommentObject keyValueCommentObject) {
+		if(keyValueCommentObjectList.size() <= list.size()) {
+			ensureCapacityOfCommentObjects();
+		}
+		if(index >= list.size()) {
+			return;
+		}
+		keyValueCommentObjectList.set(index, keyValueCommentObject);
+	}
+
+
+	private void ensureCapacityOfCommentObjects() {
+		keyValueCommentObjectList.ensureCapacity(list.size());
+		for (int i = keyValueCommentObjectList.size(), n = list.size(); i < n; i++) {
+			keyValueCommentObjectList.add(null);
 		}
 	}
 
-	private void addAtJSONParsing(Object value) {
+
+	protected CSONArray(JSONTokener x) throws CSONException {
+		super(ElementType.Array);
+		JSONParser.parseArray(x, this);
+
+	}
+
+	protected void addAtJSONParsing(Object value) {
 		if(value instanceof String && CSONElement.isBase64String((String)value)) {
 			value = CSONElement.base64StringToByteArray((String)value);
 		}
-		mList.add(value);
+		list.add(value);
+	}
+
+
+	protected void addCommentObjects(KeyValueValueCommentObject keyValueCommentObject) {
+		keyValueCommentObjectList.add(keyValueCommentObject);
 	}
 
 
@@ -149,16 +174,16 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	@Override
 	public boolean add(Object e) {
-		if(e == null || e instanceof  NullValue) mList.add(new NullValue());
+		if(e == null || e instanceof  NullValue) list.add(new NullValue());
 		if(e instanceof Number) {
-			return mList.add(e);	
+			return list.add(e);
 		} else if(e instanceof CharSequence) {
-			return mList.add(e.toString());
+			return list.add(e.toString());
 		} else if(e instanceof CSONArray) {
 			if(e == this) e = ((CSONArray)e).clone();
-			mList.add(e);
+			list.add(e);
 		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONObject || e instanceof byte[] ) {
-			return mList.add(e);
+			return list.add(e);
 		}
 		return false; 
 	}
@@ -169,14 +194,14 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	
 	public Object get(int index) {
-		Object obj = mList.get(index);
+		Object obj = list.get(index);
 		if(obj instanceof NullValue) return null;
 		return obj;
 	}
 	
 	public Object opt(int index) {
 		try {
-			Object obj = mList.get(index);
+			Object obj = list.get(index);
 			if(obj instanceof NullValue) return null;
 			return obj;
 		} catch (IndexOutOfBoundsException e) {
@@ -186,7 +211,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public CSONArray getArray(int index) {
 		try {
-			return DataConverter.toArray(mList.get(index));
+			return DataConverter.toArray(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -195,7 +220,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public CSONArray optArray(int index, CSONArray def) {
 		try {
-			return DataConverter.toArray(mList.get(index));
+			return DataConverter.toArray(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -207,7 +232,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public CSONArray optArrayWrap(int index) {
 		try {
-			Object object = mList.get(index);
+			Object object = list.get(index);
 			if (object instanceof CSONArray) {
 				return (CSONArray) object;
 			} else if (object == null) {
@@ -222,7 +247,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public CSONObject getObject(int index) {
 		try {
-			return DataConverter.toObject(mList.get(index));
+			return DataConverter.toObject(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -230,7 +255,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public CSONObject optObject(int index) {
 		try {
-			return DataConverter.toObject(mList.get(index));
+			return DataConverter.toObject(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return null;
 		}
@@ -238,7 +263,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public int getInteger(int index) {
 		try {
-			return DataConverter.toInteger(mList.get(index));
+			return DataConverter.toInteger(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -250,7 +275,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public int optInteger(int index, int def) {
 		try {
-			return DataConverter.toInteger(mList.get(index), def);
+			return DataConverter.toInteger(list.get(index), def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -258,7 +283,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public long getLong(int index) {
 		try {
-			return DataConverter.toLong(mList.get(index));
+			return DataConverter.toLong(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -270,7 +295,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public long optLong(int index, long def) {
 		try {
-			return DataConverter.toLong(mList.get(index), def);
+			return DataConverter.toLong(list.get(index), def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -278,7 +303,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public short getShort(int index) {
 		try {			
-			return DataConverter.toShort(mList.get(index));
+			return DataConverter.toShort(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -290,7 +315,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public short optShort(int index, short def) {
 		try {			
-			return DataConverter.toShort(mList.get(index),def);
+			return DataConverter.toShort(list.get(index),def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -298,7 +323,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public char getChar(int index) {
 		try {
-			return DataConverter.toChar(mList.get(index));
+			return DataConverter.toChar(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -310,7 +335,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public char optChar(int index, char def) {
 		try {
-			return DataConverter.toChar(mList.get(index),def);
+			return DataConverter.toChar(list.get(index),def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -319,7 +344,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public short getByte(int index) {
 		try {
-			return DataConverter.toByte(mList.get(index));
+			return DataConverter.toByte(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -327,7 +352,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public byte optByte(int index, byte def) {
 		try {
-			return DataConverter.toByte(mList.get(index), def);
+			return DataConverter.toByte(list.get(index), def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -335,7 +360,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public byte optByte(int index) {
 		try {
-			return DataConverter.toByte(mList.get(index));
+			return DataConverter.toByte(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return 0;
 		}
@@ -344,7 +369,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public double getDouble(int index) {
 		try {
-			return DataConverter.toDouble(mList.get(index));
+			return DataConverter.toDouble(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -356,7 +381,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public double optDouble(int index, double def) {
 		try {
-			return DataConverter.toDouble(mList.get(index));
+			return DataConverter.toDouble(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return Double.NaN;
 		}
@@ -364,7 +389,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public float getFloat(int index) {
 		try {			
-			return DataConverter.toFloat(mList.get(index));
+			return DataConverter.toFloat(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -372,7 +397,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public float optFloat(int index, float def) {
 		try {			
-			return DataConverter.toFloat(mList.get(index));
+			return DataConverter.toFloat(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -380,7 +405,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public float optFloat(int index) {
 		try {			
-			return DataConverter.toFloat(mList.get(index));
+			return DataConverter.toFloat(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return Float.NaN;
 		}
@@ -389,7 +414,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public String getString(int index) {
 		try {			
-			return DataConverter.toString(mList.get(index));
+			return DataConverter.toString(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -397,7 +422,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public String optString(int index,String def) {
 		try {			
-			return DataConverter.toString(mList.get(index));
+			return DataConverter.toString(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -409,7 +434,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public byte[] getByteArray(int index) {
 		try {			
-			byte[] buffer = (byte[]) mList.get(index);
+			byte[] buffer = (byte[]) list.get(index);
 			return buffer;
 		} catch (Exception e) {
 			throw new CSONIndexNotFoundException(e);
@@ -418,7 +443,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public byte[] optByteArray(int index) {
 		try {
-			return DataConverter.toByteArray(mList.get(index));
+			return DataConverter.toByteArray(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return null;
 		}
@@ -426,7 +451,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public byte[] optByteArray(int index,byte[] def) {
 		try {
-			return DataConverter.toByteArray(mList.get(index));
+			return DataConverter.toByteArray(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -435,7 +460,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public boolean getBoolean(int index) {
 		try {			
-			return DataConverter.toBoolean(mList.get(index));
+			return DataConverter.toBoolean(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
@@ -443,7 +468,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	public boolean optBoolean(int index, boolean def) {
 		try {			
-			return DataConverter.toBoolean(mList.get(index), def);
+			return DataConverter.toBoolean(list.get(index), def);
 		} catch (IndexOutOfBoundsException e) {
 			return def;
 		}
@@ -455,32 +480,32 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	@Override
 	public boolean remove(Object o) {
-		return mList.remove(o);
+		return list.remove(o);
 	}
 
 	@Override
 	public boolean containsAll(@SuppressWarnings("rawtypes") Collection c) {
-		return mList.containsAll(c);
+		return list.containsAll(c);
 	}
 
 	@Override
 	public boolean addAll(@SuppressWarnings("rawtypes") Collection c) {
-		return mList.addAll(c);
+		return list.addAll(c);
 	}
 
 	@Override
 	public boolean removeAll(@SuppressWarnings("rawtypes") Collection c) {
-		return mList.removeAll(c);
+		return list.removeAll(c);
 	}
 
 	@Override
 	public boolean retainAll(@SuppressWarnings("rawtypes") Collection c) {
-		return mList.retainAll(c);
+		return list.retainAll(c);
 	}
 
 	@Override
 	public void clear() {
-		mList.clear();
+		list.clear();
 	}
 	
 	public CsonArrayEnumerator enumeration() {
@@ -569,8 +594,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	protected void write(CSONWriter writer) { 
 		writer.openArray();
-		for(int i = 0, n = mList.size(); i < n; ++i) {
-			Object obj = mList.get(i);
+		for(int i = 0, n = list.size(); i < n; ++i) {
+			Object obj = list.get(i);
 			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONArray)  {
 				((CSONArray)obj).write(writer);
@@ -596,8 +621,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	protected void write(JSONWriter writer) {
 		writer.openArray();
-		for(int i = 0, n = mList.size(); i < n; ++i) {
-			Object obj = mList.get(i);
+		for(int i = 0, n = list.size(); i < n; ++i) {
+			Object obj = list.get(i);
 			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONArray)  {
 				((CSONArray)obj).write(writer);
@@ -622,8 +647,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	protected void writeJSONString(StringBuilder strBuilder) {
 		strBuilder.append("[");
-		for(int i = 0, n = mList.size(),np = n - 1 ; i < n; ++i) {
-			Object obj = mList.get(i);
+		for(int i = 0, n = list.size(), np = n - 1; i < n; ++i) {
+			Object obj = list.get(i);
 			if(obj == null) strBuilder.append("null");
 			else if(obj instanceof Number || obj instanceof Boolean) strBuilder.append(obj);
 			else if(obj instanceof Character) strBuilder.append('"').append(obj).append('"');
@@ -649,8 +674,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public CSONArray clone() {
 		CSONArray array = new CSONArray();
-		for(int i = 0, n = mList.size(); i < n; ++i) {
-			Object obj = mList.get(i);
+		for(int i = 0, n = list.size(); i < n; ++i) {
+			Object obj = list.get(i);
 			if(obj instanceof CSONArray) array.add(((CSONArray)obj).clone());
 			else if(obj instanceof CSONObject) array.add(((CSONObject)obj).clone());
 			else if(obj instanceof CharSequence) array.add(((CharSequence)obj).toString());
@@ -671,9 +696,9 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		CSONArray csonObject = (CSONArray)obj;
 		if(csonObject.size() != size()) return false;
 
-		for(int i = 0, n = mList.size(); i < n; ++i) {
-			Object compareValue = csonObject.mList.get(i);
-			Object value = mList.get(i);
+		for(int i = 0, n = list.size(); i < n; ++i) {
+			Object compareValue = csonObject.list.get(i);
+			Object value = list.get(i);
 			if((value == null || value instanceof NullValue) && (compareValue != null && !(compareValue instanceof NullValue)) ) {
 				return false;
 			}

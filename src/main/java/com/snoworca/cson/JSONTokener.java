@@ -91,6 +91,10 @@ public class JSONTokener {
         this.eof = false;
     }
 
+    public boolean canGoBack() {
+        return !this.usePrevious && this.index > 0;
+    }
+
     /**
      * Decrements the indexes for the {@link #back()} method based on the previous character read.
      */

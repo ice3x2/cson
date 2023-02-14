@@ -1,18 +1,14 @@
 package com.snoworca.cson;
 
-public class CommentObject {
+public class KeyValueValueCommentObject extends ValueCommentObject {
     public String commentBeforeKey = null;
     public String commentAfterKey = null;
 
-    public String commentBeforeValue = null;
-    public String commentAfterValue = null;
 
-    public boolean isEmpty() {
-        return commentBeforeKey == null && commentAfterKey == null && commentBeforeValue == null && commentAfterValue == null;
-    }
 
-    public boolean hasComment() {
-        return commentBeforeKey != null || commentAfterKey != null || commentBeforeValue != null || commentAfterValue != null;
+    @Override
+    public boolean isCommented() {
+        return commentBeforeKey != null || commentAfterKey != null || super.isCommented();
     }
 
     public String getKeyComment() {
@@ -39,8 +35,28 @@ public class CommentObject {
         }
     }
 
+
+
     public void setAfterKey(String comment) {
         commentAfterKey = comment;
+    }
+
+    public void setCommentAtKey(String comment) {
+        setBeforeKey(comment);
+    }
+
+    public void setCommentAtValue(String comment) {
+        setBeforeValue(comment);
+    }
+
+    public void addCommentAtKey(String comment) {
+        if(commentBeforeKey == null) commentBeforeKey = "";
+        commentBeforeKey = commentBeforeKey + comment;
+    }
+
+    public void addCommentAtValue(String comment) {
+        if(commentBeforeValue == null) commentBeforeValue = "";
+        commentBeforeValue = commentBeforeValue + comment;
     }
 
     public void setBeforeKey(String comment) {

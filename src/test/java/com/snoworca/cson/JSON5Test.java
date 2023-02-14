@@ -1,5 +1,6 @@
 package com.snoworca.cson;
 
+import org.json.JSONArray;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -68,7 +69,48 @@ public class JSON5Test {
 
     @Test
     public void testArrayComment() {
-        CSONArray csonArray = new CSONArray("[1,2,3,4,5,6,7,8,9,10,Infinity,NaN,] // 코멘트 \n // 코멘트2"  );
+        JSONArray jsonArray = new JSONArray("[1,,2,3,4,5,6,7,8,9,10,Infinity,NaN,]"  );
+        Object obj =  jsonArray.get(1);
+
+        CSONArray csonArray = null;
+        /*csonArray = new CSONArray("[//index1\n1,2,3,4,5,6,7,8,9,10,Infinity,NaN,] // 코멘트 \n // 코멘트2"  );
+        assertEquals("index1",csonArray.getCommentObject(0).getBeforeValue());*/
+
+        System.out.println("/*테*///스\n/*트*/[//index1\n1\n//index1After\n,,/* 이 곳에 주석 가능 */,\"3 \"/*index 3*/,4,5,6,7,8,9,10,11,{},13,{},[],[],[],+Infinity,NaN,] // 코멘트 \n // 코멘트2");
+
+        csonArray = new CSONArray("/*테*///스\n/*트*/[//index1\n1\n//index1After\n,,/* 이 곳에 주석 가능 */,\"3 \"/*index 3*/,4,5,6,7,8,9,10,11,/*오브젝트 시작*/{/*알수없는 영역*/}/*오브젝트끝*/,13,//14\n {/*123*/123:456//456\n,},/*15배열로그*/[,,],[],[],+Infinity,NaN,] // 코멘트 \n // 코멘트2"  );
+        assertEquals("index1",csonArray.getCommentObject(0).getBeforeValue());
+        assertEquals("테\n스\n트",csonArray.getHeadComment());
+        assertEquals("index1After",csonArray.getCommentObject(0).getAfterValue());
+        assertEquals(1,csonArray.getInteger(0));
+        assertEquals(null,csonArray.get(1));
+        assertEquals(null,csonArray.get(2));
+        assertEquals("이 곳에 주석 가능",csonArray.getCommentObject(2).getBeforeValue());
+        assertEquals("3 ",csonArray.get(3));
+        assertEquals(3,csonArray.getInteger(3));
+        assertEquals("index 3",csonArray.getCommentObject(3).getAfterValue());
+
+        assertEquals("오브젝트 시작", csonArray.getObject(12).getHeadComment());
+        assertEquals("알수없는 영역", csonArray.getObject(12).getTailCommentObject().getBeforeKey());
+        assertEquals("오브젝트끝", csonArray.getObject(12).getTailCommentObject().getAfterKey());
+
+        assertEquals("오브젝트끝",csonArray.getCommentObject(12).getAfterValue());
+
+        assertEquals("+Infinity",csonArray.get(18));
+        assertEquals("NaN",csonArray.get(19));
+
+        CSONArray idx15Array = csonArray.getArray(15);
+        assertEquals("15배열로그",csonArray.getCommentObject(15).getAfterKey());
+        assertEquals("15배열로그",idx15Array.getHeadComment());
+        assertEquals(null, idx15Array.get(0));
+        assertEquals(null, idx15Array.get(1));
+
+
+        assertTrue(Double.isInfinite(csonArray.getDouble(18)));
+        assertTrue(Double.isNaN(csonArray.getDouble(19)));
+
+
+
     }
 
     @Test
@@ -91,15 +133,15 @@ public class JSON5Test {
         assertEquals("값 뒤 코멘트\n123",csonObject.getCommentObject("key3").getAfterValue());
         assertEquals("123\n꼬리 다음 코멘트",csonObject.getTailCommentObject().getKeyComment());
 
-        CommentObject commentObject = csonObject.getCommentObject("object");
-        assertEquals("오브젝트",commentObject.getBeforeKey());
+        KeyValueValueCommentObject keyValueCommentObject = csonObject.getCommentObject("object");
+        assertEquals("오브젝트", keyValueCommentObject.getBeforeKey());
         CSONObject subObject =  csonObject.getObject("object");
         assertEquals("ok",subObject.get("p"));
         assertEquals(csonObject.getCommentObject("object").getBeforeValue(),subObject.getHeadComment());
         assertEquals("이곳은?",subObject.getTailCommentObject().getBeforeKey());
         assertEquals("오브젝트 코멘트 엔드",subObject.getTailCommentObject().getAfterKey());
 
-        assertEquals("오브젝트 코멘트",commentObject.getAfterKey());
+        assertEquals("오브젝트 코멘트", keyValueCommentObject.getAfterKey());
 
 
     }
