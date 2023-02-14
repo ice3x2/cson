@@ -11,6 +11,69 @@ public class CSONElement {
 	private final static Pattern BASE64_PREFIX_REPLACE_PATTERN = Pattern.compile("(?i)^base64,");
 	private final static Pattern BASE64_PREFIX_PATTERN = Pattern.compile("^((?i)base64,)([a-zA-Z0-9+/]*={0,2})$");
 
+	private CommentObject tailCommentObject = null;
+	private CommentObject headCommentObject = null;
+
+
+	public void setHeadComment(String comment) {
+		if(comment== null) {
+			return;
+		}
+		if(headCommentObject == null) {
+			headCommentObject = new CommentObject();
+		}
+		headCommentObject.setBeforeComment(comment);
+	}
+
+	public void setTailComment(String comment) {
+		if(comment== null) {
+			return;
+		}
+		if(tailCommentObject == null) {
+			tailCommentObject = new CommentObject();
+		}
+		tailCommentObject.setAfterComment(comment);
+
+	}
+
+	public CommentObject getHeadCommentObject() {
+		return headCommentObject;
+	}
+
+	public CommentObject getTailCommentObject() {
+		return tailCommentObject;
+	}
+
+	public CommentObject getOrCreateHeadCommentObject() {
+		return headCommentObject == null ? headCommentObject = new CommentObject() : headCommentObject;
+	}
+
+	public CommentObject getOrCreateTailCommentObject() {
+		return tailCommentObject == null ? tailCommentObject = new CommentObject() : tailCommentObject;
+	}
+
+	protected void setHeadCommentObject(CommentObject commentObject) {
+		this.headCommentObject = commentObject;
+	}
+
+	protected void setTailCommentObject(CommentObject commentObject) {
+		this.tailCommentObject = commentObject;
+	}
+
+	public String getTailComment() {
+		return tailCommentObject == null ? null : tailCommentObject.getComment();
+	}
+
+	public String getHeadComment() {
+		return headCommentObject == null ? null : headCommentObject.getComment();
+	}
+
+
+
+
+
+
+
 
 	public enum ElementType { Object, Array;};
 

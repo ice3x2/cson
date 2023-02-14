@@ -8,11 +8,8 @@ import java.util.*;
 
 public class CSONArray  extends CSONElement  implements Collection<Object>, Cloneable {
 
-	private final KeyValueValueCommentObject tailKeyValueCommentObject = new KeyValueValueCommentObject();
-	private final KeyValueValueCommentObject headKeyValueCommentObject = new KeyValueValueCommentObject();
-
 	private ArrayList<Object> list = new ArrayList<>();
-	private ArrayList<KeyValueValueCommentObject> keyValueCommentObjectList = new ArrayList<>();
+	private ArrayList<CommentObject> commentObjectList = null;
 
 
 	public CSONArray() {
@@ -87,56 +84,47 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	public String getHeadComment() {
-		return headKeyValueCommentObject.getKeyComment();
-	}
-
-	public KeyValueValueCommentObject getHeadCommentObject() {
-		return headKeyValueCommentObject;
-	}
-
-	public String getTailComment() {
-		return tailKeyValueCommentObject.getKeyComment();
-	}
-
-	public KeyValueValueCommentObject getTailCommentObject() {
-		return tailKeyValueCommentObject;
-	}
-
-
-
 	public String getComment(int index) {
-		KeyValueValueCommentObject keyValueCommentObject = getCommentObject(index);
-		if(keyValueCommentObject == null) return null;
-		return keyValueCommentObject.getValueComment();
+		CommentObject commentObject = getCommentObject(index);
+		if(commentObject == null) return null;
+		return commentObject.getComment();
 	}
 
 
-	public KeyValueValueCommentObject getCommentObject(int index) {
-		if(keyValueCommentObjectList.size() <= list.size()) {
-			ensureCapacityOfCommentObjects();
-		}
-		if(index >= list.size()) {
-			return null;
-		}
-		return keyValueCommentObjectList.get(index);
+	public CommentObject getCommentObject(int index) {
+		if(commentObjectList == null) return null;
+		if(index >= commentObjectList.size()) return null;
+		return commentObjectList.get(index);
 	}
 
-	public void setCommentObject(int index, KeyValueValueCommentObject keyValueCommentObject) {
-		if(keyValueCommentObjectList.size() <= list.size()) {
+	public CommentObject getCommentObject(int index, boolean createIfNotExists) {
+		if(commentObjectList == null) {
+			if(!createIfNotExists) return null;
+			commentObjectList = new ArrayList<>();
+		}
+		if(index >= commentObjectList.size()) {
+			if(!createIfNotExists) return null;
+			ensureCapacityOfCommentObjects();
+		}
+		return commentObjectList.get(index);
+	}
+
+
+	public void setCommentObject(int index, CommentObject keyValueCommentObject) {
+		if(commentObjectList.size() <= list.size()) {
 			ensureCapacityOfCommentObjects();
 		}
 		if(index >= list.size()) {
-			return;
+			throw new IndexOutOfBoundsException("index: " + index + ", size: " + list.size());
 		}
-		keyValueCommentObjectList.set(index, keyValueCommentObject);
+		commentObjectList.set(index, keyValueCommentObject);
 	}
 
 
 	private void ensureCapacityOfCommentObjects() {
-		keyValueCommentObjectList.ensureCapacity(list.size());
-		for (int i = keyValueCommentObjectList.size(), n = list.size(); i < n; i++) {
-			keyValueCommentObjectList.add(null);
+		commentObjectList.ensureCapacity(list.size());
+		for (int i = commentObjectList.size(), n = list.size(); i < n; i++) {
+			commentObjectList.add(null);
 		}
 	}
 
@@ -155,8 +143,11 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	protected void addCommentObjects(KeyValueValueCommentObject keyValueCommentObject) {
-		keyValueCommentObjectList.add(keyValueCommentObject);
+	protected void addCommentObjects(CommentObject commentObject) {
+		if(commentObjectList == null) {
+			commentObjectList = new ArrayList<>();
+		}
+		commentObjectList.add(commentObject);
 	}
 
 

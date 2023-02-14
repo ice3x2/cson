@@ -1,6 +1,6 @@
 package com.snoworca.cson;
 
-public class ValueCommentObject {
+public class CommentObject {
     private String beforeComment;
     private String afterComment;
 
@@ -20,7 +20,7 @@ public class ValueCommentObject {
         this.afterComment = afterComment;
     }
 
-    public void addBeforeCommentAtValue(String comment) {
+    public void addBeforeComment(String comment) {
         if (beforeComment == null) {
             beforeComment = comment;
         } else {
@@ -28,7 +28,7 @@ public class ValueCommentObject {
         }
     }
 
-    public void addAfterCommentAtValue(String comment) {
+    public void addAfterComment(String comment) {
         if (afterComment == null) {
             afterComment = comment;
         } else {
@@ -37,16 +37,20 @@ public class ValueCommentObject {
     }
 
 
-    public String getValueComment() {
-        if(commentBeforeValue == null && commentAfterValue == null) {
+    public String getComment() {
+        if(beforeComment == null && afterComment == null) {
             return null;
-        } else if(commentBeforeValue == null) {
-            return commentAfterValue;
-        } else if(commentAfterValue == null) {
-            return commentBeforeValue;
+        } else if(beforeComment == null) {
+            return afterComment;
+        } else if(afterComment == null) {
+            return beforeComment;
         } else {
-            return commentBeforeValue + "\n" + commentAfterValue;
+            return beforeComment + "\n" + afterComment;
         }
+    }
+
+    public String toString() {
+        return getComment();
     }
 
 

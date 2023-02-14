@@ -56,12 +56,13 @@ class JSONParser {
 
     static void parseArray(JSONTokener x, CSONArray csonArray) {
 
-        KeyValueValueCommentObject lastKeyValueCommentObject = new KeyValueValueCommentObject();
+
         StringBuilder commentBuilder = new StringBuilder();
+        CommentObject lastCommentObject = new CommentObject();
 
         char nextChar = readComment(x, commentBuilder);
         if(commentBuilder.length() > 0) {
-            csonArray.getHeadCommentObject().setBeforeKey(commentBuilder.toString().trim());
+            csonArray.setHeadComment(commentBuilder.toString().trim());
         }
 
         if (nextChar != '[') {
@@ -77,7 +78,7 @@ class JSONParser {
             for (;;) {
                 nextChar = readComment(x, commentBuilder);
                 if(commentBuilder.length() > 0) {
-                    lastKeyValueCommentObject.setBeforeValue(commentBuilder.toString().trim());
+                    lastCommentObject.setBeforeComment(commentBuilder.toString().trim());
                 }
                 if (nextChar == 0) {
                     throw x.syntaxError("Expected a ',' or ']'");
@@ -94,24 +95,26 @@ class JSONParser {
                     nextChar = x.nextClean();
                 } else {
                     Object value = x.nextValue();
-                    if(value instanceof  CSONObject) {
-                        CSONObject valueObject = (CSONObject) value;
-                        valueObject.setHeadComment(lastKeyValueCommentObject.getBeforeValue());
-                        lastKeyValueCommentObject.setAfterValue(valueObject.getTailCommentObject().getAfterKey());
+                    if(value instanceof CSONElement) {
+                        CSONElement valueObject = (CSONElement) value;
+                        valueObject.setHeadComment(lastCommentObject.getBeforeComment());
+                        CommentObject commentObject = valueObject.getTailCommentObject();
+                        if(commentObject != null && commentObject.isCommented()) {
+                            lastCommentObject.setAfterComment(valueObject.getTailCommentObject().getAfterComment());
+                        }
                         nextChar = x.nextClean();
                     }
                     else {
                         nextChar = readComment(x, commentBuilder);
                         if(commentBuilder.length() > 0) {
-                            lastKeyValueCommentObject.setAfterValue(commentBuilder.toString().trim());
+                            lastCommentObject.setAfterComment(commentBuilder.toString().trim());
                         }
                     }
                     csonArray.addAtJSONParsing(value);
-
                 }
-                if(!lastKeyValueCommentObject.isEmpty()) {
-                    csonArray.addCommentObjects(lastKeyValueCommentObject);
-                    lastKeyValueCommentObject = new KeyValueValueCommentObject();
+                if(lastCommentObject.isCommented()) {
+                    csonArray.addCommentObjects(lastCommentObject);
+                    lastCommentObject = new CommentObject();
                 } else {
                     csonArray.addCommentObjects(null);
                 }
@@ -121,17 +124,28 @@ class JSONParser {
                         // array is unclosed. No ']' found, instead EOF
                         throw x.syntaxError("Expected a ',' or ']'");
                     case ',':
-                        nextChar = x.nextClean();
+                        nextChar = readComment(x, commentBuilder);
+                        if(commentBuilder.length() > 0) {
+                            csonArray.getOrCreateHeadCommentObject().setBeforeComment(commentBuilder.toString().trim());
+                        }
                         if (nextChar == 0) {
                             // array is unclosed. No ']' found, instead EOF
                             throw x.syntaxError("Expected a ',' or ']'");
                         }
                         if (nextChar == ']') {
+                            readComment(x, commentBuilder);
+                            if(commentBuilder.length() > 0) {
+                                csonArray.getOrCreateHeadCommentObject().setAfterComment(commentBuilder.toString().trim());
+                            }
                             return;
                         }
                         x.back();
                         break;
                     case ']':
+                        readComment(x, commentBuilder);
+                        if(commentBuilder.length() > 0) {
+                            csonArray.getOrCreateHeadCommentObject().setAfterComment(commentBuilder.toString().trim());
+                        }
                         return;
                     default:
                         throw x.syntaxError("Expected a ',' or ']'");
@@ -144,12 +158,13 @@ class JSONParser {
         char c;
         String key = null;
 
-        KeyValueValueCommentObject lastKeyValueCommentObject = new KeyValueValueCommentObject();
+        CommentObject valueCommentObject = new CommentObject();
+        CommentObject lastKeyObject = new CommentObject();
         StringBuilder commentBuilder = new StringBuilder();
 
         char nextClean = readComment(x, commentBuilder);
         if(commentBuilder.length() > 0) {
-            csonObject.getHeadCommentObject().setBeforeKey(commentBuilder.toString().trim());
+            csonObject.setHeadComment(commentBuilder.toString().trim());
         }
         if (nextClean != '{') {
             throw x.syntaxError("A JSONObject text must begin with '{'");
@@ -158,20 +173,19 @@ class JSONParser {
             char prev = x.getPrevious();
             c = readComment(x, commentBuilder);
             if(commentBuilder.length() > 0) {
-                lastKeyValueCommentObject.setBeforeKey(commentBuilder.toString().trim());
+                lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
             }
 
             switch (c) {
                 case 0:
                     throw x.syntaxError("A JSONObject text must end with '}'");
                 case '}':
-                    if(lastKeyValueCommentObject.getBeforeKey() != null) {
-                        csonObject.getTailCommentObject().setBeforeKey(lastKeyValueCommentObject.getBeforeKey());
-                        lastKeyValueCommentObject.setBeforeKey(null);
+                    if(lastKeyObject.getBeforeComment() != null) {
+                        csonObject.getOrCreateTailCommentObject().setBeforeComment(lastKeyObject.getBeforeComment());
                     }
                     readComment(x, commentBuilder);
                     if(commentBuilder.length() > 0) {
-                        csonObject.getTailCommentObject().setAfterKey(commentBuilder.toString().trim());
+                        csonObject.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                     }
                     x.back();
                     return;
@@ -183,7 +197,7 @@ class JSONParser {
                     // fall through
                     readComment(x, commentBuilder);
                     if(commentBuilder.length() > 0) {
-                        lastKeyValueCommentObject.setBeforeKey(commentBuilder.toString().trim());
+                        lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
                     }
                 default:
                     x.back();
@@ -192,7 +206,7 @@ class JSONParser {
 
             c = readComment(x, commentBuilder);
             if(commentBuilder.length() > 0) {
-                lastKeyValueCommentObject.setAfterKey(commentBuilder.toString().trim());
+                lastKeyObject.setAfterComment(commentBuilder.toString().trim());
             }
 
             // The key is followed by ':'.
@@ -210,50 +224,46 @@ class JSONParser {
                     throw x.syntaxError("Duplicate key \"" + key + "\"");
                 }
 
+
                 readComment(x, commentBuilder);
                 if(commentBuilder.length() > 0) {
-                    lastKeyValueCommentObject.setBeforeValue(commentBuilder.toString().trim());
+                    valueCommentObject.setBeforeComment(commentBuilder.toString().trim());
                 }
                 x.back();
                 Object value = x.nextValue();
                 putAtJSONParsing(csonObject, key, value);
-                if(value instanceof CSONObject) {
-                    CSONObject objectValue = (CSONObject)value;
-                    String commentAfterKey = objectValue.getTailCommentObject().getAfterKey();
-                    if(commentAfterKey != null) {
-                        lastKeyValueCommentObject.setAfterValue(commentAfterKey);
+                if(value instanceof CSONElement) {
+                    CSONElement objectValue = (CSONElement)value;
+                    CommentObject tailCommentObject = objectValue.getTailCommentObject();
+                    if(tailCommentObject != null) {
+                        String valueAfterComment = tailCommentObject.getAfterComment();
+                        if(valueAfterComment != null) {
+                            valueCommentObject.setAfterComment(valueAfterComment);
+                        }
                     }
-                    String commentHead = lastKeyValueCommentObject.getBeforeValue();
+                    String commentHead = valueCommentObject.getBeforeComment();
                     if(commentHead != null) {
-                        objectValue.getHeadCommentObject().setBeforeKey(commentHead);
+                        objectValue.setHeadComment(commentHead);
                     }
-                    if(lastKeyValueCommentObject.isCommented()) {
-                        csonObject.putCommentObject(key, lastKeyValueCommentObject);
-                        lastKeyValueCommentObject = new KeyValueValueCommentObject();
-                    }
-
-                    //continue;
-                }
-                else if(value instanceof CSONArray) {
-                    CSONArray objectValue = (CSONArray)value;
-                    //x.back();
                 }
 
 
                 next = readComment(x, commentBuilder);
                 if(commentBuilder.length() > 0) {
-                    lastKeyValueCommentObject.setAfterValue(commentBuilder.toString().trim());
+                    valueCommentObject.setAfterComment(commentBuilder.toString().trim());
                 }
 
-
-                if(lastKeyValueCommentObject.isCommented()) {
-                    csonObject.putCommentObject(key, lastKeyValueCommentObject);
-                    lastKeyValueCommentObject = new KeyValueValueCommentObject();
+                if(lastKeyObject.isCommented() || valueCommentObject.isCommented()) {
+                    csonObject.setCommentObjects(key, !lastKeyObject.isCommented() ? null :
+                            lastKeyObject, !valueCommentObject.isCommented() ? null : valueCommentObject);
+                    lastKeyObject = new CommentObject();
+                    valueCommentObject = new CommentObject();
                 }
+
             } else {
                 next = readComment(x, commentBuilder);
                 if(commentBuilder.length() > 0) {
-                    lastKeyValueCommentObject.setAfterValue(commentBuilder.toString().trim());
+                    lastKeyObject.setAfterComment(commentBuilder.toString().trim());
                 }
             }
 
@@ -263,14 +273,14 @@ class JSONParser {
                 case ',':
                     readComment(x, commentBuilder);
                     if(commentBuilder.length() > 0) {
-                        lastKeyValueCommentObject.setBeforeKey(commentBuilder.toString().trim());
+                        lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
                     }
                     x.back();
                     break;
                 case '}':
                     readComment(x, commentBuilder);
                     if(commentBuilder.length() > 0) {
-                        csonObject.getTailCommentObject().setAfterKey(commentBuilder.toString().trim());
+                        csonObject.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                     }
                     x.back();
                     return;
