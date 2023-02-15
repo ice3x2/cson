@@ -1,34 +1,54 @@
 package com.snoworca.cson;
 
-import java.io.Reader;
+import jdk.nashorn.internal.runtime.JSONListAdapter;
 
 class JSONParser {
 
+    private boolean isCommentEnabled = false;
+    private boolean isPureJson = false;
+    private Options[] options;
+
+    private JSONTokener tokener;
+
+    protected JSONParser(JSONTokener tokener, Options... options) {
+        this.options = options == null ? new Options[0] : options;
+        for(Options option : this.options) {
+            if(option == Options.Comments) {
+                isCommentEnabled = true;
+            }
+            else if(option == Options.PureJson) {
+                isPureJson = true;
+            }
+        }
+        tokener.setPureJson(isPureJson);
+        this.tokener = tokener;
+
+    }
 
 
-    private static char nextComment(JSONTokener x, StringBuilder commentBuilder) throws CSONException {
-        x.back();
-        char next = x.next();
+    private char nextComment(StringBuilder commentBuilder) throws CSONException {
+        tokener.back();
+        char next = tokener.next();
         boolean isMultiLine = false;
         while(next == '/') {
-            char nextC = x.next();
+            char nextC = tokener.next();
             if(nextC == '/') {
-                String strComment = x.nextTo('\n');
+                String strComment = tokener.nextTo('\n');
                 if(isMultiLine) commentBuilder.append("\n");
                 commentBuilder.append(strComment);
                 isMultiLine = true;
-                next = x.nextClean();
+                next = tokener.nextClean();
             } else if(nextC == '*') {
                 String strComment = null;
                 try {
-                    strComment = x.nextToFromString("*/", true);
+                    strComment = tokener.nextToFromString("*/", true);
                 } catch (CSONException e) {
-                    throw x.syntaxError("Unterminated comment", e);
+                    throw tokener.syntaxError("Unterminated comment", e);
                 }
                 if(isMultiLine) commentBuilder.append("\n");
                 commentBuilder.append(strComment);
                 isMultiLine = true;
-                next = x.nextClean();
+                next = tokener.nextClean();
             } else  {
                 next = nextC;
             }
@@ -37,76 +57,150 @@ class JSONParser {
     }
 
 
+    private char skipComment() throws CSONException {
+        tokener.back();
+        char next = tokener.next();
+        boolean isMultiLine = false;
+        while(next == '/') {
+            char nextC = tokener.next();
+            if(nextC == '/') {
+                tokener.skipTo('\n');
+                next = tokener.nextClean();
+            } else if(nextC == '*') {
+                String strComment = null;
+                try {
+                    tokener.skipTo("*/");
+                } catch (CSONException e) {
+                    throw tokener.syntaxError("Unterminated comment", e);
+                }
+                next = tokener.nextClean();
+            } else  {
+                next = nextC;
+            }
+        }
+        return next;
+    }
 
-    private static char readComment(JSONTokener x, StringBuilder commentBuilder) {
+
+    private char readOrSkipComment(StringBuilder commentBuilder) {
+        char nextClean = tokener.nextClean();
         commentBuilder.setLength(0);
-        char nextClean = x.nextClean();
         if(nextClean  == '/') {
-            nextClean = nextComment(x, commentBuilder);
+            if(isCommentEnabled) {
+                nextClean = nextComment(commentBuilder);
+            } else {
+                nextClean = skipComment();
+            }
             return nextClean;
         }
         return nextClean;
     }
 
-    private static void putAtJSONParsing(CSONObject csonObject, String key, Object value) {
+    private void putAtJSONParsing(CSONObject csonObject, String key, Object value) {
         if(value instanceof String && CSONElement.isBase64String((String)value)) {
             value = CSONElement.base64StringToByteArray((String)value);
         }
         csonObject.put(key, value);
     }
 
-    static void parseArray(JSONTokener x, CSONArray csonArray) throws CSONException {
+    public void parseArray(CSONArray csonArray) {
+        if(isPureJson) {
+            parseArrayFromPureJson(csonArray);
+        } else {
+            parseArrayFromJson5(csonArray);
+        }
+    }
 
+    private  void parseArrayFromPureJson(CSONArray csonArray) {
+        if (tokener.nextClean() != '[') {
+            throw tokener.syntaxError("A JSONArray text must start with '['");
+        }
+        char nextChar = tokener.nextClean();
+        if (nextChar == 0) {
+            // array is unclosed. No ']' found, instead EOF
+            throw tokener.syntaxError("Expected a ',' or ']'");
+        }
+        if (nextChar != ']') {
+            tokener.back();
+            for (;;) {
+                if (tokener.nextClean() == ',') {
+                    tokener.syntaxError("Missing value");
+                } else {
+                    tokener.back();
+                    csonArray.addAtJSONParsing(tokener.nextPureValue(options));
+                }
+                switch (tokener.nextClean()) {
+                    case 0:
+                        // array is unclosed. No ']' found, instead EOF
+                        throw tokener.syntaxError("Expected a ',' or ']'");
+                    case ',':
+                        nextChar = tokener.nextClean();
+                        if (nextChar == 0) {
+                            // array is unclosed. No ']' found, instead EOF
+                            throw tokener.syntaxError("Expected a ',' or ']'");
+                        }
+                        if (nextChar == ']') {
+                            return;
+                        }
+                        tokener.back();
+                        break;
+                    case ']':
+                        return;
+                    default:
+                        throw tokener.syntaxError("Expected a ',' or ']'");
+                }
+            }
+        }
+    }
+
+    private void parseArrayFromJson5(CSONArray csonArray) throws CSONException {
 
         StringBuilder commentBuilder = new StringBuilder();
         CommentObject lastCommentObject = new CommentObject();
 
-        char nextChar = readComment(x, commentBuilder);
+        char nextChar = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
             csonArray.setHeadComment(commentBuilder.toString().trim());
         }
 
         if (nextChar != '[') {
-            throw x.syntaxError("A JSONArray text must start with '['");
+            throw tokener.syntaxError("A JSONArray text must start with '['");
         }
 
         if (nextChar != ']') {
 
             if (nextChar == 0) {
-                throw x.syntaxError("Expected a ',' or ']'");
+                throw tokener.syntaxError("Expected a ',' or ']'");
             }
 
             for (;;) {
-
                 String beforeComment = lastCommentObject.getAfterComment();
                 if(beforeComment == null) {
-                    nextChar = readComment(x, commentBuilder);
+                    nextChar = readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         lastCommentObject.setBeforeComment(commentBuilder.toString().trim());
                     }
                 } else {
-                    nextChar = x.nextClean();
+                    nextChar = tokener.nextClean();
                 }
 
                 if (nextChar == 0) {
-                    throw x.syntaxError("Expected a ',' or ']'");
+                    throw tokener.syntaxError("Expected a ',' or ']'");
                 }
                 if(nextChar == ']') {
-                    readComment(x, commentBuilder);
+                    readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         csonArray.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                     }
-                    x.back();
+                    tokener.back();
                     return;
                 }
-
-
-                x.back();
+                tokener.back();
                 if (nextChar == ',') {
                     csonArray.addAtJSONParsing(null);
-                    nextChar = x.nextClean();
+                    nextChar = tokener.nextClean();
                 } else {
-                    Object value = x.nextValue();
+                    Object value = tokener.nextValue(options);
                     if(value instanceof CSONElement) {
                         CSONElement valueObject = (CSONElement) value;
                         valueObject.setHeadComment(lastCommentObject.getBeforeComment());
@@ -114,14 +208,14 @@ class JSONParser {
                         if(commentObject != null && commentObject.isCommented()) {
                             lastCommentObject.setAfterComment(valueObject.getTailCommentObject().getAfterComment());
                         }
-                        nextChar = x.nextClean();
+                        nextChar = tokener.nextClean();
                         csonArray.addAtJSONParsing(value);
                         //if(nextChar != ']') {
                            // continue;
                         //}
                     }
                     else {
-                        nextChar = readComment(x, commentBuilder);
+                        nextChar = readOrSkipComment( commentBuilder);
                         if(commentBuilder.length() > 0) {
                             lastCommentObject.setAfterComment(commentBuilder.toString().trim());
                         }
@@ -138,47 +232,110 @@ class JSONParser {
                 switch (nextChar) {
                     case 0:
                         // array is unclosed. No ']' found, instead EOF
-                        throw x.syntaxError("Expected a ',' or ']'");
+                        throw tokener.syntaxError("Expected a ',' or ']'");
                     case ',':
-                        nextChar = x.nextClean();
+                        nextChar = tokener.nextClean();
 
                         if(commentBuilder.length() > 0) {
                             lastCommentObject.setBeforeComment(commentBuilder.toString().trim());
                         }
                         if (nextChar == 0) {
                             // array is unclosed. No ']' found, instead EOF
-                            throw x.syntaxError("Expected a ',' or ']'");
+                            throw tokener.syntaxError("Expected a ',' or ']'");
                         }
                         if (nextChar == ']') {
                             csonArray.getOrCreateTailCommentObject().setBeforeComment(lastCommentObject.getBeforeComment());
-                            readComment(x, commentBuilder);
+                            readOrSkipComment( commentBuilder);
                             if(commentBuilder.length() > 0) {
                                 csonArray.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                             }
-                            x.back();
+                            tokener.back();
                             return;
                         }
-                        x.back();
+                        tokener.back();
                         break;
                     case ']':
-                        readComment(x, commentBuilder);
+                        readOrSkipComment( commentBuilder);
                         if(commentBuilder.length() > 0) {
                             csonArray.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                         }
-                        x.back();
+                        tokener.back();
                         return;
                     case '[':
                     case '{':
-                        x.back();
+                        tokener.back();
                         continue;
                     default:
-                        throw x.syntaxError("Expected a ',' or ']'");
+                        throw tokener.syntaxError("Expected a ',' or ']'");
                 }
             }
         }
     }
 
-    static void parseObject(JSONTokener x, CSONObject csonObject) {
+    void parseObject(CSONObject csonObject) {
+        if(isPureJson) {
+            parseObjectFromPureJson(csonObject);
+        } else {
+            parseObjectFromJson5( csonObject);
+        }
+    }
+
+    void parseObjectFromPureJson(CSONObject csonObject) {
+        char c;
+        String key = null;
+        char nextClean = tokener.nextClean();
+        if (nextClean != '{') {
+            throw tokener.syntaxError("A JSONObject text must begin with '{'");
+        }
+        for (;;) {
+            c = tokener.nextClean();
+            switch (c) {
+                case 0:
+                    throw tokener.syntaxError("A JSONObject text must end with '}'");
+                case '}':
+                    return;
+                case ',':
+                    tokener.next();
+
+                    //throw tokener.syntaxError("Missing \"key\":\"value\" after comma.");
+                default:
+                    tokener.back();
+                    key = tokener.nextPureKey(options).toString();
+            }
+
+            /*
+             * The key is followed by ':'. We will also tolerate '=' or '=>'.
+             */
+            c = tokener.nextClean();
+            if (c == '=') {
+                if (tokener.next() != '>') {
+                    tokener.back();
+                }
+            } else if (c != ':') {
+                throw tokener.syntaxError("Expected a ':' after a key");
+            }
+            Object value = tokener.nextPureValue(options);
+            if (key != null) {
+                putAtJSONParsing(csonObject, key, value);
+            }
+
+            /*
+             * Pairs are separated by ','. We will also tolerate ';'.
+             */
+            switch (tokener.nextClean()) {
+                case ';':
+                case ',':
+                    tokener.back();
+                    break;
+                case '}':
+                    return;
+                default:
+                    throw tokener.syntaxError("Expected a ',' or '}'");
+            }
+        }
+    }
+
+    void parseObjectFromJson5(CSONObject csonObject) {
         char c;
         String key = null;
 
@@ -186,49 +343,49 @@ class JSONParser {
         CommentObject lastKeyObject = new CommentObject();
         StringBuilder commentBuilder = new StringBuilder();
 
-        char nextClean = readComment(x, commentBuilder);
+        char nextClean = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
             csonObject.setHeadComment(commentBuilder.toString().trim());
         }
         if (nextClean != '{') {
-            throw x.syntaxError("A JSONObject text must begin with '{'");
+            throw tokener.syntaxError("A JSONObject text must begin with '{'");
         }
         for (;;) {
-            char prev = x.getPrevious();
-            c = readComment(x, commentBuilder);
+            char prev = tokener.getPrevious();
+            c = readOrSkipComment( commentBuilder);
             if(commentBuilder.length() > 0) {
                 lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
             }
 
             switch (c) {
                 case 0:
-                    throw x.syntaxError("A JSONObject text must end with '}'");
+                    throw tokener.syntaxError("A JSONObject text must end with '}'");
                 case '}':
                     if(lastKeyObject.getBeforeComment() != null) {
                         csonObject.getOrCreateTailCommentObject().setBeforeComment(lastKeyObject.getBeforeComment());
                     }
-                    readComment(x, commentBuilder);
+                    readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         csonObject.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                     }
-                    x.back();
+                    tokener.back();
                     return;
                 case '{':
                 case '[':
                     if(prev=='{') {
-                        throw x.syntaxError("A JSON Object can not directly nest another JSON Object or JSON Array.");
+                        throw tokener.syntaxError("A JSON Object can not directly nest another JSON Object or JSON Array.");
                     }
                     // fall through
-                    readComment(x, commentBuilder);
+                    readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
                     }
                 default:
-                    x.back();
-                    key = x.nextValue().toString();
+                    tokener.back();
+                    key = tokener.nextValue(options).toString();
             }
 
-            c = readComment(x, commentBuilder);
+            c = readOrSkipComment( commentBuilder);
             if(commentBuilder.length() > 0) {
                 lastKeyObject.setAfterComment(commentBuilder.toString().trim());
             }
@@ -236,7 +393,7 @@ class JSONParser {
             // The key is followed by ':'.
             //c = x.nextClean();
             if (c != ':') {
-                throw x.syntaxError("Expected a ':' after a key");
+                throw tokener.syntaxError("Expected a ':' after a key");
             }
 
             char next;
@@ -245,16 +402,16 @@ class JSONParser {
                 // Check if key exists
                 if (csonObject.opt(key) != null) {
                     // key already exists
-                    throw x.syntaxError("Duplicate key \"" + key + "\"");
+                    throw tokener.syntaxError("Duplicate key \"" + key + "\"");
                 }
 
 
-                readComment(x, commentBuilder);
+                readOrSkipComment( commentBuilder);
                 if(commentBuilder.length() > 0) {
                     valueCommentObject.setBeforeComment(commentBuilder.toString().trim());
                 }
-                x.back();
-                Object value = x.nextValue();
+                tokener.back();
+                Object value = tokener.nextValue(options);
                 putAtJSONParsing(csonObject, key, value);
                 if(value instanceof CSONElement) {
                     CSONElement objectValue = (CSONElement)value;
@@ -272,7 +429,7 @@ class JSONParser {
                 }
 
 
-                next = readComment(x, commentBuilder);
+                next = readOrSkipComment( commentBuilder);
                 if(commentBuilder.length() > 0) {
                     valueCommentObject.setAfterComment(commentBuilder.toString().trim());
                 }
@@ -285,7 +442,7 @@ class JSONParser {
                 }
 
             } else {
-                next = readComment(x, commentBuilder);
+                next = readOrSkipComment( commentBuilder);
                 if(commentBuilder.length() > 0) {
                     lastKeyObject.setAfterComment(commentBuilder.toString().trim());
                 }
@@ -295,21 +452,21 @@ class JSONParser {
             switch (next) {
                 case ';':
                 case ',':
-                    readComment(x, commentBuilder);
+                    readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
                     }
-                    x.back();
+                    tokener.back();
                     break;
                 case '}':
-                    readComment(x, commentBuilder);
+                    readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         csonObject.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
                     }
-                    x.back();
+                    tokener.back();
                     return;
                 default:
-                    throw x.syntaxError("Expected a ',' or '}'");
+                    throw tokener.syntaxError("Expected a ',' or '}'");
             }
         }
     }

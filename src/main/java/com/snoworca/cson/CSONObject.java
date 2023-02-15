@@ -3,12 +3,14 @@ package com.snoworca.cson;
 
 
 
-import javax.xml.crypto.dsig.keyinfo.KeyValue;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 
 public class CSONObject extends CSONElement implements Cloneable {
+
+
 
 	private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
 	private LinkedHashMap<String, KeyValueCommentObject> keyValueCommentMap;
@@ -53,6 +55,13 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	public CSONObject(String json) {
 		this(new JSONTokener(json));
+	}
+
+	public CSONObject(String json,Options... options) {
+		this(new JSONTokener(json), options);
+	}
+	public CSONObject(Reader jsonStringReader,Options... options) {
+		this(new JSONTokener(jsonStringReader), options);
 	}
 
 	public CSONObject() {
@@ -278,9 +287,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 
 
-	protected CSONObject(JSONTokener x) throws CSONException {
+	protected CSONObject(JSONTokener x, Options... options) throws CSONException {
 		super(ElementType.Object);
-		JSONParser.parseObject(x, this);
+		new JSONParser(x,options).parseObject(this);
 	}
 
 

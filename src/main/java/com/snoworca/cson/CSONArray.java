@@ -2,6 +2,7 @@ package com.snoworca.cson;
 
 
 
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -110,14 +111,14 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	public void setCommentObject(int index, CommentObject keyValueCommentObject) {
+	public void setCommentObject(int index, CommentObject commentObject) {
 		if(commentObjectList.size() <= list.size()) {
 			ensureCapacityOfCommentObjects();
 		}
 		if(index >= list.size()) {
 			throw new IndexOutOfBoundsException("index: " + index + ", size: " + list.size());
 		}
-		commentObjectList.set(index, keyValueCommentObject);
+		commentObjectList.set(index, commentObject);
 	}
 
 
@@ -129,14 +130,15 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	protected CSONArray(JSONTokener x) throws CSONException {
+
+	protected CSONArray(JSONTokener x, Options... options) throws CSONException {
 		super(ElementType.Array);
-		JSONParser.parseArray(x, this);
+		new JSONParser(x, options).parseArray(this);
 
 	}
 
 	protected void addAtJSONParsing(Object value) {
-		System.out.println(value);
+		//System.out.println(value);
 		if(value instanceof String && CSONElement.isBase64String((String)value)) {
 			value = CSONElement.base64StringToByteArray((String)value);
 		}
@@ -151,9 +153,12 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		commentObjectList.add(commentObject);
 	}
 
+	public CSONArray(Reader stringSource, Options... options) throws CSONException {
+		this(new JSONTokener(stringSource), options);
+	}
 
-	public CSONArray(String source) throws CSONException {
-		this(new JSONTokener(source));
+	public CSONArray(String source, Options... options) throws CSONException {
+		this(new JSONTokener(source), options);
 	}
 	
 	public CSONArray put(Object e) {

@@ -36,6 +36,10 @@ public class JSONTokener {
     /** the number of characters read in the previous line. */
     private long characterPreviousLine;
 
+    private boolean isPureJson = false;
+
+
+
 
     /**
      * Construct a JSONTokener from a Reader. The caller must close the Reader.
@@ -53,6 +57,10 @@ public class JSONTokener {
         this.character = 1;
         this.characterPreviousLine = 0;
         this.line = 1;
+    }
+
+    public void setPureJson(boolean isPureJson) {
+        this.isPureJson = isPureJson;
     }
 
 
@@ -445,6 +453,32 @@ public class JSONTokener {
     }
 
 
+    public void skipTo(String strDelimiters) throws CSONException {
+        char c;
+        char[] delimiters = strDelimiters.toCharArray();
+        int equalCount = 0;
+        int delimiterEndIndex = delimiters.length - 1;
+        for (;;) {
+            c = this.next();
+            if(c == 0) {
+                return;
+            }
+            else if (delimiters[equalCount] == c) {
+                if(equalCount == delimiterEndIndex) {
+                    return;
+                }
+                equalCount++;
+            }
+            else if(equalCount > 0 && delimiters[0] == c) {
+                equalCount = 1;
+            }
+            else {
+                equalCount = 0;
+            }
+        }
+    }
+
+
 
 
     /**
@@ -454,7 +488,7 @@ public class JSONTokener {
      *
      * @return An object.
      */
-    public Object nextValue() throws CSONException {
+    public Object nextValue(Options... options) throws CSONException {
         char c = this.nextClean();
         String string;
 
@@ -465,31 +499,20 @@ public class JSONTokener {
             case '{':
                 this.back();
                 try {
-                    return new CSONObject(this);
+                    return new CSONObject(this, options);
                 } catch (StackOverflowError e) {
                     throw new CSONException("JSON Array or Object depth too large to process.", e);
                 }
             case '[':
                 this.back();
                 try {
-                    return new CSONArray(this);
+                    return new CSONArray(this, options);
                 } catch (StackOverflowError e) {
                     throw new CSONException("JSON Array or Object depth too large to process.", e);
                 }
         }
 
-        /*
-         * Handle unquoted text. This could be the values true, false, or
-         * null, or it can be a number. An implementation (such as this one)
-         * is allowed to also accept non-standard forms.
-         *
-         * Accumulate characters until we reach the end of the text or a
-         * formatting character.
-         */
-
         StringBuilder sb = new StringBuilder();
-
-
         while (c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
             sb.append(c);
             c = this.next();
@@ -505,6 +528,72 @@ public class JSONTokener {
         }
         return stringToValue(string);
     }
+
+
+    public Object nextPureValue(Options... options) throws CSONException {
+        char c = this.nextClean();
+        String string;
+
+        switch (c) {
+            case '"':
+                return this.nextString(c);
+            case '{':
+                this.back();
+                try {
+                    return new CSONObject(this, options);
+                } catch (StackOverflowError e) {
+                    throw new CSONException("JSON Array or Object depth too large to process.", e);
+                }
+            case '[':
+                this.back();
+                try {
+                    return new CSONArray(this, options);
+                } catch (StackOverflowError e) {
+                    throw new CSONException("JSON Array or Object depth too large to process.", e);
+                }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        while (c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
+            sb.append(c);
+            c = this.next();
+        }
+
+        if (!this.eof) {
+            this.back();
+        }
+
+        string = sb.toString().trim();
+        if ("".equals(string)) {
+            throw this.syntaxError("Missing value");
+        }
+        Object value = stringToValue(string);
+        if(value instanceof String) {
+            throw this.syntaxError("String values must start and end with double quotes.");
+        }
+        return value;
+    }
+
+
+    public Object nextPureKey(Options... options) throws CSONException {
+        char c = this.nextClean();
+        String string;
+
+        switch (c) {
+            case '"':
+                return this.nextString(c);
+        }
+
+
+        if (!this.eof) {
+            this.back();
+        }
+
+
+        throw this.syntaxError("Missing value");
+
+    }
+
 
     public static Object stringToValue(String string) {
         if ("".equals(string)) {
