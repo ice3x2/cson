@@ -136,6 +136,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 	protected void addAtJSONParsing(Object value) {
+		System.out.println(value);
 		if(value instanceof String && CSONElement.isBase64String((String)value)) {
 			value = CSONElement.base64StringToByteArray((String)value);
 		}

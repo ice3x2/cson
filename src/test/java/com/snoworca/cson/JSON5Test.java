@@ -64,7 +64,6 @@ public class JSON5Test {
         assertEquals("코멘트", csonObject.getTailComment());
         csonObject = new CSONObject("{key:'value',} // 코멘트 \n // 코멘트2"  );
         assertEquals("코멘트\n코멘트2", csonObject.getTailComment());
-
     }
 
     @Test
@@ -76,12 +75,17 @@ public class JSON5Test {
         csonArray = new CSONArray("[//index1\n1,2,3,4,5,6,7,8,9,10,Infinity,NaN,] // 코멘트 \n // 코멘트2"  );
         assertEquals("index1",csonArray.getCommentObject(0).getBeforeComment());
 
-        System.out.println("/*테*///스\n/*트*/[//index1\n1\n//index1After\n,,/* 이 곳에 주석 가능 */,\"3 \"/*index 3*/,4,5,6,7,8,9,10,11,{},13,{},[],[],[],+Infinity,NaN,] // 코멘트 \n // 코멘트2");
 
-        csonArray = new CSONArray("/*테*///스\n/*트*/[//index1\n1\n//index1After\n,,/* 이 곳에 주석 가능 */,\"3 \"/*index 3*/,4,5,6,7,8,9,10,11," +
-                "/*오브젝트 시작*/{/*알수없는 영역*/}/*오브젝트끝*/,13,//14\n {/*123*/123:456//456\n,}," +
-                "/*15배열로그*/[,,]/*15after*/,[],[],+Infinity,NaN,] // 코멘트 \n // 코멘트2"  );
-
+        csonArray = new CSONArray("/*테*///스\n" +
+                "/*트*/[//index1\n" +
+                "1\n" +
+                "//index1After\n" +
+                ",,/* 이 곳에 주석 가능 */,\"3 \"/*index 3*/,4,5,6,7,8,9,10,11," +
+                "/*오브젝트 시작*/{/*알수없는 영역*/}/*오브젝트끝*/,13,//14\n" +
+" {/*123*/123:456//456\n,},/*15배열로그*/[,,]/*15after*/,[],[],+Infinity,NaN," +
+                ",[{},{}],[,/*index22*/],[,/*index23*/]/*index23after*/,24,[,]//index25after\n," +
+                "{1:2,//코멘트\n}//코멘트\n,] // 코멘트 \n // 코멘트2"  );
+        System.out.println(csonArray);
         assertEquals("index1",csonArray.getCommentObject(0).getBeforeComment());
         assertEquals("테\n스\n트",csonArray.getHeadComment());
         assertEquals("index1After",csonArray.getCommentObject(0).getAfterComment());
@@ -102,6 +106,7 @@ public class JSON5Test {
         assertEquals("+Infinity",csonArray.get(18));
         assertEquals("NaN",csonArray.get(19));
 
+
         CSONArray idx15Array = csonArray.getArray(15);
         assertEquals("15배열로그",csonArray.getCommentObject(15).getBeforeComment());
         assertEquals("15배열로그",idx15Array.getHeadComment());
@@ -120,9 +125,11 @@ public class JSON5Test {
     public void testKeyComment() {
         CSONObject csonObject = new CSONObject("{ \n" +
                 "/* 코멘트입니다. */\n //222 \n " +
-                " key: /* 값 코멘트 */ \"value\", key2: \"val/* ok */ue2\", /* 오브젝트 */ object " +
+                " key: /* 값 코멘트 */ \"value\", key2: \"val/* ok */ue2\",array:[1,2,3,4,],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
                 "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
-                " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123*/,  \n /*123*/ } /* 꼬리 다음 코멘트 */"   );
+                " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,  \n /*123*/ } /* 꼬리 다음 코멘트 */"   );
+
+        System.out.println(csonObject);
 
         assertEquals("코멘트입니다.\n222",csonObject.getCommentOfKey("key"));
         assertEquals("값 코멘트",csonObject.getCommentOfValue("key"));

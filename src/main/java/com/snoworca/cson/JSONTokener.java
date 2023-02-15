@@ -414,7 +414,7 @@ public class JSONTokener {
         }
     }
 
-    public String nextToFromString(String strDelimiters) throws CSONException {
+    public String nextToFromString(String strDelimiters,boolean eofToError) throws CSONException {
         char c;
         char[] delimiters = strDelimiters.toCharArray();
         StringBuilder sb = new StringBuilder();
@@ -422,7 +422,13 @@ public class JSONTokener {
         int delimiterEndIndex = delimiters.length - 1;
         for (;;) {
             c = this.next();
-            if (delimiters[equalCount] == c) {
+            if(c == 0) {
+                if(eofToError) {
+                    throw this.syntaxError("Unterminated string");
+                }
+                return sb.toString().trim();
+            }
+            else if (delimiters[equalCount] == c) {
                 if(equalCount == delimiterEndIndex) {
                     return sb.substring(0,sb.length() - delimiterEndIndex).trim();
                 }
@@ -432,7 +438,6 @@ public class JSONTokener {
                 equalCount = 1;
             }
             else {
-
                 equalCount = 0;
             }
             sb.append(c);

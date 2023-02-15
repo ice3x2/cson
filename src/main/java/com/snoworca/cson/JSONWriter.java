@@ -333,17 +333,17 @@ public class JSONWriter {
 	 
 	 
 	 public JSONWriter openArray() {
-		 ObjectType type = typeStack.getLast();
-		 if(type == ObjectType.OpenArray) {
-			 typeStack.removeLast();
-			 typeStack.addLast(ObjectType.Array);
-		 }
-		 else if(type == ObjectType.Array) {
-			 stringBuilder.append(',');
-		 }
-		 else if(type != ObjectType.ObjectKey && type != ObjectType.None) {
-			 throw new CSONWriteException();
-		 }
+		if(!typeStack.isEmpty()) {
+			ObjectType type = typeStack.getLast();
+			if (type == ObjectType.OpenArray) {
+				typeStack.removeLast();
+				typeStack.addLast(ObjectType.Array);
+			} else if (type == ObjectType.Array) {
+				stringBuilder.append(',');
+			} else if (type != ObjectType.ObjectKey && type != ObjectType.None) {
+				throw new CSONWriteException();
+			}
+		}
 
 		 typeStack.addLast(ObjectType.OpenArray);
 		 stringBuilder.append('[');
@@ -356,6 +356,11 @@ public class JSONWriter {
 			 throw new CSONWriteException();
 		 }
 		 typeStack.removeLast();
+		 if(typeStack.isEmpty()) {
+			 stringBuilder.append(']');
+			 return this;
+		 }
+
 		 if(typeStack.getLast() == ObjectType.ObjectKey) {
 			 typeStack.removeLast();
 		 }
