@@ -36,7 +36,19 @@ public class JSONTokener {
     /** the number of characters read in the previous line. */
     private long characterPreviousLine;
 
-    private boolean isPureJson = false;
+    private boolean ignoreNumberFormatError = false;
+    private boolean allowNaN = true;
+    private boolean allowPositiveSing = true;
+    private boolean allowInfinity = true;
+    private boolean unquoted = false;
+    private boolean singleQuotes = false;
+
+    private boolean allowHexadecimal = true;
+
+    private boolean isLeadingZeroOmission = false;
+
+    private boolean allowCharacter = false;
+
 
 
 
@@ -59,9 +71,6 @@ public class JSONTokener {
         this.line = 1;
     }
 
-    public void setPureJson(boolean isPureJson) {
-        this.isPureJson = isPureJson;
-    }
 
 
     /**
@@ -494,49 +503,24 @@ public class JSONTokener {
 
         switch (c) {
             case '"':
+                return this.nextString(c);
             case '\'':
-                return this.nextString(c);
-            case '{':
-                this.back();
-                try {
-                    return new CSONObject(this, options);
-                } catch (StackOverflowError e) {
-                    throw new CSONException("JSON Array or Object depth too large to process.", e);
+                if(allowCharacter) {
+                    String value = this.nextString(c);
+                    try {
+                        return this.stringToCharValue(value);
+                    } catch (CSONException e) {
+                        if(!singleQuotes && unquoted) {
+                            throw e;
+                        }
+                        return value;
+                    }
                 }
-            case '[':
-                this.back();
-                try {
-                    return new CSONArray(this, options);
-                } catch (StackOverflowError e) {
-                    throw new CSONException("JSON Array or Object depth too large to process.", e);
+                if(singleQuotes) {
+                    return this.nextString(c);
+                } else {
+                    throw this.syntaxError("Unexpected single quote");
                 }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        while (c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
-            sb.append(c);
-            c = this.next();
-        }
-
-        if (!this.eof) {
-            this.back();
-        }
-
-        string = sb.toString().trim();
-        if ("".equals(string)) {
-            throw this.syntaxError("Missing value");
-        }
-        return stringToValue(string);
-    }
-
-
-    public Object nextPureValue(Options... options) throws CSONException {
-        char c = this.nextClean();
-        String string;
-
-        switch (c) {
-            case '"':
-                return this.nextString(c);
             case '{':
                 this.back();
                 try {
@@ -568,8 +552,8 @@ public class JSONTokener {
             throw this.syntaxError("Missing value");
         }
         Object value = stringToValue(string);
-        if(value instanceof String) {
-            throw this.syntaxError("String values must start and end with double quotes.");
+        if(!unquoted && value instanceof String) {
+            throw this.syntaxError("Unquoted string");
         }
         return value;
     }
@@ -578,12 +562,10 @@ public class JSONTokener {
     public Object nextPureKey(Options... options) throws CSONException {
         char c = this.nextClean();
         String string;
-
         switch (c) {
             case '"':
                 return this.nextString(c);
         }
-
 
         if (!this.eof) {
             this.back();
@@ -595,7 +577,54 @@ public class JSONTokener {
     }
 
 
-    public static Object stringToValue(String string) {
+    public char stringToCharValue(String string) {
+
+        int length = string.length();
+
+        if ("".equals(string)) {
+            return 0;
+        }
+
+        if (length == 1) {
+            return string.charAt(0);
+        }
+
+        if(allowHexadecimal) {
+            char initial = string.charAt(0);
+            Exception err = null;
+            if (length > 2 && initial == '0' && (string.charAt(1) == 'x' || string.charAt(1) == 'X')) {
+                try {
+                    return (char) Integer.parseInt(string.substring(2), 16);
+                } catch (NumberFormatException e) {
+                    err = e;
+                }
+            }
+            else if(length == 5 && (initial == 'u' || initial == 'U')) {
+                try {
+                    return (char) Integer.parseInt(string.substring(1), 16);
+                } catch (NumberFormatException e) {
+                    err = e;
+                }
+            }  else if(length == 6 && (initial == 'u' || initial == 'U') && string.charAt(1) == '+') {
+                try {
+                    return (char) Integer.parseInt(string.substring(2), 16);
+                } catch (NumberFormatException e) {
+                    err = e;
+                }
+            }
+            if(!ignoreNumberFormatError) {
+                if(err != null) {
+                    throw syntaxError("Invalid char value: " + string, err);
+                }
+            }
+        }
+
+
+        throw  this.syntaxError("Invalid char value: " + string);
+    }
+
+
+    public Object stringToValue(String string) {
         if ("".equals(string)) {
             return string;
         }
@@ -611,16 +640,63 @@ public class JSONTokener {
             return null;
         }
 
+        if (allowNaN && "NaN".equalsIgnoreCase(string)) {
+            return Double.NaN;
+        }
+
+        if(allowInfinity) {
+            if ("Infinity".equalsIgnoreCase(string) || (allowPositiveSing && "+Infinity".equalsIgnoreCase(string))) {
+                return Double.POSITIVE_INFINITY;
+            }
+            if ("-Infinity".equalsIgnoreCase(string)) {
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
+
+
         /*
          * If it might be a number, try converting it. If a number cannot be
          * produced, then the value will just be a string.
          */
-
         char initial = string.charAt(0);
-        if ((initial >= '0' && initial <= '9') || initial == '-') {
+        int length = string.length();
+        String originalString = null;
+        if(allowHexadecimal && initial == '0' && length > 2) {
+            char second = string.charAt(1);
+            if(second == 'x' || second == 'X') {
+                try {
+                    return Integer.parseInt(string.substring(2), 16);
+                } catch (NumberFormatException ignore) {
+                    if(!ignoreNumberFormatError) {
+                        throw this.syntaxError("Invalid number format: " + string, ignore);
+                    }
+                }
+            }
+        }
+
+
+
+        if(isLeadingZeroOmission && initial == '.' && length > 1 ) {
+            originalString = string;
+            string = "0" + string;
+            initial = '0';
+        }
+
+        if ((initial >= '0' && initial <= '9') || initial == '-' || (allowPositiveSing && initial == '+')) {
+            if(isLeadingZeroOmission && string.charAt(length - 1) == '.') {
+                originalString = string;
+                string = string + "0";
+            }
+
             try {
                 return stringToNumber(string);
-            } catch (Exception ignore) {
+            } catch (NumberFormatException ignore) {
+                if(!ignoreNumberFormatError) {
+                    throw this.syntaxError("Invalid number format: " + string, ignore);
+                }
+                if(originalString != null) {
+                    return originalString;
+                }
             }
         }
         return string;

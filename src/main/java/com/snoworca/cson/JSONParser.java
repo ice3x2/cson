@@ -278,6 +278,7 @@ class JSONParser {
         }
     }
 
+    /*
     void parseObjectFromPureJson(CSONObject csonObject) {
         char c;
         String key = null;
@@ -301,9 +302,6 @@ class JSONParser {
                     key = tokener.nextPureKey(options).toString();
             }
 
-            /*
-             * The key is followed by ':'. We will also tolerate '=' or '=>'.
-             */
             c = tokener.nextClean();
             if (c == '=') {
                 if (tokener.next() != '>') {
@@ -317,9 +315,6 @@ class JSONParser {
                 putAtJSONParsing(csonObject, key, value);
             }
 
-            /*
-             * Pairs are separated by ','. We will also tolerate ';'.
-             */
             switch (tokener.nextClean()) {
                 case ';':
                 case ',':
@@ -331,7 +326,7 @@ class JSONParser {
                     throw tokener.syntaxError("Expected a ',' or '}'");
             }
         }
-    }
+    }*/
 
     void parseObjectFromJson5(CSONObject csonObject) {
         char c;

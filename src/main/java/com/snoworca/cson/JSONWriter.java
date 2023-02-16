@@ -370,8 +370,9 @@ public class JSONWriter {
 
 	public JSONWriter add(char value) {
 		checkAndAppendInArray();
-
+		stringBuilder.append('\'');
 		stringBuilder.append(value);
+		stringBuilder.append('\'');
 		return this;
 	}
 
