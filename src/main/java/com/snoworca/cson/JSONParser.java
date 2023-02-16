@@ -1,14 +1,12 @@
 package com.snoworca.cson;
 
-import jdk.nashorn.internal.runtime.JSONListAdapter;
-
 class JSONParser {
 
     private boolean isCommentEnabled = false;
     private boolean isPureJson = false;
+    private JSONTokener tokener;
     private Options[] options;
 
-    private JSONTokener tokener;
 
     protected JSONParser(JSONTokener tokener, Options... options) {
         this.options = options == null ? new Options[0] : options;

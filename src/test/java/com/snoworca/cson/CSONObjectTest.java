@@ -6,8 +6,6 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import static org.junit.Assert.*;
 
@@ -121,6 +119,8 @@ public class CSONObjectTest {
     }
 
 
+
+
     @Test
     public void toJsonAndParseTest() {
 
@@ -131,7 +131,7 @@ public class CSONObjectTest {
 
 
         System.out.println(jsonString);
-        CSONObject compareCSONObject = new CSONObject(jsonString);
+        CSONObject compareCSONObject = new CSONObject(jsonString, Options.PureJson);
 
 
         assertEquals(1, compareCSONObject.getInt("1"));
@@ -161,7 +161,15 @@ public class CSONObjectTest {
         assertTrue(csonArray.get(11) instanceof CSONObject);
         assertArrayEquals(buffer, csonArray.getByteArray(12));
 
+        System.out.println("--------------------------------------------------");
         System.out.println(jsonString);
+
+        CSONObject csonObject2 = new CSONObject(jsonString);
+
+    }
+
+    @Test
+    public void csonArrayToStringTest() {
 
     }
 }
