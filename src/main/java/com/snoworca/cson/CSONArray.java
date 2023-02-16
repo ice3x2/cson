@@ -12,6 +12,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	private ArrayList<Object> list = new ArrayList<>();
 	private ArrayList<CommentObject> commentObjectList = null;
 
+	private JSONOptions jsonOptions = JSONOptions.json5();
+
 
 	public CSONArray() {
 		super(ElementType.Array);
@@ -131,10 +133,10 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 
 
-	protected CSONArray(JSONTokener x, Options... options) throws CSONException {
+	protected CSONArray(JSONTokener x) throws CSONException {
 		super(ElementType.Array);
-		new JSONParser(x, options).parseArray(this);
-
+		this.jsonOptions = x.getJsonOption();
+		new JSONParser(x).parseArray(this);
 	}
 
 	protected void addAtJSONParsing(Object value) {
@@ -153,12 +155,21 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		commentObjectList.add(commentObject);
 	}
 
-	public CSONArray(Reader stringSource, Options... options) throws CSONException {
-		this(new JSONTokener(stringSource), options);
+	public CSONArray(Reader stringSource) throws CSONException {
+		this(new JSONTokener(stringSource,JSONOptions.json5()));
 	}
 
-	public CSONArray(String source, Options... options) throws CSONException {
-		this(new JSONTokener(source), options);
+	public CSONArray(Reader stringSource, JSONOptions options) throws CSONException {
+		this(new JSONTokener(stringSource,options));
+	}
+
+
+	public CSONArray(String source) throws CSONException {
+		this(new JSONTokener(source,JSONOptions.json5()));
+	}
+
+	public CSONArray(String source, JSONOptions options) throws CSONException {
+		this(new JSONTokener(source,options));
 	}
 	
 	public CSONArray put(Object e) {

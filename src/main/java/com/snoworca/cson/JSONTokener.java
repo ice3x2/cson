@@ -36,19 +36,7 @@ public class JSONTokener {
     /** the number of characters read in the previous line. */
     private long characterPreviousLine;
 
-    private boolean ignoreNumberFormatError = false;
-    private boolean allowNaN = true;
-    private boolean allowPositiveSing = true;
-    private boolean allowInfinity = true;
-    private boolean unquoted = false;
-    private boolean singleQuotes = false;
-
-    private boolean allowHexadecimal = true;
-
-    private boolean isLeadingZeroOmission = false;
-
-    private boolean allowCharacter = false;
-
+    private JSONOptions jsonOption;
 
 
 
@@ -58,7 +46,7 @@ public class JSONTokener {
      *
      * @param reader     A reader.
      */
-    public JSONTokener(Reader reader) {
+    public JSONTokener(Reader reader, JSONOptions jsonOptions) {
         this.reader = reader.markSupported()
                 ? reader
                 : new BufferedReader(reader);
@@ -69,16 +57,19 @@ public class JSONTokener {
         this.character = 1;
         this.characterPreviousLine = 0;
         this.line = 1;
+        this.jsonOption = jsonOptions;
     }
 
-
+    public JSONOptions getJsonOption() {
+        return jsonOption;
+    }
 
     /**
      * Construct a JSONTokener from an InputStream. The caller must close the input stream.
      * @param inputStream The source.
      */
-    public JSONTokener(InputStream inputStream) {
-        this(new InputStreamReader(inputStream));
+    public JSONTokener(InputStream inputStream, JSONOptions jsonOptions) {
+        this(new InputStreamReader(inputStream),jsonOptions);
     }
 
 
@@ -87,8 +78,8 @@ public class JSONTokener {
      *
      * @param s     A source string.
      */
-    public JSONTokener(String s) {
-        this(new StringReader(s));
+    public JSONTokener(String s,JSONOptions jsonOptions) {
+        this(new StringReader(s), jsonOptions);
     }
 
 
@@ -497,7 +488,7 @@ public class JSONTokener {
      *
      * @return An object.
      */
-    public Object nextValue(Options... options) throws CSONException {
+    public Object nextValue() throws CSONException {
         char c = this.nextClean();
         String string;
 
@@ -505,18 +496,12 @@ public class JSONTokener {
             case '"':
                 return this.nextString(c);
             case '\'':
-                if(allowCharacter) {
+                if(jsonOption.isAllowCharacter()) {
                     String value = this.nextString(c);
-                    try {
-                        return this.stringToCharValue(value);
-                    } catch (CSONException e) {
-                        if(!singleQuotes && unquoted) {
-                            throw e;
-                        }
-                        return value;
-                    }
+                    return this.stringToCharValue(value);
+
                 }
-                if(singleQuotes) {
+                if(jsonOption.isAllowSingleQuotes()) {
                     return this.nextString(c);
                 } else {
                     throw this.syntaxError("Unexpected single quote");
@@ -524,14 +509,14 @@ public class JSONTokener {
             case '{':
                 this.back();
                 try {
-                    return new CSONObject(this, options);
+                    return new CSONObject(this);
                 } catch (StackOverflowError e) {
                     throw new CSONException("JSON Array or Object depth too large to process.", e);
                 }
             case '[':
                 this.back();
                 try {
-                    return new CSONArray(this, options);
+                    return new CSONArray(this);
                 } catch (StackOverflowError e) {
                     throw new CSONException("JSON Array or Object depth too large to process.", e);
                 }
@@ -552,14 +537,14 @@ public class JSONTokener {
             throw this.syntaxError("Missing value");
         }
         Object value = stringToValue(string);
-        if(!unquoted && value instanceof String) {
+        if(!jsonOption.isAllowUnquoted() && value instanceof String) {
             throw this.syntaxError("Unquoted string");
         }
         return value;
     }
 
 
-    public Object nextPureKey(Options... options) throws CSONException {
+    public Object nextPureKey(JSONOptions... options) throws CSONException {
         char c = this.nextClean();
         String string;
         switch (c) {
@@ -577,7 +562,7 @@ public class JSONTokener {
     }
 
 
-    public char stringToCharValue(String string) {
+    public Object stringToCharValue(String string) {
 
         int length = string.length();
 
@@ -589,7 +574,7 @@ public class JSONTokener {
             return string.charAt(0);
         }
 
-        if(allowHexadecimal) {
+        if(jsonOption.isAllowHexadecimal()) {
             char initial = string.charAt(0);
             Exception err = null;
             if (length > 2 && initial == '0' && (string.charAt(1) == 'x' || string.charAt(1) == 'X')) {
@@ -612,15 +597,18 @@ public class JSONTokener {
                     err = e;
                 }
             }
-            if(!ignoreNumberFormatError) {
+            if(!jsonOption.isIgnoreNumberFormatError()) {
                 if(err != null) {
                     throw syntaxError("Invalid char value: " + string, err);
                 }
             }
         }
 
+        if(!jsonOption.isAllowSingleQuotes() && !jsonOption.isAllowUnquoted()) {
+            throw  this.syntaxError("Invalid char value: " + string);
+        }
+        return string;
 
-        throw  this.syntaxError("Invalid char value: " + string);
     }
 
 
@@ -640,12 +628,12 @@ public class JSONTokener {
             return null;
         }
 
-        if (allowNaN && "NaN".equalsIgnoreCase(string)) {
+        if (jsonOption.isAllowNaN() && "NaN".equalsIgnoreCase(string)) {
             return Double.NaN;
         }
 
-        if(allowInfinity) {
-            if ("Infinity".equalsIgnoreCase(string) || (allowPositiveSing && "+Infinity".equalsIgnoreCase(string))) {
+        if(jsonOption.isAllowInfinity()) {
+            if ("Infinity".equalsIgnoreCase(string) || (jsonOption.isAllowPositiveSing() && "+Infinity".equalsIgnoreCase(string))) {
                 return Double.POSITIVE_INFINITY;
             }
             if ("-Infinity".equalsIgnoreCase(string)) {
@@ -661,13 +649,13 @@ public class JSONTokener {
         char initial = string.charAt(0);
         int length = string.length();
         String originalString = null;
-        if(allowHexadecimal && initial == '0' && length > 2) {
+        if(jsonOption.isAllowHexadecimal() && initial == '0' && length > 2) {
             char second = string.charAt(1);
             if(second == 'x' || second == 'X') {
                 try {
                     return Integer.parseInt(string.substring(2), 16);
                 } catch (NumberFormatException ignore) {
-                    if(!ignoreNumberFormatError) {
+                    if(!jsonOption.isIgnoreNumberFormatError()) {
                         throw this.syntaxError("Invalid number format: " + string, ignore);
                     }
                 }
@@ -676,14 +664,14 @@ public class JSONTokener {
 
 
 
-        if(isLeadingZeroOmission && initial == '.' && length > 1 ) {
+        if(jsonOption.isLeadingZeroOmission() && initial == '.' && length > 1 ) {
             originalString = string;
             string = "0" + string;
             initial = '0';
         }
 
-        if ((initial >= '0' && initial <= '9') || initial == '-' || (allowPositiveSing && initial == '+')) {
-            if(isLeadingZeroOmission && string.charAt(length - 1) == '.') {
+        if ((initial >= '0' && initial <= '9') || initial == '-' || (jsonOption.isAllowPositiveSing() && initial == '+')) {
+            if(jsonOption.isLeadingZeroOmission() && string.charAt(length - 1) == '.') {
                 originalString = string;
                 string = string + "0";
             }
@@ -691,7 +679,7 @@ public class JSONTokener {
             try {
                 return stringToNumber(string);
             } catch (NumberFormatException ignore) {
-                if(!ignoreNumberFormatError) {
+                if(!jsonOption.isIgnoreNumberFormatError()) {
                     throw this.syntaxError("Invalid number format: " + string, ignore);
                 }
                 if(originalString != null) {

@@ -286,16 +286,20 @@ class DataConverter {
 
 	}
 	
-	
-	final static String escapeJSONString(String str) {
+	final static String escapeJSONString(String str, boolean allowBreakLine) {
 		if(str == null) return  null;
 		char[] charArray = str.toCharArray();
 		StringBuilder builder = new StringBuilder();
+		char lastCh = 0;
 		for(int i = 0; i < charArray.length; ++i) {
 			char ch = charArray[i];
 			switch (ch) {
 			case '\n':
-				builder.append("\\n");
+				if(allowBreakLine && lastCh == '\\') {
+					builder.append('\n');
+				} else {
+					builder.append("\\n");
+				}
 				break;
 			case '\r':
 				builder.append("\\r");
@@ -319,6 +323,7 @@ class DataConverter {
 				builder.append(ch);
 				break;
 			}
+			lastCh = ch;
 		}
 		return builder.toString();
 		

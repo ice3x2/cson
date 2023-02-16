@@ -8,12 +8,17 @@ public class JSONWriter {
 
 	private final static int DEFAULT_BUFFER_SIZE = 512;
 
+	private JSONOptions jsonOptions = JSONOptions.json();
+
+
+	private boolean isAllowUnquoted = false;
+	private boolean isPretty = false;
+	private boolean isUnprettyArray = false;
+	private String depthSpace = "  ";
+
 	private String keyQuote = "\"";
 	private String valueQuote = "\"";
-	private String depthTab = "  ";
 
-	private  boolean isPretty = true;
-	private boolean isUnprettyArray = true;
 
 	private ArrayDeque<ObjectType> typeStack_ = new ArrayDeque<>();
 	private StringBuilder stringBuilder = new StringBuilder(DEFAULT_BUFFER_SIZE);
@@ -36,12 +41,32 @@ public class JSONWriter {
 	private CharSequence getDepthTab() {
 		StringBuilder stringBuilder = new StringBuilder();
 		for (int i = 0; i < typeStack_.size(); i++) {
-			stringBuilder.append(depthTab);
+			stringBuilder.append(depthSpace);
 		}
 		return stringBuilder;
 	}
 
 	public JSONWriter() {
+
+	}
+
+	public JSONWriter(JSONOptions jsonOptions) {
+		this.jsonOptions = jsonOptions;
+		if(jsonOptions.isPretty()) {
+			isPretty = true;
+		}
+		if(jsonOptions.isUnprettyArray()) {
+			isUnprettyArray = false;
+		}
+		if(jsonOptions.getDepthSpace() != null) {
+			depthSpace = jsonOptions.getDepthSpace();
+		}
+		isAllowUnquoted = jsonOptions.isAllowUnquoted();
+		if(jsonOptions.isAllowUnquoted()) {
+			keyQuote = "";
+		}
+
+
 
 	}
 
@@ -90,8 +115,10 @@ public class JSONWriter {
 			stringBuilder.append("\n");
 		}
 		stringBuilder.append(getDepthTab());
+
+		key = DataConverter.escapeJSONString(key);
 		stringBuilder.append(keyQuote);
-		stringBuilder.append(DataConverter.escapeJSONString(key));
+		stringBuilder.append(key);
 		stringBuilder.append(keyQuote);
 
 		stringBuilder.append(":");

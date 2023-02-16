@@ -131,7 +131,7 @@ public class CSONObjectTest {
 
 
         System.out.println(jsonString);
-        CSONObject compareCSONObject = new CSONObject(jsonString, Options.PureJson);
+        CSONObject compareCSONObject = new CSONObject(jsonString, JSONOptions.json());
 
 
         assertEquals(1, compareCSONObject.getInt("1"));

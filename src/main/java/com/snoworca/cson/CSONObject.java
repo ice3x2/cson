@@ -54,14 +54,14 @@ public class CSONObject extends CSONElement implements Cloneable {
 	}
 
 	public CSONObject(String json) {
-		this(new JSONTokener(json));
+		this(new JSONTokener(json, JSONOptions.json5()));
 	}
 
-	public CSONObject(String json,Options... options) {
-		this(new JSONTokener(json), options);
+	public CSONObject(String json, JSONOptions options) {
+		this(new JSONTokener(json, options));
 	}
-	public CSONObject(Reader jsonStringReader,Options... options) {
-		this(new JSONTokener(jsonStringReader), options);
+	public CSONObject(Reader jsonStringReader, JSONOptions options) {
+		this(new JSONTokener(jsonStringReader, options));
 	}
 
 	public CSONObject() {
@@ -287,9 +287,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 
 
-	protected CSONObject(JSONTokener x, Options... options) throws CSONException {
+	protected CSONObject(JSONTokener x) throws CSONException {
 		super(ElementType.Object);
-		new JSONParser(x,options).parseObject(this);
+		new JSONParser(x).parseObject(this);
 	}
 
 

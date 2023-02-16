@@ -30,7 +30,7 @@ public class JSON5Test {
     public void testTopComment() {
         CSONObject csonObject = new CSONObject("// 루트코멘트 \n { \n" +
                 "// 코멘트입니다. \n " +
-                " key: \"value\" }" , Options.Comments);
+                " key: \"value\" }" , JSONOptions.json5());
 
         assertEquals("루트코멘트",csonObject.getHeadComment());
 
@@ -38,7 +38,7 @@ public class JSON5Test {
                 "  /* 코\n멘\n트\r\n는\n\t주\n석\n\n\n\n*/" +
                 "{ \n" +
                 "// 코멘트입니다. \n" +
-                " key: \"value\" }\n\n\n\n\n\r\n\t\t\t\t\t ",Options.Comments   );
+                " key: \"value\" }\n\n\n\n\n\r\n\t\t\t\t\t ", JSONOptions.json5()   );
 
         assertEquals("루트코멘트\n코멘트입니다222.\n코\n" +
                 "멘\n" +
@@ -53,16 +53,16 @@ public class JSON5Test {
     @Test
     public void testKeyCommentSimple() {
         //CSONObject csonObject = new CSONObject("{key:'value', /* 여기에도 코멘트가 존재 가능*/ } /** 여기도 존재가능 **/"  );
-        CSONObject  csonObject = new CSONObject("{key:'value',} ",Options.Comments );
+        CSONObject  csonObject = new CSONObject("{key:'value',} ", JSONOptions.json5());
         assertEquals("value", csonObject.get("key"));
 
-        csonObject = new CSONObject("{key:'value', // 코멘트 \n } ",Options.Comments);
+        csonObject = new CSONObject("{key:'value', // 코멘트 \n } ", JSONOptions.json5());
         assertEquals("value", csonObject.get("key"));
         assertEquals("코멘트", csonObject.getTailComment());
 
-        csonObject = new CSONObject("{key:'value' } // 코멘트 "  ,Options.Comments);
+        csonObject = new CSONObject("{key:'value' } // 코멘트 "  , JSONOptions.json5());
         assertEquals("코멘트", csonObject.getTailComment());
-        csonObject = new CSONObject("{key:'value',} // 코멘트 \n // 코멘트2" , Options.Comments );
+        csonObject = new CSONObject("{key:'value',} // 코멘트 \n // 코멘트2" , JSONOptions.json5());
         assertEquals("코멘트\n코멘트2", csonObject.getTailComment());
     }
 
@@ -72,7 +72,7 @@ public class JSON5Test {
         Object obj =  jsonArray.get(1);
 
         CSONArray csonArray = null;
-        csonArray = new CSONArray("[//index1\n1,2,3,4,5,6,7,8,9,10,Infinity,NaN,] // 코멘트 \n // 코멘트2" , Options.Comments);
+        csonArray = new CSONArray("[//index1\n1,2,3,4,5,6,7,8,9,10,Infinity,NaN,] // 코멘트 \n // 코멘트2" , JSONOptions.json5());
         assertEquals("index1",csonArray.getCommentObject(0).getBeforeComment());
 
 
@@ -82,9 +82,9 @@ public class JSON5Test {
                 "//index1After\n" +
                 ",,/* 이 곳에 주석 가능 */,\"3 \"/*index 3*/,4,5,6,7,8,9,10,11," +
                 "/*오브젝트 시작*/{/*알수없는 영역*/}/*오브젝트끝*/,13,//14\n" +
-" {/*123*/123:456//456\n,},/*15배열로그*/[,,]/*15after*/,[],[],+Infinity,NaN," +
+" {/*123*/123:456//456\n,},/*15배열로그*/[,,]/*15after*/,[],[],-Infinity,NaN," +
                 ",[{},{}],[,/*index22*/],[,/*index23*/]/*index23after*/,24,[,]//index25after\n," +
-                "{1:2,//코멘트\n}//코멘트\n,] // 코멘트 \n // 코멘트2",  Options.Comments  );
+                "{1:2,//코멘트\n}//코멘트\n,] // 코멘트 \n // 코멘트2",  JSONOptions.json5());
         System.out.println(csonArray);
         assertEquals("index1",csonArray.getCommentObject(0).getBeforeComment());
         assertEquals("테\n스\n트",csonArray.getHeadComment());
@@ -103,8 +103,8 @@ public class JSON5Test {
 
         assertEquals("오브젝트끝",csonArray.getCommentObject(12).getAfterComment());
 
-        assertEquals("+Infinity",csonArray.get(18));
-        assertEquals("NaN",csonArray.get(19));
+        assertEquals(Double.NEGATIVE_INFINITY,csonArray.get(18));
+        assertEquals(Double.NaN,csonArray.get(19));
 
 
         CSONArray idx15Array = csonArray.getArray(15);
@@ -138,7 +138,7 @@ public class JSON5Test {
                 "/* 코멘트입니다. */\n //222 \n " +
                 " key: /* 값 코멘트 */ \"value\", key2: \"val/* ok */ue2\",array:[1,2,3,4,],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
                 "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
-                " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */"  ,Options.Comments );
+                " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */"  , JSONOptions.json5());
 
         System.out.println(csonObject);
 
