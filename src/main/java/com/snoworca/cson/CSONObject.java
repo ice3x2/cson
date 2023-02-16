@@ -15,6 +15,8 @@ public class CSONObject extends CSONElement implements Cloneable {
 	private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
 	private LinkedHashMap<String, KeyValueCommentObject> keyValueCommentMap;
 
+	private JSONOptions jsonOptions = JSONOptions.json5();
+
 
 
 	public CSONObject(byte[] buffer) {
@@ -22,6 +24,8 @@ public class CSONObject extends CSONElement implements Cloneable {
 		CSONObject csonObject = (CSONObject)CSONParser.parse(buffer);
 		this.dataMap = csonObject.dataMap;
 	}
+
+
 
 	public CSONObject(byte[] buffer, int offset, int length) {
 		super(ElementType.Object);
@@ -289,6 +293,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	protected CSONObject(JSONTokener x) throws CSONException {
 		super(ElementType.Object);
+		this.jsonOptions = x.getJsonOption();
 		new JSONParser(x).parseObject(this);
 	}
 
@@ -427,7 +432,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 		//StringBuilder stringBuilder = new StringBuilder();
 		//writeJSONString(stringBuilder);
 		//return stringBuilder.toString();
-		JSONWriter jsonWriter  = new JSONWriter();
+		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
 		write(jsonWriter);
 		return jsonWriter.toString();
 	}
@@ -501,6 +506,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 	}
 
 
+	/*
 	protected void writeJSONString(StringBuilder strBuilder) {
 
 
@@ -522,7 +528,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 		}
 		strBuilder.append("}");
-	}
+	}*/
 
 	public CSONObject clone() {
 		CSONObject csonObject = new CSONObject();

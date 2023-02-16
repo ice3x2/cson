@@ -11,6 +11,7 @@ public class JSONWriter {
 	private JSONOptions jsonOptions = JSONOptions.json();
 
 
+	private boolean isAllowLineBreak = false;
 	private boolean isAllowUnquoted = false;
 	private boolean isPretty = false;
 	private boolean isUnprettyArray = false;
@@ -62,12 +63,20 @@ public class JSONWriter {
 			depthSpace = jsonOptions.getDepthSpace();
 		}
 		isAllowUnquoted = jsonOptions.isAllowUnquoted();
-		if(jsonOptions.isAllowUnquoted()) {
-			keyQuote = "";
+		keyQuote = jsonOptions.getValueQuote();
+		valueQuote = jsonOptions.getValueQuote();
+		if(!jsonOptions.isAllowUnquoted() && keyQuote.isEmpty()) {
+			keyQuote = "\"";
 		}
-
-
-
+		if(!jsonOptions.isAllowSingleQuotes()) {
+			if(keyQuote.equals("'")) {
+				keyQuote = jsonOptions.isAllowUnquoted() ? "" : "\"";
+			}
+			if(valueQuote.equals("'")) {
+				valueQuote = "\"";
+			}
+		}
+		isAllowLineBreak = jsonOptions.isAllowLineBreak();
 	}
 
 	private void writeComment(String comment) {
@@ -100,6 +109,17 @@ public class JSONWriter {
 		}
 	}
 
+	private void writeString(String quoteArg, String str) {
+		String quote = quoteArg;
+		if(isAllowLineBreak && str.contains("\\\n")) {
+			quote = "\"";
+		}
+		str = DataConverter.escapeJSONString(str, isAllowLineBreak);
+		stringBuilder.append(quote);
+		stringBuilder.append(str);
+		stringBuilder.append(quote);
+	}
+
 	public JSONWriter key(String key) {
 		ObjectType type = typeStack_.getLast();
 		if(type != ObjectType.OpenObject) {
@@ -116,10 +136,7 @@ public class JSONWriter {
 		}
 		stringBuilder.append(getDepthTab());
 
-		key = DataConverter.escapeJSONString(key);
-		stringBuilder.append(keyQuote);
-		stringBuilder.append(key);
-		stringBuilder.append(keyQuote);
+		writeString(keyQuote, key);
 
 		stringBuilder.append(":");
 		return this;
@@ -149,9 +166,8 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
-		stringBuilder.append('"');
-		stringBuilder.append(DataConverter.escapeJSONString(value));
-		stringBuilder.append('"');
+
+		writeString(valueQuote, value);
 		return this;
 	}
 
@@ -180,9 +196,7 @@ public class JSONWriter {
 		}
 		removeStack();
 		if(value instanceof CharSequence || value instanceof Character) {
-			stringBuilder.append('"');
-			stringBuilder.append(DataConverter.escapeJSONString(value.toString()));
-			stringBuilder.append('"');
+			writeString(valueQuote, value.toString());
 		} else if(value instanceof Number) {
 			stringBuilder.append(value);
 		} else if(value instanceof Boolean) {
@@ -305,9 +319,8 @@ public class JSONWriter {
 			return this;
 		}
 		checkAndAppendInArray();
-		stringBuilder.append('"');
-		stringBuilder.append(DataConverter.escapeJSONString(value));
-		stringBuilder.append('"');
+		writeString(valueQuote, value);
+
 
 		return this;
 	}
@@ -373,9 +386,7 @@ public class JSONWriter {
 		}
 		checkAndAppendInArray();
 		if(value instanceof CharSequence || value instanceof Character) {
-			stringBuilder.append('"');
-			stringBuilder.append(DataConverter.escapeJSONString(value.toString()));
-			stringBuilder.append('"');
+			writeString(valueQuote, value.toString());
 		} else if(value instanceof Number) {
 			stringBuilder.append(value);
 		} else if(value instanceof Boolean) {

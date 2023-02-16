@@ -78,6 +78,8 @@ public class JSONOptions {
         }
 
         public JSONOptions setKeyQuote(String keyQuote) {
+            if(keyQuote == null)
+                throw new IllegalArgumentException("keyQuote can not be null");
             this.keyQuote = keyQuote;
             return this;
         }
@@ -87,6 +89,8 @@ public class JSONOptions {
         }
 
         public JSONOptions setValueQuote(String valueQuote) {
+            if(valueQuote == null || valueQuote.length() == 0)
+                throw new IllegalArgumentException("valueQuote can not be null or empty");
             this.valueQuote = valueQuote;
             return this;
         }
@@ -96,7 +100,7 @@ public class JSONOptions {
             return allowTrailingComma;
         }
 
-        public boolean isAllowBreakLine() {
+        public boolean isAllowLineBreak() {
             return allowBreakLine;
         }
 
@@ -142,6 +146,7 @@ public class JSONOptions {
         }
 
         public JSONOptions setDepthSpace(String depthSpace) {
+            if(depthSpace == null) depthSpace = "";
             this.depthSpace = depthSpace;
             return this;
         }
@@ -197,6 +202,7 @@ public class JSONOptions {
 
         public JSONOptions setAllowUnquoted(boolean unquoted) {
             this.allowUnquoted = unquoted;
+            this.keyQuote = unquoted ? "" : this.keyQuote;
             return this;
         }
 
@@ -206,6 +212,7 @@ public class JSONOptions {
 
         public JSONOptions setAllowSingleQuotes(boolean singleQuotes) {
             this.allowSingleQuotes = singleQuotes;
+            this.valueQuote = singleQuotes ? "'" : this.valueQuote;
             return this;
         }
 

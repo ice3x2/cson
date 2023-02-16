@@ -653,6 +653,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	}
 
+	/*
 	protected void writeJSONString(StringBuilder strBuilder) {
 		strBuilder.append("[");
 		for(int i = 0, n = list.size(), np = n - 1; i < n; ++i) {
@@ -668,13 +669,13 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			if(i != np) strBuilder.append(',');
 		}
 		strBuilder.append("]");
-	}
+	}*/
 
 
 	
 	@Override
 	public String toString() {
-		JSONWriter jsonWriter  = new JSONWriter();
+		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
 		write(jsonWriter);
 		return jsonWriter.toString();
 	}
