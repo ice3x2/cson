@@ -69,7 +69,7 @@ class JSONParser {
     }
 
 
-    private char readOrSkipComment(StringBuilder commentBuilder) {
+    private char readOrSkipComment(StringBuilder commentBuilder)  {
         char nextClean = tokener.nextClean();
         commentBuilder.setLength(0);
         if(nextClean  == '/') {
@@ -107,53 +107,13 @@ class JSONParser {
     }
 
 
-    /*
-    private  void parseArrayFromPureJson(CSONArray csonArray) {
-        if (tokener.nextClean() != '[') {
-            throw tokener.syntaxError("A JSONArray text must start with '['");
-        }
-        char nextChar = tokener.nextClean();
-        if (nextChar == 0) {
-            // array is unclosed. No ']' found, instead EOF
-            throw tokener.syntaxError("Expected a ',' or ']'");
-        }
-        if (nextChar != ']') {
-            tokener.back();
-            for (;;) {
-                if (tokener.nextClean() == ',') {
-                    tokener.syntaxError("Missing value");
-                } else {
-                    tokener.back();
-                    csonArray.addAtJSONParsing(tokener.nextPureValue(options));
-                }
-                switch (tokener.nextClean()) {
-                    case 0:
-                        // array is unclosed. No ']' found, instead EOF
-                        throw tokener.syntaxError("Expected a ',' or ']'");
-                    case ',':
-                        nextChar = tokener.nextClean();
-                        if (nextChar == 0) {
-                            // array is unclosed. No ']' found, instead EOF
-                            throw tokener.syntaxError("Expected a ',' or ']'");
-                        }
-                        if (nextChar == ']') {
-                            return;
-                        }
-                        tokener.back();
-                        break;
-                    case ']':
-                        return;
-                    default:
-                        throw tokener.syntaxError("Expected a ',' or ']'");
-                }
-            }
-        }
-    }*/
 
     private void parseArrayFromJson5(CSONArray csonArray) throws CSONException {
 
         StringBuilder commentBuilder = new StringBuilder();
         CommentObject lastCommentObject = new CommentObject();
+
+        boolean isReadComment = options.isAllowComments() && !options.isSkipComments();
 
         char nextChar = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
@@ -207,9 +167,7 @@ class JSONParser {
                         }
                         nextChar = tokener.nextClean();
                         csonArray.addAtJSONParsing(value);
-                        //if(nextChar != ']') {
-                           // continue;
-                        //}
+                        commentBuilder.setLength(0);
                     }
                     else {
                         nextChar = readOrSkipComment( commentBuilder);
@@ -219,7 +177,7 @@ class JSONParser {
                         csonArray.addAtJSONParsing(value);
                     }
                 }
-                if(lastCommentObject.isCommented()) {
+                if(isReadComment && lastCommentObject.isCommented()) {
                     csonArray.addCommentObjects(lastCommentObject);
                 } else {
                     csonArray.addCommentObjects(null);
@@ -421,6 +379,7 @@ class JSONParser {
                     if(commentHead != null) {
                         objectValue.setHeadComment(commentHead);
                     }
+                    commentBuilder.setLength(0);
                 }
 
                 next = readOrSkipComment(commentBuilder);

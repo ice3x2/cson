@@ -153,6 +153,15 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			commentObjectList = new ArrayList<>();
 		}
 		commentObjectList.add(commentObject);
+		System.out.println("addCommentObjects: " + commentObjectList.size() + ", " + list.size());
+	}
+
+	protected void setCommentObjectToLastIndex(CommentObject commentObjects) {
+		if("값2[4]\n2[5]값".equals(commentObjects.getComment())) {
+			System.out.println("setCommentObjectToLastIndex: " + commentObjects);
+		}
+		System.out.println("setCommentObjects: " + commentObjectList.size() + ", " + list.size() + ", " + commentObjects);
+		commentObjectList.set(commentObjectList.size()-1, commentObjects);
 	}
 
 	public CSONArray(Reader stringSource) throws CSONException {
@@ -496,6 +505,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return list.containsAll(c);
 	}
 
+
 	@Override
 	public boolean addAll(@SuppressWarnings("rawtypes") Collection c) {
 		return list.addAll(c);
@@ -661,6 +671,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			else if(obj instanceof byte[]) writer.add((byte[])obj);
 			else if(obj instanceof Boolean) writer.add((boolean)obj);
 		}
+		writer.nextCommentObject(getTailCommentObject());
 		writer.closeArray();
 
 	}

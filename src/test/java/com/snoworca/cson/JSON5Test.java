@@ -124,13 +124,14 @@ public class JSON5Test {
     @Test
     public void toStringTest() {
         String jsonString =
-                "{ //키1_앞\n" +
+                "//인덱스\n//야호!!여기가 처음이다." +
+                        "\n{ //키1_앞\n" +
                             "키1/*키1_뒤*/: " +
                     "/*값1앞*/값1/*값1뒤*/," +
                     "키2:[/*값2[0]*/1/*2[0]값*/,/*값2[1]*/2/*2[1]값*/,/*값2[2]*/3/*2[2]값*/,/*값2[3]*/4,/*값2[4]*/{}/*[4]값2*/," +
-                        "{/*키2.1*/키2.1/*2.1키*/:/*값2.1*/값2.1/*2.1값*/,키2.2:/*값2.2*/{키2.2.1/*2.2.1키*/:값2.2.1/*2.2.1값*/}/*2.2값*/" +
-                                        ",/*키2.3*/키2.3/*2.3키*/:/*값2.3*/{/*키2.3.1*/키2.3.1/*2.3.1키*/:값2.3.1/*2.3.1값*/}/*2.3값*/}/*2[5]값*/]/*값2*/," +
-                "}";
+                        "{/*키2.1*/키2.1/*2.1키*/:/*값2.1*/값2.1/*2.1값*/,키2.2 /*.\n2.2키\ntestㅇㄴㅁㄹㅇㄴㅁㄹㄴㅇㄻㅇㄴㄹ\nsdafasdfadsfdasㅇㄴㅁㄹㄴㅇㄻㄴㅇㄹ\n_*/:/*값2.2*/{키2.2.1/*2.2.1키*/:값2.2.1/*2.2.1값*/}/*2.2값*/" +
+                                        ",/*키2.3*/키2.3/*2.3키*/:/*값2.3*/{/*키2.3.1*/키2.3.1/*2.3.1키*/:값2.3.1/*2.3.1값*/}/*2.3값*/}/*2[5]값*/,[],/*배열 안에 배열*/[]/*배열 안에 배열 \n끝*/]/*값2*/," +
+                "}//테일. 어쩌고저쩌고";
         // array  파싱하는 과정에서 빈 공간은 건너뛰는 것 같음...
 
 
@@ -153,6 +154,8 @@ public class JSON5Test {
         //System.out.println(json5Str);
         CSONObject csonObject = new CSONObject(json5Str , JSONOptions.json5().setKeyQuote(""));
         System.out.println(csonObject);
+
+        csonObject = new CSONObject(csonObject.toString() , JSONOptions.json5());
 
         assertEquals("코멘트입니다.\n222",csonObject.getCommentObjectOfKey("key").getBeforeComment());
         assertEquals("값 코멘트\n값 코멘트 뒤",csonObject.getCommentOfValue("key"));
