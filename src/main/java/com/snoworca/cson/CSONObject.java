@@ -474,23 +474,55 @@ public class CSONObject extends CSONElement implements Cloneable {
 		writer.closeObject();
 	}
 
+	@Override
 	protected void write(JSONWriter writer) {
 		Iterator<Entry<String, Object>> iter = dataMap.entrySet().iterator();
+		boolean isComment = jsonOptions.isAllowComments() && !jsonOptions.isSkipComments() && keyValueCommentMap != null;
+
+		writer.nextCommentObject(getHeadCommentObject());
 		writer.openObject();
 		while(iter.hasNext()) {
 			Entry<String, Object> entry = iter.next();
 			String key = entry.getKey();
 			Object obj = entry.getValue();
+			KeyValueCommentObject keyValueCommentObject = isComment ? keyValueCommentMap.get(key) : null;
+			CommentObject objectElementHeadCache = null;
+			CommentObject objectElementTailCache = null;
+			if(keyValueCommentObject != null) {
+				writer.nextCommentObject(keyValueCommentObject.keyCommentObject);
+				if(obj instanceof CSONElement) {
+					if(null != keyValueCommentObject.valueCommentObject) {
+						objectElementHeadCache = ((CSONElement)obj).getHeadCommentObject();
+						objectElementTailCache = ((CSONElement)obj).getTailCommentObject();
+						((CSONElement)obj).setHeadComment(keyValueCommentObject.valueCommentObject.getBeforeComment());
+						((CSONElement)obj).setTailComment(keyValueCommentObject.valueCommentObject.getAfterComment());
+					}
+				} else {
+					writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
+				}
+			}
 			if(obj == null || obj instanceof NullValue) writer.key(key).nullValue();
-			else if(obj instanceof CSONArray)  {
+			else if(obj instanceof CSONElement)  {
 				writer.key(key);
-				((CSONArray)obj).write(writer);
+				//writer.writeComment(commentObjectCache.getBeforeComment(), true);
+				try {
+					((CSONElement) obj).write(writer);
+				} finally {
+					if(objectElementHeadCache != null) {
+						((CSONElement)obj).setHeadCommentObject(objectElementHeadCache);
+						objectElementHeadCache = null;
+					}
+					if(objectElementTailCache != null) {
+						((CSONElement)obj).setTailCommentObject(objectElementTailCache);
+						objectElementTailCache = null;
+					}
+				}
+
+				//writer.writeComment(commentObjectCache.getAfterComment(), false);
 			}
-			else if(obj instanceof CSONObject)  {
-				writer.key(key);
-				((CSONObject)obj).write(writer);
+			else if(obj instanceof Byte)	{
+				writer.key(key).value((byte)obj);
 			}
-			else if(obj instanceof Byte)	writer.key(key).value((byte)obj);
 			else if(obj instanceof Short)	writer.key(key).value((short)obj);
 			else if(obj instanceof Character) writer.key(key).value((char)obj);
 			else if(obj instanceof Integer) writer.key(key).value((int)obj);
@@ -502,7 +534,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 			else if(obj instanceof BigDecimal) writer.key(key).value(obj);
 			else if(obj instanceof byte[]) writer.key(key).value((byte[])obj);
 		}
+		writer.nextCommentObject(getTailCommentObject());
 		writer.closeObject();
+
 	}
 
 

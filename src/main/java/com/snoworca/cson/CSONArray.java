@@ -631,12 +631,24 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		writer.openArray();
 		for(int i = 0, n = list.size(); i < n; ++i) {
 			Object obj = list.get(i);
+		 	CommentObject commentObject = commentObjectList.get(i);
+			 if(commentObject != null && !(obj instanceof CSONElement)) {
+				 writer.nextCommentObject(commentObject);
+			 }
 			if(obj == null || obj instanceof NullValue) writer.addNull();
-			else if(obj instanceof CSONArray)  {
-				((CSONArray)obj).write(writer);
-			}
-			else if(obj instanceof CSONObject)  {
-				((CSONObject)obj).write(writer);
+			else if(obj instanceof CSONElement)  {
+				CommentObject objectElementHeadCache = ((CSONElement) obj).getHeadCommentObject();
+				CommentObject objectElementTailCache = ((CSONElement) obj).getTailCommentObject();
+				try {
+					if (null != commentObject) {
+						((CSONElement) obj).setHeadComment(commentObject.getBeforeComment());
+						((CSONElement) obj).setTailComment(commentObject.getAfterComment());
+					}
+					((CSONElement)obj).write(writer);
+				} finally {
+					((CSONElement)obj).setHeadCommentObject(objectElementHeadCache);
+					((CSONElement)obj).setTailCommentObject(objectElementTailCache);
+				}
 			}
 			else if(obj instanceof Byte)	writer.add((byte)obj);
 			else if(obj instanceof Short)	writer.add((short)obj);

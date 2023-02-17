@@ -1,6 +1,6 @@
 package com.snoworca.cson;
 
-public class CommentObject {
+public class CommentObject implements  Cloneable {
     private String beforeComment;
     private String afterComment;
 
@@ -58,5 +58,13 @@ public class CommentObject {
         return beforeComment != null || afterComment != null;
     }
 
+
+    @Override
+    public CommentObject clone() {
+        CommentObject commentObject = new CommentObject();
+        commentObject.beforeComment =  beforeComment;
+        commentObject.afterComment = afterComment;
+        return commentObject;
+    }
 
 }

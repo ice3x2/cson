@@ -1,5 +1,6 @@
 package com.snoworca.cson;
 
+import javax.xml.stream.events.Comment;
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
 
@@ -10,7 +11,20 @@ public class JSONWriter {
 
 	private JSONOptions jsonOptions = JSONOptions.json();
 
+	private final static int COMMENT_BEFORE_KEY = 1;
+	private final static int COMMENT_BEFORE_VALUE = 2;
 
+
+	private final static int COMMENT_AFTER_VALUE = 3;
+	private final static int COMMENT_AFTER_KEY = 4;
+
+
+	private final static int COMMENT_BEFORE_ARRAY_VALUE = 5;
+	private final static int COMMENT_AFTER_ARRAY_VALUE = 6;
+
+	private final static int COMMENT_BEFORE_CHD_OBJ_VALUE = 7;
+
+	private boolean isComment = false;
 	private boolean isAllowLineBreak = false;
 	private boolean isAllowUnquoted = false;
 	private boolean isPretty = false;
@@ -19,6 +33,11 @@ public class JSONWriter {
 
 	private String keyQuote = "\"";
 	private String valueQuote = "\"";
+
+
+	//private String commentStringAfterObjectValue = null;
+	private ArrayDeque<CommentObject> keyValueCommentObjects = new ArrayDeque<>();
+	//private ArrayDeque<CommentObject> objectCommentObjects = new ArrayDeque<>();
 
 
 	private ArrayDeque<ObjectType> typeStack_ = new ArrayDeque<>();
@@ -47,6 +66,59 @@ public class JSONWriter {
 		return stringBuilder;
 	}
 
+
+	private void writeAfterComment() {
+		writeBeforeComment(COMMENT_AFTER_VALUE);
+	}
+
+	private void writeAfterComment(int type) {
+		if(!keyValueCommentObjects.isEmpty()) {
+			CommentObject commentObject  = keyValueCommentObjects.removeFirst();
+			String afterComment = commentObject.getAfterComment();
+			if(afterComment == null) {
+				return;
+			}
+			writeComment(afterComment, type);
+		}
+	}
+
+	private void cacheAfterComment(int type) {
+		if(!keyValueCommentObjects.isEmpty()) {
+			//CommentObject commentObject  = keyValueCommentObjects.removeFirst();
+			//String afterComment = commentObject.getAfterComment();
+			//commentStringAfterObjectValue = afterComment;
+			writeAfterComment(COMMENT_AFTER_VALUE);
+		}
+	}
+
+	private void writeBeforeComment() {
+		writeBeforeComment(COMMENT_BEFORE_ARRAY_VALUE);
+	}
+
+	private void writeBeforeComment(int type) {
+		if(!keyValueCommentObjects.isEmpty()) {
+			CommentObject commentObject = keyValueCommentObjects.getFirst();
+			String beforeComment  = commentObject.getBeforeComment();
+			if(beforeComment == null) {
+				return;
+			}
+			writeComment(beforeComment, type);
+			commentObject.setBeforeComment(null);
+		}
+	}
+
+	private void writeBeforeAndRemoveComment(int type) {
+		if(!keyValueCommentObjects.isEmpty()) {
+			CommentObject commentObject = keyValueCommentObjects.removeFirst();
+			String beforeComment  = commentObject.getBeforeComment();
+			if(beforeComment == null) {
+				return;
+			}
+			writeComment(beforeComment, type);
+			commentObject.setBeforeComment(null);
+		}
+	}
+
 	public JSONWriter() {
 
 	}
@@ -63,7 +135,7 @@ public class JSONWriter {
 			depthSpace = jsonOptions.getDepthSpace();
 		}
 		isAllowUnquoted = jsonOptions.isAllowUnquoted();
-		keyQuote = jsonOptions.getValueQuote();
+		keyQuote = jsonOptions.getKeyQuote();
 		valueQuote = jsonOptions.getValueQuote();
 		if(!jsonOptions.isAllowUnquoted() && keyQuote.isEmpty()) {
 			keyQuote = "\"";
@@ -77,37 +149,72 @@ public class JSONWriter {
 			}
 		}
 		isAllowLineBreak = jsonOptions.isAllowLineBreak();
+
+		isComment = jsonOptions.isAllowComments() && !jsonOptions.isSkipComments();
 	}
 
-	private void writeComment(String comment) {
-		if(comment != null) {
+
+	private void writeComment(String comment, int commentType) {
+		if(comment != null && isComment) {
 			String[] commentLines = comment.split("\n");
 			for (String commentLine : commentLines) {
 				if(commentLine.trim().isEmpty()) {
 					stringBuilder.append("\n");
 					continue;
 				}
-				stringBuilder.append("//");
-				stringBuilder.append(commentLine);
-				stringBuilder.append("\n");
+				if(commentType == COMMENT_AFTER_KEY || commentType == COMMENT_BEFORE_VALUE || !isPretty) {
+					stringBuilder.append(" /* ");
+					stringBuilder.append(commentLine);
+					stringBuilder.append(" */ ");
+				}
+				else if(commentType == COMMENT_BEFORE_ARRAY_VALUE) {
+					stringBuilder.append("//");
+					stringBuilder.append(commentLine);
+					stringBuilder.append("\n");
+					stringBuilder.append(getDepthTab());
+				}
+				else if(commentType == COMMENT_BEFORE_KEY) {
+					stringBuilder.append(getDepthTab());
+					stringBuilder.append("//");
+					stringBuilder.append(commentLine);
+					stringBuilder.append("\n");
+				}
+				else if(commentType == COMMENT_AFTER_VALUE) {
+					stringBuilder.append(" /* ");
+					stringBuilder.append(commentLine);
+					stringBuilder.append(" */ ");
+				}
 			}
 		}
 	}
 
-	private void writeBeforeComment(CommentObject commentObject) {
-		if(commentObject != null) {
-			String beforeComment  = commentObject.getBeforeComment();
-			stringBuilder.append("\n");
-			writeComment(beforeComment);
+
+	public void nextCommentObject(CommentObject commentObject) {
+		if(commentObject == null) return;
+		if(!keyValueCommentObjects.isEmpty() && !keyValueCommentObjects.getLast().isCommented()) {
+			keyValueCommentObjects.removeLast();
+		}
+		if(!commentObject.isCommented()) {
+			return;
+		}
+
+		this.keyValueCommentObjects.addLast(commentObject.clone());
+	}
+
+
+	protected void writeComment(String comment, boolean alwaysSlash) {
+		if(!isComment && comment == null) return;
+		if(!isPretty || alwaysSlash || comment.contains("\n")) {
+			stringBuilder.append(" /* " ).append(comment).append(" */ ");
+		} else {
+			this.stringBuilder.append(" //").append(comment);
 		}
 	}
 
-	private void writeAfterComment(CommentObject commentObject) {
-		if(commentObject != null) {
-			String beforeComment  = commentObject.getAfterComment();
-			writeComment(beforeComment);
-		}
-	}
+
+
+
+
 
 	private void writeString(String quoteArg, String str) {
 		String quote = quoteArg;
@@ -124,34 +231,40 @@ public class JSONWriter {
 		ObjectType type = typeStack_.getLast();
 		if(type != ObjectType.OpenObject) {
 			stringBuilder.append(',');
+			/*if(commentStringAfterObjectValue != null) {
+				writeComment(commentStringAfterObjectValue, COMMENT_AFTER_VALUE);
+				commentStringAfterObjectValue = null;
+			}*/
 		}
 		else {
 			changeStack(ObjectType.Object);
 		}
-
-
 		pushStack(ObjectType.ObjectKey);
 		if(isPretty) {
 			stringBuilder.append("\n");
 		}
+		writeBeforeComment(COMMENT_BEFORE_KEY);
 		stringBuilder.append(getDepthTab());
-
 		writeString(keyQuote, key);
-
+		writeAfterComment(COMMENT_AFTER_KEY);
 		stringBuilder.append(":");
 		return this;
 	}
 
-	public JSONWriter key(char key) {
+	/*public JSONWriter key(char key) {
+		writeBeforeComment();
 		key(String.valueOf(key));
+		writeAfterComment();
 		return this;
-	}
+	}*/
 
 	public JSONWriter nullValue() {
 		if(typeStack_.getLast() != ObjectType.ObjectKey) {
 			throw new CSONWriteException();
 		}
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append("null");
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		removeStack();
 		return this;
 	}
@@ -166,8 +279,9 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
-
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		writeString(valueQuote, value);
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -180,9 +294,11 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append("\"base64,");
 		stringBuilder.append(Base64.encode(value));
 		stringBuilder.append('"');
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -195,6 +311,7 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		if(value instanceof CharSequence || value instanceof Character) {
 			writeString(valueQuote, value.toString());
 		} else if(value instanceof Number) {
@@ -212,6 +329,7 @@ public class JSONWriter {
 			stringBuilder.append(value);
 			stringBuilder.append('"');
 		}
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -220,7 +338,9 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append(value);
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -229,7 +349,9 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append(value);
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -238,7 +360,9 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append(value);
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -247,7 +371,9 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append(value);
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -256,7 +382,9 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
 		stringBuilder.append(value ? "true" : "false");
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -265,9 +393,12 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
-		stringBuilder.append(valueQuote);
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
+		String quote =  jsonOptions.isAllowCharacter() ? "'" : valueQuote;
+		stringBuilder.append(quote);
 		stringBuilder.append(value);
-		stringBuilder.append(valueQuote);
+		stringBuilder.append(quote);
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -276,7 +407,23 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
-		stringBuilder.append(value);
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
+		if(jsonOptions.isAllowInfinity() && Float.isInfinite(value)) {
+			if(value > 0) {
+				stringBuilder.append("Infinity");
+			} else {
+				stringBuilder.append("-Infinity");
+			}
+		} else if(Float.isNaN(value)) {
+			if(jsonOptions.isAllowNaN()) {
+				stringBuilder.append("NaN");
+			} else {
+				stringBuilder.append(valueQuote).append("NaN").append(valueQuote);
+			}
+		} else {
+			stringBuilder.append(value);
+		}
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
@@ -285,13 +432,30 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
-		stringBuilder.append(value);
+		writeBeforeComment(COMMENT_BEFORE_VALUE);
+		if(jsonOptions.isAllowInfinity() && Double.isInfinite(value)) {
+			if(value > 0) {
+				stringBuilder.append("Infinity");
+			} else {
+				stringBuilder.append("-Infinity");
+			}
+		} else if(Double.isNaN(value)) {
+			if(jsonOptions.isAllowNaN()) {
+				stringBuilder.append("NaN");
+			} else {
+				stringBuilder.append(valueQuote).append("NaN").append(valueQuote);
+			}
+		} else {
+			stringBuilder.append(value);
+		}
+		cacheAfterComment(COMMENT_AFTER_VALUE);
 		return this;
 	}
 
 	private void checkAndAppendInArray() {
 		ObjectType type = typeStack_.getLast();
 		if(type != ObjectType.OpenArray) {
+			writeAfterComment(COMMENT_AFTER_VALUE);
 			stringBuilder.append(',');
 		} else if(type == ObjectType.OpenArray) {
 			changeStack(ObjectType.Array);
@@ -309,6 +473,7 @@ public class JSONWriter {
 	///
 	public JSONWriter addNull() {
 		checkAndAppendInArray();
+		writeBeforeComment();
 		stringBuilder.append("null");
 		return this;
 	}
@@ -318,10 +483,10 @@ public class JSONWriter {
 			addNull();
 			return this;
 		}
+		writeBeforeComment();
 		checkAndAppendInArray();
 		writeString(valueQuote, value);
-
-
+		writeAfterComment();
 		return this;
 	}
 
@@ -330,10 +495,12 @@ public class JSONWriter {
 			addNull();
 			return this;
 		}
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append("\"base64,");
 		stringBuilder.append(Base64.encode(value));
 		stringBuilder.append('"');
+		writeAfterComment();
 		return this;
 	}
 
@@ -342,40 +509,51 @@ public class JSONWriter {
 			addNull();
 			return this;
 		}
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
 
 
 	public JSONWriter add(byte value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
 
 	public JSONWriter add(int value) {
 		checkAndAppendInArray();
+		writeBeforeComment();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
 
 	public JSONWriter add(long value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
 
 	public JSONWriter add(short value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
 
 	public JSONWriter add(boolean value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value ? "true" : "false");
-
+		writeAfterComment();
 		return this;
 	}
 
@@ -384,6 +562,7 @@ public class JSONWriter {
 			addNull();
 			return this;
 		}
+		writeBeforeComment();
 		checkAndAppendInArray();
 		if(value instanceof CharSequence || value instanceof Character) {
 			writeString(valueQuote, value.toString());
@@ -402,31 +581,36 @@ public class JSONWriter {
 			stringBuilder.append(value);
 			stringBuilder.append('"');
 		}
+		writeAfterComment();
 		return this;
 	}
 
 
 	public JSONWriter add(char value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append('\'');
 		stringBuilder.append(value);
 		stringBuilder.append('\'');
+		writeAfterComment();
 		return this;
 	}
 
 	public JSONWriter add(float value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
 
 	public JSONWriter add(double value) {
+		writeBeforeComment();
 		checkAndAppendInArray();
 		stringBuilder.append(value);
+		writeAfterComment();
 		return this;
 	}
-
-
 
 
 
@@ -447,6 +631,8 @@ public class JSONWriter {
 				}
 			} else if (type != ObjectType.ObjectKey && type != ObjectType.None) {
 				throw new CSONWriteException();
+			} else {
+				writeBeforeComment(COMMENT_BEFORE_VALUE);
 			}
 		}
 		pushStack(ObjectType.OpenArray);
@@ -466,18 +652,31 @@ public class JSONWriter {
 		}
 		if(typeStack_.isEmpty()) {
 			stringBuilder.append(']');
+			writeAfterComment();
 			return this;
 		}
 
 		if(typeStack_.getLast() == ObjectType.ObjectKey) {
 			removeStack();
+			cacheAfterComment(COMMENT_AFTER_VALUE);
 		}
 		stringBuilder.append(']');
 		return this;
 	}
 
+	public JSONWriter writeHeaderComment(CommentObject commentObject) {
+		if(!isComment || commentObject == null || commentObject.getBeforeComment() == null) {
+			return this;
+		}
+		stringBuilder.append("/*").append(commentObject.getBeforeComment()).append( "*/");
+
+		return this;
+
+	}
+
 	public JSONWriter openObject() {
 		ObjectType type = typeStack_.isEmpty() ? null : typeStack_.getLast();
+		int commentType = COMMENT_BEFORE_ARRAY_VALUE;
 		if(type == ObjectType.Object) {
 			throw new CSONWriteException();
 		} else if(type == ObjectType.Array) {
@@ -492,7 +691,12 @@ public class JSONWriter {
 				stringBuilder.append(getDepthTab());
 			}
 			changeStack(ObjectType.Array);
+		} else if(type == ObjectType.ObjectKey) {
+			commentType = COMMENT_BEFORE_KEY;
+		} else if(type == ObjectType.OpenObject) {
+			commentType = COMMENT_BEFORE_KEY;
 		}
+		writeBeforeAndRemoveComment(commentType);
 		stringBuilder.append('{');
 		pushStack(ObjectType.OpenObject);
 		return this;
@@ -503,7 +707,10 @@ public class JSONWriter {
 			throw new CSONWriteException();
 		}
 		removeStack();
-
+		/*if(commentStringAfterObjectValue != null) {
+			writeComment(commentStringAfterObjectValue, COMMENT_AFTER_VALUE);
+			commentStringAfterObjectValue = null;
+		}*/
 		if(isPretty && stringBuilder.charAt(stringBuilder.length() - 1) != '{') {
 			stringBuilder.append('\n');
 			stringBuilder.append(getDepthTab());
@@ -511,10 +718,10 @@ public class JSONWriter {
 			stringBuilder.append("");
 		}
 		stringBuilder.append('}');
-
-
+		writeAfterComment(COMMENT_AFTER_KEY);
 		if(!typeStack_.isEmpty() && typeStack_.getLast() == ObjectType.ObjectKey) {
 			removeStack();
+			//cacheAfterComment(COMMENT_AFTER_VALUE);
 		}
 
 		return this;
@@ -522,9 +729,9 @@ public class JSONWriter {
 
 	@Override
 	public String toString() {
-		if(!typeStack_.isEmpty()) {
+		/*if(!typeStack_.isEmpty()) {
 			throw new CSONWriteException();
-		}
+		}*/
 		return stringBuilder.toString();
 	}
 

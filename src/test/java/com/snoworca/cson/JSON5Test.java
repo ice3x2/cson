@@ -118,33 +118,46 @@ public class JSON5Test {
         assertTrue(Double.isInfinite(csonArray.getDouble(18)));
         assertTrue(Double.isNaN(csonArray.getDouble(19)));
 
+    }
+
+
+    @Test
+    public void toStringTest() {
+        String jsonString =
+                "{ //키1_앞\n" +
+                            "키1/*키1_뒤*/: " +
+                    "/*값1앞*/값1/*값1뒤*/," +
+                    "키2:[/*값2[0]*/1/*2[0]값*/,/*값2[1]*/2/*2[1]값*/,/*값2[2]*/3/*2[2]값*/,/*값2[3]*/4,/*값2[4]*/{}/*[4]값2*/," +
+                        "{/*키2.1*/키2.1/*2.1키*/:/*값2.1*/값2.1/*2.1값*/,키2.2:/*값2.2*/{키2.2.1/*2.2.1키*/:값2.2.1/*2.2.1값*/}/*2.2값*/" +
+                                        ",/*키2.3*/키2.3/*2.3키*/:/*값2.3*/{/*키2.3.1*/키2.3.1/*2.3.1키*/:값2.3.1/*2.3.1값*/}/*2.3값*/}/*2[5]값*/]/*값2*/," +
+                "}";
+        // array  파싱하는 과정에서 빈 공간은 건너뛰는 것 같음...
+
+
+        CSONObject csonObject = new CSONObject(jsonString, JSONOptions.json5());
+
+       System.out.println(csonObject.toString());
+
 
     }
 
     @Test
     public void testKeyComment() {
-        long start = System.currentTimeMillis();
-        for(int i = 0; i < 100000; ++i) {
-            CSONObject csonObject = new CSONObject("{ \n" +
-                    "/* 코멘트입니다. */\n //222 \n " +
-                    " key: /* 값 코멘트 */ \"value\", key2: \"val/* ok */ue2\",array:[1,2,3,4,],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
-                    "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
-                    " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */");
-        }
 
-        System.out.println("testKeyComment : " + (System.currentTimeMillis() - start));
-
-        CSONObject csonObject = new CSONObject("{ \n" +
+        String json5Str = "{ \n" +
                 "/* 코멘트입니다. */\n //222 \n " +
-                " key: /* 값 코멘트 */ \"value\", key2: \"val/* ok */ue2\",array:[1,2,3,4,],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
+                " key: /* 값 코멘트 */ \"value\"//값 코멘트 뒤\n,key2: \"val/* ok */ue2\",/*array코멘트*/array:[1,2,3,4,],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
                 "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
-                " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */"  , JSONOptions.json5());
+                " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */";
 
+        //System.out.println(json5Str);
+        CSONObject csonObject = new CSONObject(json5Str , JSONOptions.json5().setKeyQuote(""));
         System.out.println(csonObject);
 
-        assertEquals("코멘트입니다.\n222",csonObject.getCommentOfKey("key"));
-        assertEquals("값 코멘트",csonObject.getCommentOfValue("key"));
+        assertEquals("코멘트입니다.\n222",csonObject.getCommentObjectOfKey("key").getBeforeComment());
+        assertEquals("값 코멘트\n값 코멘트 뒤",csonObject.getCommentOfValue("key"));
 
+        assertEquals("array코멘트",csonObject.getCommentObjectOfKey("array").getBeforeComment());
         assertEquals(null,csonObject.getCommentOfKey("key2"));
         assertEquals(null,csonObject.getCommentOfValue("key2"));
         assertEquals("val/* ok */ue2",csonObject.getString("key2"));

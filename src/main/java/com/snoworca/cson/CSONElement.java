@@ -3,7 +3,7 @@ package com.snoworca.cson;
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 
-public class CSONElement {
+public abstract  class CSONElement {
 
 	protected static final String HEAD_COMMENT_KEY  = "";
 	protected static final String TAIL_COMMENT_KEY  = " ";
@@ -35,6 +35,7 @@ public class CSONElement {
 		tailCommentObject.setAfterComment(comment);
 
 	}
+
 
 	public CommentObject getHeadCommentObject() {
 		return headCommentObject;
@@ -71,6 +72,7 @@ public class CSONElement {
 
 
 
+	protected abstract void write(JSONWriter writer);
 
 
 
