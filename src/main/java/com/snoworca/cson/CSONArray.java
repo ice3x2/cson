@@ -652,7 +652,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 				try {
 					if (null != commentObject) {
 						((CSONElement) obj).setHeadComment(commentObject.getBeforeComment());
-						((CSONElement) obj).setTailComment(commentObject.getAfterComment());
+						((CSONElement) obj).setTailCommentObject(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),commentObject.getAfterComment()));
 					}
 					((CSONElement)obj).write(writer);
 				} finally {

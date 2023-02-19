@@ -14,10 +14,9 @@ public class JSONWriter {
 
 	private final static int COMMENT_SLASH_START = 4;
 
-	private final static int COMMENT_BEFORE_ARRAY_VALUE = 5;
-	private final static int COMMENT_AFTER_ARRAY_VALUE = 6;
 
-	private final static int COMMENT_BEFORE_CHD_OBJ_VALUE = 7;
+	private final static int COMMENT_BEFORE_ARRAY_VALUE = 5;
+	private final static int COMMENT_COMMA_AND_SLASH_START = 6;
 
 	private boolean isComment = false;
 	private boolean isAllowLineBreak = false;
@@ -80,6 +79,9 @@ public class JSONWriter {
 	}
 
 	private void writeBeforeComment(int type) {
+		if(type == 6) {
+			System.out.println('s');
+		}
 		if(!keyValueCommentObjects.isEmpty()) {
 			CommentObject commentObject = keyValueCommentObjects.getFirst();
 			String beforeComment  = commentObject.getBeforeComment();
@@ -148,8 +150,11 @@ public class JSONWriter {
 					stringBuilder.append("\n");
 					continue;
 				}
-				if(commentType == COMMENT_SLASH_START || !isPretty) {
+				if(!isPretty || commentType == COMMENT_SLASH_START || commentType == COMMENT_COMMA_AND_SLASH_START) {
 					if(i == 0) {
+						if(commentType == COMMENT_COMMA_AND_SLASH_START) {
+							stringBuilder.append(",");
+						}
 						stringBuilder.append(" /* ");
 					} else {
 						stringBuilder.append("\n");
@@ -169,9 +174,10 @@ public class JSONWriter {
 					stringBuilder.append("\n");
 				}
 			}
-			if(commentType == COMMENT_SLASH_START || !isPretty) {
+			if(commentType == COMMENT_SLASH_START || commentType == COMMENT_COMMA_AND_SLASH_START || !isPretty) {
 				stringBuilder.append(" */");
 			}
+
 		}
 	}
 
@@ -639,6 +645,9 @@ public class JSONWriter {
 			stringBuilder.append('\n');
 			stringBuilder.append(getDepthTab());
 		}
+
+		writeBeforeComment(COMMENT_COMMA_AND_SLASH_START);
+
 		if(typeStack_.isEmpty()) {
 			stringBuilder.append(']');
 			writeBeforeComment(COMMENT_BEFORE_KEY);;
@@ -706,6 +715,8 @@ public class JSONWriter {
 		} else {
 			stringBuilder.append("");
 		}
+		writeBeforeComment(COMMENT_COMMA_AND_SLASH_START);
+
 		stringBuilder.append('}');
 
 		if(!typeStack_.isEmpty() && typeStack_.getLast() == ObjectType.ObjectKey) {

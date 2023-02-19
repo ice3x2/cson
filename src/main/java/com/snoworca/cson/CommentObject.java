@@ -4,6 +4,14 @@ public class CommentObject implements  Cloneable {
     private String beforeComment;
     private String afterComment;
 
+    public CommentObject() {
+    }
+
+    public CommentObject(String beforeComment, String afterComment) {
+        this.beforeComment = beforeComment;
+        this.afterComment = afterComment;
+    }
+
     public String getBeforeComment() {
         return beforeComment;
     }

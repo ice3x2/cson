@@ -145,6 +145,9 @@ class JSONParser {
                     throw tokener.syntaxError("Expected a ',' or ']'");
                 }
                 if(nextChar == ']') {
+                    if(isReadComment && lastCommentObject.isCommented()) {
+                        csonArray.getOrCreateTailCommentObject().setBeforeComment(lastCommentObject.getAfterComment());
+                    }
                     readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
                         csonArray.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());

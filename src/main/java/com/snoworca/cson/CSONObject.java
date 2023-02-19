@@ -495,16 +495,17 @@ public class CSONObject extends CSONElement implements Cloneable {
 						objectElementHeadCache = ((CSONElement)obj).getHeadCommentObject();
 						objectElementTailCache = ((CSONElement)obj).getTailCommentObject();
 						((CSONElement)obj).setHeadComment(keyValueCommentObject.valueCommentObject.getBeforeComment());
-						((CSONElement)obj).setTailComment(keyValueCommentObject.valueCommentObject.getAfterComment());
+						((CSONElement) obj).setTailCommentObject(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),keyValueCommentObject.valueCommentObject.getAfterComment()));
 					}
 				} else {
 					writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
 				}
+			} if(obj instanceof CSONElement) {
+				((CSONElement) obj).setTailCommentObject(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),null));
 			}
 			if(obj == null || obj instanceof NullValue) writer.key(key).nullValue();
 			else if(obj instanceof CSONElement)  {
 				writer.key(key);
-				//writer.writeComment(commentObjectCache.getBeforeComment(), true);
 				try {
 					((CSONElement) obj).write(writer);
 				} finally {
