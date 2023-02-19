@@ -146,7 +146,7 @@ class JSONParser {
                 }
                 if(nextChar == ']') {
                     if(isReadComment && lastCommentObject.isCommented()) {
-                        csonArray.getOrCreateTailCommentObject().setBeforeComment(lastCommentObject.getAfterComment());
+                        csonArray.getOrCreateTailCommentObject().setBeforeComment(lastCommentObject.getBeforeComment());
                     }
                     readOrSkipComment( commentBuilder);
                     if(commentBuilder.length() > 0) {
@@ -424,6 +424,20 @@ class JSONParser {
                     }
                     tokener.back();
                     return;
+                case '/':
+                    tokener.back();
+                    next = readOrSkipComment( commentBuilder);
+                    if(commentBuilder.length() > 0) {
+                        lastKeyObject.setBeforeComment(commentBuilder.toString().trim());
+                    }
+                    if(next =='}') {
+                        readOrSkipComment( commentBuilder);
+                        if(commentBuilder.length() > 0) {
+                            csonObject.getOrCreateTailCommentObject().setAfterComment(commentBuilder.toString().trim());
+                        }
+                        tokener.back();
+                        return;
+                    }
                 default:
                     throw tokener.syntaxError("Expected a ',' or '}'");
             }

@@ -488,20 +488,19 @@ public class CSONObject extends CSONElement implements Cloneable {
 			KeyValueCommentObject keyValueCommentObject = isComment ? keyValueCommentMap.get(key) : null;
 			CommentObject objectElementHeadCache = null;
 			CommentObject objectElementTailCache = null;
-			if(keyValueCommentObject != null) {
-				writer.nextCommentObject(keyValueCommentObject.keyCommentObject);
-				if(obj instanceof CSONElement) {
+			if(obj instanceof CSONElement) {
+				objectElementHeadCache = ((CSONElement)obj).getHeadCommentObject();
+				objectElementTailCache = ((CSONElement)obj).getTailCommentObject();
+				if(keyValueCommentObject != null) {
 					if(null != keyValueCommentObject.valueCommentObject) {
-						objectElementHeadCache = ((CSONElement)obj).getHeadCommentObject();
-						objectElementTailCache = ((CSONElement)obj).getTailCommentObject();
 						((CSONElement)obj).setHeadComment(keyValueCommentObject.valueCommentObject.getBeforeComment());
 						((CSONElement) obj).setTailCommentObject(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),keyValueCommentObject.valueCommentObject.getAfterComment()));
+					} else if(objectElementTailCache != null) {
+						((CSONElement) obj).setTailCommentObject(objectElementTailCache.clone());
 					}
-				} else {
-					writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
 				}
-			} if(obj instanceof CSONElement) {
-				((CSONElement) obj).setTailCommentObject(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),null));
+			} else if(keyValueCommentObject != null) {
+					writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
 			}
 			if(obj == null || obj instanceof NullValue) writer.key(key).nullValue();
 			else if(obj instanceof CSONElement)  {

@@ -123,8 +123,11 @@ public class JSON5Test {
 
     @Test
     public void toStringTest1() {
-        CSONObject csonObject = new CSONObject("{array:[/*코멘트*/], key:'value', /*코멘트*/} ", JSONOptions.json5());
+        CSONObject csonObject = new CSONObject("{array:[/*코멘트*/], key:{/*코멘트*/}/*코멘트*/, /*코멘트*/} ", JSONOptions.json5());
         System.out.println(csonObject.toString());
+
+        assertEquals("코멘트",csonObject.getArray("array").getTailCommentObject().getBeforeComment());
+        assertEquals("코멘트",csonObject.getTailCommentObject().getBeforeComment());
 
     }
 
