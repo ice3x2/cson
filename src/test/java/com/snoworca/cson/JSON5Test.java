@@ -123,7 +123,7 @@ public class JSON5Test {
 
     @Test
     public void toStringTest1() {
-        CSONObject csonObject = new CSONObject("{array:[/*코멘트*/], key:{/*코멘트*/}/*코멘트*/, /*코멘트*/} ", JSONOptions.json5());
+        CSONObject csonObject = new CSONObject("{array:[/*코멘트*/],  key:{/*코멘트*/}/*코멘트*/, /*코멘트*/} ", JSONOptions.json5());
         System.out.println(csonObject.toString());
 
         assertEquals("코멘트",csonObject.getArray("array").getTailCommentObject().getBeforeComment());
@@ -157,7 +157,7 @@ public class JSON5Test {
 
         String json5Str = "{ \n" +
                 "/* 코멘트입니다. */\n //222 \n " +
-                " key: /* 값 코멘트 */ \"value\"//값 코멘트 뒤\n,key2: \"val/* ok */ue2\",/*array코멘트*/array:[1,2,3,4,],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
+                " key: /* 값 코멘트 */ \"value\"//값 코멘트 뒤\n,key2: \"val/* ok */ue2\",/*array코멘트*/array:[1,2,3,4,Infinity],/*코멘트array2*/array2/*코멘트array2*/:/*코멘트array2b*/[1,2,3,4]/*코멘트array2a*/,/* 오브젝트 */ object " +
                 "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
                 " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */";
 

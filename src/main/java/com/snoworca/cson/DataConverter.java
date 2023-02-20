@@ -291,39 +291,48 @@ class DataConverter {
 		char[] charArray = str.toCharArray();
 		StringBuilder builder = new StringBuilder();
 		char lastCh = 0;
+		boolean isLastLF = false;
 		for(int i = 0; i < charArray.length; ++i) {
 			char ch = charArray[i];
 			switch (ch) {
 			case '\n':
 				if(allowLineBreak && lastCh == '\\') {
 					builder.append('\n');
+					isLastLF = true;
 				} else {
 					builder.append("\\n");
 				}
 				break;
 			case '\r':
-				if(allowLineBreak && lastCh == '\n') {
+				if(allowLineBreak && isLastLF) {
 					builder.append('\r');
+					isLastLF = false;
 				} else {
 					builder.append("\\r");
 				}
 				break;
 			case '\f':
+				isLastLF = false;
 				builder.append("\\f");
 				break;
 			case '\t':
+				isLastLF = false;
 				builder.append("\\t");
 				break;
 			case '\b':
+				isLastLF = false;
 				builder.append("\\b");
 				break;
 			case '"':
+				isLastLF = false;
 				builder.append("\\\"");
 				break;
 			case '\\':
+				isLastLF = false;
 				builder.append("\\");
 				break;
 			default:
+				isLastLF = false;
 				builder.append(ch);
 				break;
 			}

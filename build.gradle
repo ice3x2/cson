@@ -19,7 +19,7 @@ apply from: 'publish.gradle'
 
 
 group 'com.snoworca'
-version '0.0.1'
+version '0.0.2'
 
 repositories {
     mavenCentral()

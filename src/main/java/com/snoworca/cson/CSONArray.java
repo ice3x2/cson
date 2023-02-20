@@ -636,7 +636,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		writer.openArray();
 		for(int i = 0, n = list.size(); i < n; ++i) {
 			Object obj = list.get(i);
-		 	CommentObject commentObject = commentObjectList.get(i);
+		 	CommentObject commentObject = commentObjectList == null ? null : commentObjectList.get(i);
 			 if(commentObject != null && !(obj instanceof CSONElement)) {
 				 writer.nextCommentObject(commentObject);
 			 }

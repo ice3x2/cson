@@ -429,9 +429,12 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	@Override
 	public String toString() {
-		//StringBuilder stringBuilder = new StringBuilder();
-		//writeJSONString(stringBuilder);
-		//return stringBuilder.toString();
+		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
+		write(jsonWriter);
+		return jsonWriter.toString();
+	}
+
+	public String toString(JSONOptions jsonOptions) {
 		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
 		write(jsonWriter);
 		return jsonWriter.toString();
@@ -488,6 +491,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 			KeyValueCommentObject keyValueCommentObject = isComment ? keyValueCommentMap.get(key) : null;
 			CommentObject objectElementHeadCache = null;
 			CommentObject objectElementTailCache = null;
+			if(keyValueCommentObject != null) {
+				writer.nextCommentObject(keyValueCommentObject.keyCommentObject);
+			}
 			if(obj instanceof CSONElement) {
 				objectElementHeadCache = ((CSONElement)obj).getHeadCommentObject();
 				objectElementTailCache = ((CSONElement)obj).getTailCommentObject();
@@ -500,7 +506,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 					}
 				}
 			} else if(keyValueCommentObject != null) {
-					writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
+				writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
 			}
 			if(obj == null || obj instanceof NullValue) writer.key(key).nullValue();
 			else if(obj instanceof CSONElement)  {

@@ -35,7 +35,7 @@ public class CSONTest {
 
         jsonObject = new JSONObject(jsonObject.toString());
 
-        CSONObject csonObject = new CSONObject(new CSONObject(jsonObject.toString()).toString());
+        CSONObject csonObject = new CSONObject(new CSONObject(jsonObject.toString()).toString(JSONOptions.json()), JSONOptions.json());
         Set<String> originalKeySet = jsonObject.keySet();
         Set<String> csonKeySet =csonObject.keySet();
         assertEquals(originalKeySet, csonKeySet);

@@ -20,7 +20,7 @@ public class JSONOptions {
             jsonOptions.setAllowSingleQuotes(false);
             jsonOptions.setAllowHexadecimal(true);
             jsonOptions.setLeadingZeroOmission(false);
-            jsonOptions.setAllowCharacter(true);
+            jsonOptions.setAllowCharacter(false);
             jsonOptions.setAllowTrailingComma(false);
             return jsonOptions;
         }
