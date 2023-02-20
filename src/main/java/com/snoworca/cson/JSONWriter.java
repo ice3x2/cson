@@ -79,9 +79,6 @@ public class JSONWriter {
 	}
 
 	private void writeBeforeComment(int type) {
-		if(type == 6) {
-			System.out.println('s');
-		}
 		if(!keyValueCommentObjects.isEmpty()) {
 			CommentObject commentObject = keyValueCommentObjects.getFirst();
 			String beforeComment  = commentObject.getBeforeComment();

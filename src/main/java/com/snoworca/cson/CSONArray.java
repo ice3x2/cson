@@ -140,7 +140,6 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 	protected void addAtJSONParsing(Object value) {
-		//System.out.println(value);
 		if(value instanceof String && CSONElement.isBase64String((String)value)) {
 			value = CSONElement.base64StringToByteArray((String)value);
 		}
@@ -153,14 +152,10 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			commentObjectList = new ArrayList<>();
 		}
 		commentObjectList.add(commentObject);
-		System.out.println("addCommentObjects: " + commentObjectList.size() + ", " + list.size());
+
 	}
 
 	protected void setCommentObjectToLastIndex(CommentObject commentObjects) {
-		if("값2[4]\n2[5]값".equals(commentObjects.getComment())) {
-			System.out.println("setCommentObjectToLastIndex: " + commentObjects);
-		}
-		System.out.println("setCommentObjects: " + commentObjectList.size() + ", " + list.size() + ", " + commentObjects);
 		commentObjectList.set(commentObjectList.size()-1, commentObjects);
 	}
 
