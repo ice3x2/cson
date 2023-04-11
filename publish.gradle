@@ -1,6 +1,6 @@
 ext {
     PUBLISH_GROUP_ID = 'com.snoworca'
-    PUBLISH_VERSION = '0.0.2'
+    PUBLISH_VERSION = getProperty("version")
     PUBLISH_ARTIFACT_ID = 'cson'
     PUBLISH_DESCRIPTION = 'Binary Json Library'
     PUBLISH_URL = 'https://github.com/ice3x2/cson'

@@ -22,7 +22,7 @@ apply from: 'publish.gradle'
 
 
 group 'com.snoworca'
-version '0.0.2'
+version getProperty("version")
 
 repositories {
     mavenCentral()
