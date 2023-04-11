@@ -12,6 +12,9 @@ plugins {
 }
 
 
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
 
 apply plugin: 'io.github.gradle-nexus.publish-plugin'
 apply from: "${rootDir}/scripts/publish-maven.gradle"
