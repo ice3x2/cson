@@ -12,7 +12,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	private ArrayList<Object> list = new ArrayList<>();
 	private ArrayList<CommentObject> commentObjectList = null;
 
-	private JSONOptions jsonOptions = JSONOptions.json5();
+	private JSONOptions jsonOptions = JSONOptions.json();
 
 
 	public CSONArray() {
