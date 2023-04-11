@@ -53,7 +53,7 @@ public class JSONOptions {
         private boolean skipComments = false;
 
         private boolean allowComments = false;
-        private boolean ignoreNumberFormatError = false;
+        private boolean ignoreNumberFormatError = true;
         private boolean allowNaN = true;
         private boolean allowPositiveSing = true;
         private boolean allowInfinity = true;

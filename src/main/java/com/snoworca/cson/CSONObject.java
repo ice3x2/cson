@@ -15,7 +15,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 	private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
 	private LinkedHashMap<String, KeyValueCommentObject> keyValueCommentMap;
 
-	private JSONOptions jsonOptions = JSONOptions.json5();
+	private JSONOptions jsonOptions = JSONOptions.json();
 
 
 
@@ -524,7 +524,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 					}
 				}
 
-				//writer.writeComment(commentObjectCache.getAfterComment(), false);
 			}
 			else if(obj instanceof Byte)	{
 				writer.key(key).value((byte)obj);
@@ -545,30 +544,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	}
 
-
-	/*
-	protected void writeJSONString(StringBuilder strBuilder) {
-
-
-		Iterator<Entry<String, Object>> iter = dataMap.entrySet().iterator();
-		while(iter.hasNext()) {
-			Entry<String, Object> entry = iter.next();
-			String key = entry.getKey();
-			Object obj = entry.getValue();
-			strBuilder.append('"').append(key).append("\":");
-			if(obj == null || obj instanceof NullValue) strBuilder.append("null");
-			else if(obj instanceof Number || obj instanceof Boolean) strBuilder.append(obj);
-			else if(obj instanceof Character) strBuilder.append('"').append(obj).append('"');
-			else if(obj instanceof String) strBuilder.append('"').append(DataConverter.escapeJSONString((String)obj)).append('"');
-			else if(obj instanceof byte[]) strBuilder.append('"').append(DataConverter.toString(obj)).append('"');
-			else if(obj instanceof CSONArray) ((CSONArray)obj).writeJSONString(strBuilder);
-			else if(obj instanceof CSONObject) ((CSONObject)obj).writeJSONString(strBuilder);
-
-			if(iter.hasNext()) strBuilder.append(',');
-
-		}
-		strBuilder.append("}");
-	}*/
 
 	public CSONObject clone() {
 		CSONObject csonObject = new CSONObject();
@@ -595,6 +570,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 	public int size() {
 		return dataMap.size();
 	}
+
+
+
 
 	@Override
 	public boolean equals(Object obj) {
@@ -645,24 +623,4 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return true;
 	}
 
-	static class KeyValueCommentObject {
-		CommentObject keyCommentObject;
-		CommentObject valueCommentObject;
-
-		@Override
-		public String toString() {
-			if(keyCommentObject == null && valueCommentObject == null) {
-				return "";
-			}
-			else if(keyCommentObject == null) {
-				return valueCommentObject.toString();
-			}
-			else if(valueCommentObject == null) {
-				return keyCommentObject.toString();
-			}
-			else {
-				return  keyCommentObject.toString() + "\n" + valueCommentObject.toString();
-			}
-		}
-	}
 }

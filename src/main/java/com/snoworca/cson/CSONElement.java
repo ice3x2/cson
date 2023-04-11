@@ -70,6 +70,10 @@ public abstract  class CSONElement {
 	}
 
 
+	public final CSONPath path() {
+		return new CSONPath(this);
+	}
+
 
 
 	protected abstract void write(JSONWriter writer);
