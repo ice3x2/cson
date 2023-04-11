@@ -698,6 +698,13 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return jsonWriter.toString();
 	}
 
+	public String toString(JSONOptions jsonOptions) {
+		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
+		write(jsonWriter);
+		return jsonWriter.toString();
+	}
+
+
 
 	public CSONArray clone() {
 		CSONArray array = new CSONArray();
