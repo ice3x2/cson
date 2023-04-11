@@ -7,7 +7,7 @@
 ## Usage (gradle)
 ```groovy
 dependencies {
-    implementation group: 'com.snoworca', name: 'cson', version: '0.0.1'
+    implementation group: 'com.snoworca', name: 'cson', version: '0.9.1'
 }
 ```
 
