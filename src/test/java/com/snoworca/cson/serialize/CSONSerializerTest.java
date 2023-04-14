@@ -3,10 +3,14 @@ package com.snoworca.cson.serialize;
 import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONObject;
 
+
+import com.snoworca.cson.JSONOptions;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 
 import static org.junit.Assert.assertEquals;
 
@@ -235,7 +239,95 @@ public class CSONSerializerTest  {
             assertEquals(v.value,  csonArray.getObject(cnt).get("value"));
             cnt++;
         }
+    }
+
+
+    @Cson
+    public static class MultiCollectionChild {
+
+
+        public MultiCollectionChild() {
+        }
+        @Value
+        int value;
+
+        @Value
+        public MultiCollectionChild[] childrens = null;
+        @Value
+        public ConcurrentMap<String, String> map = new ConcurrentHashMap<>();
+        @Value
+        public Map<String, MultiCollectionChild> mapChild = new HashMap<>();
+        @Value
+        public Map<String, Collection<MultiCollectionChild>> mapChildCollection = new HashMap<>();
+        @Value
+        public Set<MultiCollectionChild> set = new HashSet<>();
+
+        // 내부 값을들 랜덤하게 채워주는 init() 메서드 하나 만들어줘.
+        public void init() {
+            init(4);
+        }
+
+        public void init(int num) {
+
+            value = num;
+
+
+            --num;
+
+            childrens = new MultiCollectionChild[num];
+
+            int randomCount= num;//random.nextInt(num);
+            for(int i=0; i<randomCount; i++) {
+                MultiCollectionChild child = new MultiCollectionChild();
+                child.init(num);
+                childrens[i] = child;
+            }
+            randomCount= num;//random.nextInt(num);
+            for(int i=0; i<randomCount; i++) {
+                map.put("key" + i, "value" + i);
+            }
+            randomCount= num;//random.nextInt(num);
+            for(int i=0; i<randomCount; i++) {
+                MultiCollectionChild child = new MultiCollectionChild();
+                child.init(num);
+                mapChild.put("key" + i, child);
+            }
+            randomCount= num;//random.nextInt(num);
+            for(int i=0; i<randomCount; i++) {
+                Collection<MultiCollectionChild> childCollection = new ArrayList<>();
+                randomCount= num;//random.nextInt(num);
+                for(int j=0; j<randomCount; j++) {
+                    MultiCollectionChild child = new MultiCollectionChild();
+                    child.init(num);
+                    childCollection.add(child);
+                }
+                mapChildCollection.put("key" + i, childCollection);
+            }
+
+            randomCount= num;//random.nextInt(num);
+            for(int i=0; i<randomCount; i++) {
+                MultiCollectionChild child = new MultiCollectionChild();
+                child.init(num);
+                set.add(child);
+            }
+
+
+        }
+
 
     }
+
+    @Test
+    public void multiCollectionChildSerializeTest() {
+        MultiCollectionChild mcc = new MultiCollectionChild();
+        mcc.init();
+        CSONObject csonObject =  CSONSerializer.toCSONObject(mcc);
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+
+
+
+
+    }
+
 
 }

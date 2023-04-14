@@ -1,6 +1,7 @@
 package com.snoworca.cson.serialize;
 
 import java.util.Collection;
+import java.util.Map;
 
 public class DataType {
     public final static byte TYPE_UNKNOWN = -1;
@@ -20,6 +21,8 @@ public class DataType {
     public final static byte TYPE_COLLECTION = 13;
     public final static byte TYPE_CSON_OBJECT = 31;
     public final static byte TYPE_OBJECT = 30;
+
+    public final static byte TYPE_MAP = 14;
 
     public static boolean isObjectType(byte type) {
         return type == TYPE_OBJECT || type == TYPE_CSON_OBJECT || type == -1;
@@ -58,6 +61,9 @@ public class DataType {
         }
         else if(Collection.class.isAssignableFrom(type)) {
             return DataType.TYPE_COLLECTION;
+        }
+        else if(Map.class.isAssignableFrom(type)) {
+            return DataType.TYPE_MAP;
         }
         else if(!type.isInterface() && type.getAnnotation(Cson.class) != null) {
             return DataType.TYPE_CSON_OBJECT;

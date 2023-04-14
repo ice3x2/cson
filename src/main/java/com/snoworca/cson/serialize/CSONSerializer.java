@@ -7,6 +7,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 public class CSONSerializer {
 
@@ -32,6 +33,11 @@ public class CSONSerializer {
                 CSONArray childArray = toCSONArray((Collection<?>)object);
                 csonArray.add(childArray);
             }
+            else if(object instanceof Map) {
+                //TODO
+                String aa ;
+            }
+
             else {
                 CSONObject csonObject = toCSONObject(object);
                 csonArray.add(csonObject);

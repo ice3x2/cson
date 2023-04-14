@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.*;
 
 public class FieldInfo implements Comparable {
     FieldInfo(Field field, String name) {
@@ -42,9 +43,64 @@ public class FieldInfo implements Comparable {
         } else if (Collection.class.isAssignableFrom(type)) {
             setCollection(true);
             readComponentType(field.getGenericType());
+        } else if (Map.class.isAssignableFrom(type)) {
+            setMap(true);
+            readMapType(field.getGenericType());
 
         }
     }
+
+
+    private void readMapType(Type type) {
+        try {
+            ComponentInfo componentInfo = new ComponentInfo();
+            ParameterizedType integerListType = null;
+
+            Class<?> componentClass = null;
+            if (type instanceof ParameterizedType) {
+                integerListType = (ParameterizedType)type;
+                Type[] actualType = integerListType.getActualTypeArguments();
+                if(actualType.length != 2) {
+                    isError = true;
+                    return;
+                }
+                Type keyType = actualType[0];
+                Type valueType = actualType[1];
+                Type rawType = integerListType.getRawType();
+                componentInfo.collectionConstructor = constructorOfMap((Class<?>) rawType);
+                componentInfo.collectionConstructor.setAccessible(true);
+                if(!(keyType instanceof ParameterizedType && ((Class<?>)keyType).isAssignableFrom(CharSequence.class) )) {
+                    //TODO key 값은 항상 문자열이어야함.
+                    isError = true;
+                    return;
+                }
+                componentClass = ((Class<?>) keyType);
+            } else {
+                componentClass = Object.class;
+            }
+            componentInfo.type = DataType.getDataType(componentClass);
+            if(DataType.isObjectType(componentInfo.type)) {
+                //TODO 생성자가 없을 경우 예외를 발생시켜야함.
+                componentInfo.componentConstructor = componentClass.getDeclaredConstructor();
+                componentInfo.componentConstructor.setAccessible(true);
+            }
+
+            this.componentInfos.add(componentInfo);
+            if (!(componentClass instanceof Object) && componentInfo.type < 0) {
+                isError = true;
+                return;
+            }
+
+            if(DataType.TYPE_COLLECTION ==  componentInfo.type) {
+                readComponentType(componentClass);
+            }
+        } catch (Exception e) {
+            // TODO 어딘가에서 에러를 처리해야함
+            isError = true;
+        }
+    }
+
+
 
     private void readComponentType(Type type) {
         try {
@@ -70,6 +126,7 @@ public class FieldInfo implements Comparable {
             }
             componentInfo.type = DataType.getDataType(componentClass);
             if(DataType.isObjectType(componentInfo.type)) {
+                //TODO 생성자가 없을 경우 예외를 발생시켜야함.
                 componentInfo.componentConstructor = componentClass.getDeclaredConstructor();
                 componentInfo.componentConstructor.setAccessible(true);
             }
@@ -84,6 +141,7 @@ public class FieldInfo implements Comparable {
                 readComponentType(componentClass);
             }
         } catch (Exception e) {
+            // TODO 어딘가에서 에러를 처리해야함
             isError = true;
         }
     }
@@ -97,14 +155,35 @@ public class FieldInfo implements Comparable {
             return  ArrayDeque.class.getConstructor();
         } else if (type.isInterface() && (List.class.isAssignableFrom(type) || Collection.class.isAssignableFrom(type)) || type == Collection.class) {
             return  ArrayList.class.getConstructor();
+        } else if (type.isInterface() && (NavigableSet.class.isAssignableFrom(type) || SortedSet.class.isAssignableFrom(type))) {
+            return  TreeSet.class.getConstructor();
+        }
+        return  type.getConstructor();
+    }
+
+    private Constructor<?> constructorOfMap(Class<?> type) throws NoSuchMethodException {
+        if (type.isInterface() && ConcurrentNavigableMap.class.isAssignableFrom(type)) {
+            return  ConcurrentSkipListMap.class.getConstructor();
+        }  else if (type.isInterface() && ConcurrentMap.class.isAssignableFrom(type)) {
+            return  ConcurrentHashMap.class.getConstructor();
+        }
+        else if (type.isInterface() && (AbstractMap.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type))) {
+            return LinkedHashMap.class.getConstructor();
+        } else if (type.isInterface() && Dictionary.class.isAssignableFrom(type)) {
+            return  Hashtable.class.getConstructor();
+        } else if (type.isInterface() && (NavigableMap.class.isAssignableFrom(type) || SortedMap.class.isAssignableFrom(type))) {
+            return  TreeMap.class.getConstructor();
         }
         return  type.getConstructor();
     }
 
 
+
+    private String keyName = null;
     private boolean isError = false;
     private boolean isArray = false;
     private boolean isCollection = false;
+    private boolean isMap = false;
 
     private boolean isByteArrayToCSONArray = false;
 
@@ -156,6 +235,14 @@ public class FieldInfo implements Comparable {
 
     protected void setCollection(boolean collection) {
         isCollection = collection;
+    }
+
+    protected void setMap(boolean map) {
+        isMap = map;
+    }
+
+    public boolean isMap() {
+        return isMap;
     }
 
     public int getArraySize() {

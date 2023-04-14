@@ -1,7 +1,6 @@
 package com.snoworca.cson.serialize;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.util.*;
 
 public class TypeInfo {
