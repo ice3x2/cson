@@ -72,6 +72,10 @@ public class DataType {
 
     }
 
+    public static boolean isJsonDefaultType(byte type) {
+        return type >= TYPE_NULL && type <= TYPE_STRING;
+    }
+
     public static boolean isNumberType(byte type) {
         return type >= TYPE_BYTE && type <= TYPE_DOUBLE;
     }

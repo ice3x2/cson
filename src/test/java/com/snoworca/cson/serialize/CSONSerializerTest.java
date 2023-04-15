@@ -7,6 +7,7 @@ import com.snoworca.cson.CSONObject;
 import com.snoworca.cson.JSONOptions;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -14,7 +15,10 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertEquals;
 
-public class CSONSerializerTest  {
+public class
+
+
+CSONSerializerTest  {
 
     private static Random random = new Random(System.currentTimeMillis());
 
@@ -323,6 +327,100 @@ public class CSONSerializerTest  {
         mcc.init();
         CSONObject csonObject =  CSONSerializer.toCSONObject(mcc);
         System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+
+    }
+
+
+    @Cson
+    public static class MapTestClass {
+       /* @Value
+        Map<String, Integer> integerMap;
+
+        @Value
+        Map<String, String> stringMap;
+
+
+        @Value
+        Map<String, Map<String, Boolean>> stringBooleanMap;
+
+        @Value
+        Map<String, Map<String, Collection<Integer>>> randomCollectionMap = new HashMap<>();
+
+        @Value
+        Map<String, Map<String, Integer[]>> randomArrayMap = new HashMap<>();*/
+
+
+
+
+        public MapTestClass init() {
+            /*
+            integerMap = new HashMap<>();
+            integerMap.put("key1", 1);
+            integerMap.put("key2", 2);
+            integerMap.put("key3", 3);
+            integerMap.put("key4", 4);
+
+            stringMap = new HashMap<>();
+            stringMap.put("str1", "1");
+            stringMap.put("str2", "2");
+            stringMap.put("str3", "3");
+            stringMap.put("str4", "4");
+
+
+            stringBooleanMap = new LinkedHashMap<>();
+            Map<String, Boolean> boolMap = new HashMap<>();
+            boolMap.put("true", true);
+            boolMap.put("false", false);
+            stringBooleanMap.put("bool1", boolMap);
+
+            HashMap<String, Collection<Integer>> collectionMap = new HashMap<>();
+            collectionMap.put("collection1", Arrays.asList(6,5,4,3,2,1));
+            collectionMap.put("collection2", Arrays.asList(8,9,10,11,12,13));
+            randomCollectionMap.put("randomCollectionMap", collectionMap);
+*/
+            HashMap<String, Integer[]> arrayMap = new HashMap<>();
+            arrayMap.put("array1", new Integer[]{6,5,4,3,2,1});
+            arrayMap.put("array2", new Integer[]{8,9,10,11,12,13});
+            randomArrayMap.put("randomArrayMap", arrayMap);
+
+
+
+
+            return this;
+
+        }
+
+    }
+
+
+    @Test
+    public void mapTest() {
+
+
+        CSONObject csonObject =  CSONSerializer.toCSONObject(new MapTestClass().init());
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+        /*
+        assertEquals(1, csonObject.get("key1"));
+        assertEquals(2, csonObject.get("key2"));
+        assertEquals(3, csonObject.get("key3"));
+        assertEquals(4, csonObject.get("key4"));
+
+
+        assertEquals("1", csonObject.get("str1"));
+        assertEquals("2", csonObject.get("str2"));
+        assertEquals("3", csonObject.get("str3"));
+        assertEquals("4", csonObject.get("str4"));
+
+        assertEquals(true, csonObject.getObject("bool1").get("true"));
+
+        assertEquals(6, csonObject.getObject("randomCollectionMap").getArray("collection1").getInteger(0) );
+        assertEquals(11, csonObject.getObject("randomCollectionMap").getArray("collection2").getInteger(3) );
+*/
+        assertEquals(6, csonObject.getObject("randomArrayMap").getArray("array1").getInteger(0) );
+        assertEquals(11, csonObject.getObject("randomArrayMap").getArray("array2").getInteger(3) );
+
+
+
 
 
 

@@ -30,7 +30,7 @@ public class TypeInfo {
 
     public static TypeInfo create(Class<?> type) {
         Cson cson = type.getAnnotation(Cson.class);
-        if(cson == null) {
+        if(cson == null && !Collection.class.isAssignableFrom(type) & !Map.class.isAssignableFrom(type)) {
             throw  new InvalidSerializeException("Class " + type.getName() + " is not annotated with @Cson");
         }
         TypeInfo typeInfo = new TypeInfo();

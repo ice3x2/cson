@@ -56,7 +56,6 @@ public class FieldInfo implements Comparable {
             ComponentInfo componentInfo = new ComponentInfo();
             ParameterizedType integerListType = null;
 
-            Class<?> componentClass = null;
             if (type instanceof ParameterizedType) {
                 integerListType = (ParameterizedType)type;
                 Type[] actualType = integerListType.getActualTypeArguments();
@@ -69,31 +68,67 @@ public class FieldInfo implements Comparable {
                 Type rawType = integerListType.getRawType();
                 componentInfo.collectionConstructor = constructorOfMap((Class<?>) rawType);
                 componentInfo.collectionConstructor.setAccessible(true);
-                if(!(keyType instanceof ParameterizedType && ((Class<?>)keyType).isAssignableFrom(CharSequence.class) )) {
-                    //TODO key 값은 항상 문자열이어야함.
+
+                try {
+                    Constructor<?> constructor = ((Class<?>) keyType).getDeclaredConstructor(String.class);
+                    constructor.setAccessible(true);
+                    componentInfo.keyConstructor = constructor;
+                } catch (NoSuchMethodException e) {
+                    //TODO key 값은 문자열이 인자인 생성자가 있어야함.
                     isError = true;
                     return;
                 }
-                componentClass = ((Class<?>) keyType);
-            } else {
-                componentClass = Object.class;
-            }
-            componentInfo.type = DataType.getDataType(componentClass);
-            if(DataType.isObjectType(componentInfo.type)) {
-                //TODO 생성자가 없을 경우 예외를 발생시켜야함.
-                componentInfo.componentConstructor = componentClass.getDeclaredConstructor();
-                componentInfo.componentConstructor.setAccessible(true);
-            }
 
-            this.componentInfos.add(componentInfo);
-            if (!(componentClass instanceof Object) && componentInfo.type < 0) {
+
+                if(valueType instanceof ParameterizedType) {
+                    if (Collection.class.isAssignableFrom((Class<?>) ((ParameterizedType) valueType).getRawType())){
+                        componentInfo.type = DataType.TYPE_COLLECTION;
+                        componentInfos.add(componentInfo);
+                        readComponentType(valueType);
+                        return;
+                    }
+                    else if (Map.class.isAssignableFrom((Class<?>) ((ParameterizedType) valueType).getRawType())){
+                        componentInfo.type = DataType.TYPE_MAP;
+                        componentInfos.add(componentInfo);
+                        readMapType(valueType);
+                        return;
+                    }
+                }
+
+
+                componentInfo.type = DataType.getDataType((Class<?>)valueType);
+                if(DataType.TYPE_ARRAY == componentInfo.type) {
+                    Class<?> componentClass = ((Class<?>)valueType).getComponentType();
+                    componentInfo.type = DataType.getDataType(componentClass);
+                    componentInfo.isArray = true;
+                    componentInfo.isPrimitive = componentClass.isPrimitive();
+                    if (componentInfo.type < 0) {
+                        isError = true;
+                    }
+                    componentInfos.add(componentInfo);
+                }
+                else if(!DataType.isJsonDefaultType(componentInfo.type)) {
+                    componentInfo.componentConstructor = ((Class<?>) valueType).getDeclaredConstructor();
+                    componentInfo.componentConstructor.setAccessible(true);
+                }
+
+
+
+                this.componentInfos.add(componentInfo);
+
+                if(DataType.TYPE_COLLECTION ==  componentInfo.type) {
+                    readComponentType(valueType);
+                } else if(DataType.TYPE_MAP ==  componentInfo.type) {
+                    readMapType(valueType);
+                }
+
+
+            } else {
+                //TODO 예외처리 필요 (Map이 아닌 경우)
                 isError = true;
                 return;
             }
 
-            if(DataType.TYPE_COLLECTION ==  componentInfo.type) {
-                readComponentType(componentClass);
-            }
         } catch (Exception e) {
             // TODO 어딘가에서 에러를 처리해야함
             isError = true;
@@ -131,15 +166,18 @@ public class FieldInfo implements Comparable {
                 componentInfo.componentConstructor.setAccessible(true);
             }
 
-            this.componentInfos.add(componentInfo);
             if (!(componentClass instanceof Object) && componentInfo.type < 0) {
                 isError = true;
                 return;
             }
+            this.componentInfos.add(componentInfo);
 
             if(DataType.TYPE_COLLECTION ==  componentInfo.type) {
                 readComponentType(componentClass);
+            } else if(DataType.TYPE_MAP ==  componentInfo.type) {
+                readMapType(componentClass);
             }
+
         } catch (Exception e) {
             // TODO 어딘가에서 에러를 처리해야함
             isError = true;
@@ -262,6 +300,10 @@ public class FieldInfo implements Comparable {
     }
 
 
+    public boolean isNestedCollection() {
+        return componentInfos.size() > 1;
+    }
+
     public int componentInfoSize() {
         return componentInfos.size();
     }
@@ -303,9 +345,25 @@ public class FieldInfo implements Comparable {
     }
 
     protected class ComponentInfo {
+
         private Constructor<?> collectionConstructor;
         private Constructor<?> componentConstructor;
+
+        private Constructor<?> keyConstructor;
+
+
+
+        boolean isPrimitive = false;
+        boolean isArray = false;
         byte type;
+
+
+        public boolean isPrimitive() {
+            return isPrimitive;
+        }
+        public boolean isArray() {
+            return isArray;
+        }
 
         public Constructor<?> getCollectionConstructor() {
             return collectionConstructor;
