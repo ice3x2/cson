@@ -5,7 +5,9 @@ import com.snoworca.cson.CSONObject;
 
 import javax.swing.text.html.CSS;
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -124,6 +126,14 @@ public class CSONSerializer {
             }  else if(componentInfo.isArray()) {
                 CSONArray subArray = arrayObjectToCSONArray(componentInfo, value);
                 csonObject.put(key.toString(), subArray);
+            } else {
+                try {
+                    CSONObject subObject = CSONSerializer.toCSONObject(value);
+                    csonObject.put(key.toString(), subObject);
+                } catch (StackOverflowError e) {
+                    // todo 메시지 출력
+                    throw new RuntimeException(e);
+                }
             }
 
 
@@ -161,6 +171,12 @@ public class CSONSerializer {
                 Collection<?> collectionValue = (Collection<?>)value;
                 CSONArray csonArrayValue = collectionToCSONArray(fieldInfo, collectionValue, index + 1);
                 csonArrayValue.put(csonArrayValue);
+            }
+        } else if(componentType == DataType.TYPE_MAP) {
+            for(Object value : collectionObject) {
+                CSONObject csonObject = new CSONObject();
+                injectFromMap(fieldInfo, (Map<?, ?>)value, csonObject, index + 1);
+                csonArray.put(csonObject);
             }
         }
         else {

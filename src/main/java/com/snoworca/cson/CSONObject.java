@@ -424,7 +424,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 		if(obj instanceof CSONObject) {
 			return (CSONObject)obj;
 		}
-		throw new CSONIndexNotFoundException();
+		throw new CSONIndexNotFoundException(key);
 	}
 
 	@Override

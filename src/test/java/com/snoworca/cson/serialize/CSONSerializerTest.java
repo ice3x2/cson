@@ -332,24 +332,67 @@ CSONSerializerTest  {
 
 
     @Cson
+    public static class ChildMap {
+        @Value
+        int value = 1000;
+        @Value
+        public Map<String, MapTestClass> childMap = new HashMap<>();
+
+
+    }
+
+
+    @Cson
+    public static class Key {
+
+        @Value
+        public String key;
+        public Key(String key) {
+            this.key = key;
+        }
+
+        public Key() {
+        }
+
+        @Override
+        public String toString() {
+            return key;
+        }
+    }
+
+
+    @Cson
     public static class MapTestClass {
-       /* @Value
-        Map<String, Integer> integerMap;
+
+        /* @Value
+         Map<String, Integer> integerMap;
+
+         @Value
+         Map<String, String> stringMap;
+
+
+         @Value
+         Map<String, Map<String, Boolean>> stringBooleanMap;
+
+         @Value
+         Map<String, Map<String, Collection<Integer>>> randomCollectionMap = new HashMap<>();
+
+         @Value
+         Map<String, Map<String, Integer[]>> randomArrayMap = new HashMap<>();
+
+         @Value
+         Map<String, Map<String, Map<String, String>>> mapmapmap = new HashMap<>();
+
+         @Value
+        Map<Key, String> keyMap = new HashMap<>();
+
 
         @Value
-        Map<String, String> stringMap;
-
-
-        @Value
-        Map<String, Map<String, Boolean>> stringBooleanMap;
+        ChildMap childMap = new ChildMap();
+*/
 
         @Value
-        Map<String, Map<String, Collection<Integer>>> randomCollectionMap = new HashMap<>();
-
-        @Value
-        Map<String, Map<String, Integer[]>> randomArrayMap = new HashMap<>();*/
-
-
+        ArrayList<Map<String, Key>> mapInList = new ArrayList<>();
 
 
         public MapTestClass init() {
@@ -377,14 +420,45 @@ CSONSerializerTest  {
             collectionMap.put("collection1", Arrays.asList(6,5,4,3,2,1));
             collectionMap.put("collection2", Arrays.asList(8,9,10,11,12,13));
             randomCollectionMap.put("randomCollectionMap", collectionMap);
-*/
+
             HashMap<String, Integer[]> arrayMap = new HashMap<>();
             arrayMap.put("array1", new Integer[]{6,5,4,3,2,1});
             arrayMap.put("array2", new Integer[]{8,9,10,11,12,13});
             randomArrayMap.put("randomArrayMap", arrayMap);
 
+            mapmapmap = new HashMap<>();
+            HashMap<String, Map<String, String>> mapmap = new HashMap<>();
+            HashMap<String, String> map = new HashMap<>();
+            map.put("key1", "value1");
+            map.put("key2", "value2");
+            map.put("key3", "value3");
+            map.put("key4", "value4");
+            mapmap.put("map1", map);
+            mapmap.put("map2", map);
+            mapmap.put("map3", map);
+            mapmap.put("map4", map);
+            mapmapmap.put("mapmapmap", mapmap);
 
 
+
+            keyMap.put(new Key("key1"), "value1");
+            keyMap.put(new Key("key2"), "value2");
+            keyMap.put(new Key("key3"), "value3");
+
+            childMap.childMap.put("child1", new MapTestClass());
+*/
+
+            Map<String, Key> map = new HashMap<>();
+            map.put("key1", new Key("key1"));
+            map.put("key2", new Key("key2"));
+            map.put("key3", new Key("key3"));
+            mapInList.add(map);
+
+            map = new HashMap<>();
+            map.put("key4", new Key("key4"));
+            map.put("key5", new Key("key5"));
+            map.put("key6", new Key("key6"));
+            mapInList.add(map);
 
             return this;
 
@@ -415,10 +489,27 @@ CSONSerializerTest  {
 
         assertEquals(6, csonObject.getObject("randomCollectionMap").getArray("collection1").getInteger(0) );
         assertEquals(11, csonObject.getObject("randomCollectionMap").getArray("collection2").getInteger(3) );
-*/
+
         assertEquals(6, csonObject.getObject("randomArrayMap").getArray("array1").getInteger(0) );
         assertEquals(11, csonObject.getObject("randomArrayMap").getArray("array2").getInteger(3) );
 
+
+        assertEquals("value1", csonObject.getObject("mapmapmap").getObject("map1").get("key1") );
+        assertEquals("value2", csonObject.getObject("mapmapmap").getObject("map2").get("key2") );
+        assertEquals("value3", csonObject.getObject("mapmapmap").getObject("map3").get("key3") );
+        assertEquals("value4", csonObject.getObject("mapmapmap").getObject("map4").get("key4") );
+
+
+        assertEquals("value1", csonObject.getString("key1"));
+        assertEquals("value2", csonObject.getString("key2"));
+        assertEquals("value3", csonObject.getString("key3"));
+
+        assertEquals(1000, csonObject.getObject("child1").getObject("childMap").getInteger("value") );
+
+         */
+
+        assertEquals("key1", csonObject.getArray("mapInList").getObject(0).getObject("key1").getString("key"));
+        assertEquals("key6", csonObject.getArray("mapInList").getObject(1).getObject("key6").getString("key"));
 
 
 

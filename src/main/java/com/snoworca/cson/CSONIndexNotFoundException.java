@@ -1,8 +1,16 @@
 package com.snoworca.cson;
 
 public class CSONIndexNotFoundException extends RuntimeException {
+
+	String message;
+
 	CSONIndexNotFoundException() {
 		super();
+	}
+
+
+	CSONIndexNotFoundException(String key) {
+		super("'" + key + "' is not found.");
 	}
 	
 	CSONIndexNotFoundException(Exception cause) {

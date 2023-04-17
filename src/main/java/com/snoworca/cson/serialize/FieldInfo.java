@@ -81,18 +81,8 @@ public class FieldInfo implements Comparable {
 
 
                 if(valueType instanceof ParameterizedType) {
-                    if (Collection.class.isAssignableFrom((Class<?>) ((ParameterizedType) valueType).getRawType())){
-                        componentInfo.type = DataType.TYPE_COLLECTION;
-                        componentInfos.add(componentInfo);
-                        readComponentType(valueType);
-                        return;
-                    }
-                    else if (Map.class.isAssignableFrom((Class<?>) ((ParameterizedType) valueType).getRawType())){
-                        componentInfo.type = DataType.TYPE_MAP;
-                        componentInfos.add(componentInfo);
-                        readMapType(valueType);
-                        return;
-                    }
+                    putCollectionType((ParameterizedType) valueType,componentInfo);
+                    return;
                 }
 
 
@@ -136,6 +126,19 @@ public class FieldInfo implements Comparable {
     }
 
 
+    private void putCollectionType(ParameterizedType valueType, ComponentInfo componentInfo) {
+        if (Collection.class.isAssignableFrom((Class<?>) valueType.getRawType())){
+            componentInfo.type = DataType.TYPE_COLLECTION;
+            componentInfos.add(componentInfo);
+            readComponentType(valueType);
+        }
+        else if (Map.class.isAssignableFrom((Class<?>) (valueType).getRawType())){
+            componentInfo.type = DataType.TYPE_MAP;
+            componentInfos.add(componentInfo);
+            readMapType(valueType);
+        }
+    }
+
 
     private void readComponentType(Type type) {
         try {
@@ -149,10 +152,8 @@ public class FieldInfo implements Comparable {
                 Type rawType = integerListType.getRawType();
                 componentInfo.collectionConstructor = constructorOfCollection((Class<?>) rawType);
                 componentInfo.collectionConstructor.setAccessible(true);
-                if(actualType instanceof ParameterizedType && Collection.class.isAssignableFrom((Class<?>)((ParameterizedType)actualType).getRawType())) {
-                    componentInfo.type = DataType.TYPE_COLLECTION;
-                    componentInfos.add(componentInfo);
-                    readComponentType(actualType);
+                if(actualType instanceof ParameterizedType) {
+                    putCollectionType((ParameterizedType) actualType,componentInfo);
                     return;
                 }
                 componentClass = ((Class<?>) actualType);
