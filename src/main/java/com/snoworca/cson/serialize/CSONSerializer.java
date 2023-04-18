@@ -67,6 +67,10 @@ public class CSONSerializer {
                    injectCSONValue(fieldInfo,object, csonObject);
                    continue;
                }
+               if(fieldInfo.isByteArrayToCSONArray()) {
+                   injectCSONArray(fieldInfo,object, csonObject);
+                     continue;
+               }
                injectCSONArray(fieldInfo, object, csonObject);
            }
            else if(fieldInfo.isCollection()) {
@@ -185,7 +189,8 @@ public class CSONSerializer {
 
 
     private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj) {
-        byte type = info.getType();
+        FieldInfo componentType = info.getComponentInfo(0);
+        byte type = componentType.getType(); //info.getType();
 
         CSONArray csonArray = new CSONArray();
         if(info.isPrimitive()) {
