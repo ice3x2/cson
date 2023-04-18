@@ -25,6 +25,17 @@ public class TypeInfoRackTest {
         public int b;
         @Value
         public int c;
+
+        @Value("ValueC")
+        public int valueC;
+
+
+        @Value("key1.key2.key3.pathKey")
+        public int pathKey;
+
+        @Value("key1.key2.key3.pathArrayKey[0]")
+        public int pathArrayKey;
+
     }
 
     @Cson
@@ -146,6 +157,21 @@ public class TypeInfoRackTest {
         }
     }
 
+
+    @Test
+    public void defaultValueTest() {
+        TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(ClassA.class);
+        FieldInfo fieldInfo = typeInfo.getFieldInfo("ValueC");
+        assertEquals("valueC", fieldInfo.getField().getName());
+    }
+
+
+    @Test
+    public void pathKeyTest() {
+        TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(ClassA.class);
+        FieldInfo fieldInfo = typeInfo.getFieldInfo("pathKey");
+        assertEquals("pathKey", fieldInfo.getField().getName());
+    }
 
 
 }

@@ -93,7 +93,7 @@ public class CSONSerializer {
                 csonObject.put(fieldInfo.getName(), null);
                 return;
             }
-            CSONArray csonArray =  fieldInfo.isArray() ? arrayObjectToCSONArray(fieldInfo, value) :
+            CSONArray csonArray =  fieldInfo.isArray() ? arrayObjectToCSONArray(fieldInfo, value, 0) :
                                    fieldInfo.isCollection() ? collectionToCSONArray(fieldInfo, (Collection<?>)value, 0) : null;
             csonObject.put(fieldInfo.getName(), csonArray);
             return;
@@ -126,7 +126,7 @@ public class CSONSerializer {
                 csonObject.put(key.toString(), subArray);
                 --index;
             }  else if(componentInfo.isArray()) {
-                CSONArray subArray = arrayObjectToCSONArray(componentInfo,value);
+                CSONArray subArray = arrayObjectToCSONArray(componentInfo,value, index);
                 csonObject.put(key.toString(), subArray);
             } else {
                 try {
@@ -188,8 +188,8 @@ public class CSONSerializer {
 
 
 
-    private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj) {
-        FieldInfo componentType = info.getComponentInfo(0);
+    private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj, int index) {
+        FieldInfo componentType = info.getComponentInfo(index);
         byte type = componentType.getType(); //info.getType();
 
         CSONArray csonArray = new CSONArray();

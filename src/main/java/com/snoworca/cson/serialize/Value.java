@@ -9,6 +9,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Value {
 
+
+    String value() default "";
+
     String key() default "";
     boolean byteArrayToCSONArray() default false;
 

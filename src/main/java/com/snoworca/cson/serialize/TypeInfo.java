@@ -48,7 +48,8 @@ public class TypeInfo {
             if(valueAnnotation == null) continue;
 
             String keyName = field.getName();
-            String keyInAnnotation = valueAnnotation.key();
+            String keyInAnnotation = valueAnnotation.value();
+            if(keyInAnnotation == null || keyInAnnotation.isEmpty()) keyInAnnotation = valueAnnotation.key();
             if(!keyInAnnotation.isEmpty()) {
                 keyName = keyInAnnotation;
             }
