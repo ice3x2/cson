@@ -100,9 +100,11 @@ public class FieldInfo implements Comparable {
                 else if(!DataType.isJsonDefaultType(componentInfo.type)) {
                     componentInfo.componentConstructor = ((Class<?>) valueType).getDeclaredConstructor();
                     componentInfo.componentConstructor.setAccessible(true);
+                } else {
+                    componentInfo.isPrimitive = ((Class<?>) valueType).isPrimitive();
+
+
                 }
-
-
 
                 this.componentInfos.add(componentInfo);
 
@@ -308,6 +310,9 @@ public class FieldInfo implements Comparable {
     public int componentInfoSize() {
         return componentInfos.size();
     }
+
+
+
 
     public ComponentInfo getComponentInfo(int index) {
         return componentInfos.get(index);
