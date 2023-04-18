@@ -101,30 +101,34 @@ public class CSONSerializer {
     }
 
 
-    public static void injectFromMap(FieldInfo fieldInfo,Map<?, ?> map, CSONObject csonObject,int index) {
+    public static void injectFromMap(FieldInfo info, Map<?, ?> map, CSONObject csonObject, int index) {
+        FieldInfo.ComponentInfo componentInfo = info.getComponentInfo(index);
+        injectFromMap(componentInfo, info.isNestedCollection(), map, csonObject, index);
+
+    }
+
+    public static void injectFromMap(FieldInfo.ComponentInfo componentInfo,boolean isNestedCollection, Map<?, ?> map, CSONObject csonObject, int index) {
         Set<? extends Map.Entry<?, ?>> entrySet = map.entrySet();
-        FieldInfo.ComponentInfo componentInfo = fieldInfo.getComponentInfo(index);
         byte componentType = componentInfo.getType();
 
         for(Map.Entry<?, ?> entry : entrySet) {
             Object key = entry.getKey();
             Object value = entry.getValue();
-            byte type = fieldInfo.getType();
             if(DataType.isJsonDefaultType(componentType) && !componentInfo.isArray())  {
                 csonObject.put(key.toString(), value);
-            } else if(value instanceof Map && fieldInfo.isNestedCollection())  {
+            } else if(value instanceof Map && isNestedCollection)  {
                 CSONObject subObject = new CSONObject();
                 ++index;
-                injectFromMap(fieldInfo, (Map<?, ?>)value, subObject, index);
+                injectFromMap(componentInfo,isNestedCollection, (Map<?, ?>)value, subObject, index);
                 csonObject.put(key.toString(), subObject);
                 --index;
-            } else if(value instanceof Collection && fieldInfo.isNestedCollection()) {
+            } else if(value instanceof Collection && isNestedCollection) {
                  ++index;
-                CSONArray subArray = collectionToCSONArray(fieldInfo, (Collection<?>)value, index);
+                CSONArray subArray = collectionToCSONArray(componentInfo,isNestedCollection, (Collection<?>)value, index);
                 csonObject.put(key.toString(), subArray);
                 --index;
             }  else if(componentInfo.isArray()) {
-                CSONArray subArray = arrayObjectToCSONArray(componentInfo, value);
+                CSONArray subArray = arrayObjectToCSONArray(componentInfo,isNestedCollection, value);
                 csonObject.put(key.toString(), subArray);
             } else {
                 try {
@@ -141,11 +145,15 @@ public class CSONSerializer {
     }
 
 
-
-
     private static CSONArray collectionToCSONArray(FieldInfo fieldInfo,Collection<?> collectionObject,int index) {
-        CSONArray csonArray = new CSONArray();
         FieldInfo.ComponentInfo componentInfo = fieldInfo.getComponentInfo(index);
+        boolean isNestedCollection = fieldInfo.isNestedCollection();
+        return collectionToCSONArray(componentInfo, isNestedCollection, collectionObject, index);
+    }
+
+    private static CSONArray collectionToCSONArray(FieldInfo.ComponentInfo componentInfo,boolean isNestedCollection, Collection<?> collectionObject, int index) {
+        CSONArray csonArray = new CSONArray();
+
         byte componentType = componentInfo.getType();
         if(componentType == DataType.TYPE_CSON_OBJECT) {
             for(Object value : collectionObject) {
@@ -169,13 +177,13 @@ public class CSONSerializer {
         } else if(componentType == DataType.TYPE_COLLECTION) {
             for(Object value : collectionObject) {
                 Collection<?> collectionValue = (Collection<?>)value;
-                CSONArray csonArrayValue = collectionToCSONArray(fieldInfo, collectionValue, index + 1);
+                CSONArray csonArrayValue = collectionToCSONArray(componentInfo,isNestedCollection, collectionValue, index + 1);
                 csonArrayValue.put(csonArrayValue);
             }
         } else if(componentType == DataType.TYPE_MAP) {
             for(Object value : collectionObject) {
                 CSONObject csonObject = new CSONObject();
-                injectFromMap(fieldInfo, (Map<?, ?>)value, csonObject, index + 1);
+                injectFromMap(componentInfo,isNestedCollection, (Map<?, ?>)value, csonObject, index + 1);
                 csonArray.put(csonObject);
             }
         }
@@ -189,10 +197,11 @@ public class CSONSerializer {
 
 
     private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj) {
-        return arrayObjectToCSONArray(info.getComponentInfo(0), arrayObj);
+        FieldInfo.ComponentInfo componentInfo = info.getComponentInfo(0);
+        return arrayObjectToCSONArray(componentInfo,info.isNestedCollection(), arrayObj);
     }
 
-    private static CSONArray arrayObjectToCSONArray(FieldInfo.ComponentInfo info, Object arrayObj) {
+    private static CSONArray arrayObjectToCSONArray(FieldInfo.ComponentInfo info,boolean isNestedCollection, Object arrayObj) {
         byte type = info.getType();
         CSONArray csonArray = new CSONArray();
         if(info.isPrimitive()) {
@@ -294,6 +303,19 @@ public class CSONSerializer {
                     } else {
                         CSONObject value = CSONSerializer.toCSONObject(obj);
                         csonArray.put(value);
+                    }
+                }
+            }
+            else if(type == DataType.TYPE_MAP) {
+                int length = Array.getLength(arrayObj);
+                for(int i = 0; i < length; i++) {
+                    Object obj = Array.get(arrayObj,i);
+                    if(obj == null) {
+                        csonArray.put(null);
+                    } else {
+                        CSONObject csonObject = new CSONObject();
+                        injectFromMap(info,isNestedCollection, (Map)obj, csonObject, i);
+                        csonArray.put(csonObject);
                     }
                 }
             }

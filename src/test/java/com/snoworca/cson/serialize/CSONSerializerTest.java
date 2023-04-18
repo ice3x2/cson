@@ -395,6 +395,10 @@ CSONSerializerTest  {
         ArrayList<Map<String, Key>> mapInList = new ArrayList<>();
 
 
+        @Value
+        Map<String, Key>[] arrayMap = new Map[10];
+
+
         public MapTestClass init() {
             /*
             integerMap = new HashMap<>();
@@ -439,8 +443,6 @@ CSONSerializerTest  {
             mapmap.put("map4", map);
             mapmapmap.put("mapmapmap", mapmap);
 
-
-
             keyMap.put(new Key("key1"), "value1");
             keyMap.put(new Key("key2"), "value2");
             keyMap.put(new Key("key3"), "value3");
@@ -459,6 +461,13 @@ CSONSerializerTest  {
             map.put("key5", new Key("key5"));
             map.put("key6", new Key("key6"));
             mapInList.add(map);
+
+            for(int i = 0; i < arrayMap.length; ++i) {
+                map = new HashMap<>();
+                map.put("key" + i, new Key("key" + i));
+                arrayMap[i] = map;
+            }
+
 
             return this;
 
@@ -506,11 +515,13 @@ CSONSerializerTest  {
 
         assertEquals(1000, csonObject.getObject("child1").getObject("childMap").getInteger("value") );
 
-         */
-
         assertEquals("key1", csonObject.getArray("mapInList").getObject(0).getObject("key1").getString("key"));
         assertEquals("key6", csonObject.getArray("mapInList").getObject(1).getObject("key6").getString("key"));
 
+         */
+
+
+        assertEquals("key1", csonObject.getArray("arrayMap").getObject(0).getObject("key0").getString("key0"));
 
 
 
