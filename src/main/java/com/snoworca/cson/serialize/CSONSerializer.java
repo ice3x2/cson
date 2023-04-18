@@ -23,7 +23,7 @@ public class CSONSerializer {
     private static CSONObject toCSONObject(Object object, int index) {
         TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(object.getClass());
         CSONObject csonObject = new CSONObject();
-        serialize(object, typeInfo, csonObject, index);
+        serialize(object, typeInfo, csonObject);
         return csonObject;
     }
 
@@ -54,15 +54,15 @@ public class CSONSerializer {
         return csonArray;
     }
 
-    private static void serialize(Object object, TypeInfo typeInfo, CSONObject csonObject, int index) {
+    private static void serialize(Object object, TypeInfo typeInfo, CSONObject csonObject) {
         ArrayList<FieldInfo> fieldInfos = typeInfo.getFieldInfos();
         for (FieldInfo fieldInfo : fieldInfos) {
            if(fieldInfo.isError()) continue;
-           else if(fieldInfo.isCSONObject()) {
-               injectCSONObject(fieldInfo,object, csonObject, index);
+           else if(fieldInfo.isCSONObject() || fieldInfo.isMap()) {
+               injectCSONObject(fieldInfo,object, csonObject);
            }
            else if(fieldInfo.isArray()) {
-               FieldInfo.ComponentInfo componentInfo = fieldInfo.getComponentInfo(0);
+               FieldInfo componentInfo = fieldInfo.getComponentInfo(0);
                if(componentInfo.getType() == DataType.TYPE_BYTE && !fieldInfo.isByteArrayToCSONArray()) {
                    injectCSONValue(fieldInfo,object, csonObject);
                    continue;
@@ -71,9 +71,6 @@ public class CSONSerializer {
            }
            else if(fieldInfo.isCollection()) {
                injectCSONArray(fieldInfo, object, csonObject);
-           }
-           else if(fieldInfo.isMap()) {
-                injectCSONObject(fieldInfo, object, csonObject, index);
            }
            else {
                injectCSONValue(fieldInfo,object, csonObject);
@@ -101,34 +98,31 @@ public class CSONSerializer {
     }
 
 
-    public static void injectFromMap(FieldInfo info, Map<?, ?> map, CSONObject csonObject, int index) {
-        FieldInfo.ComponentInfo componentInfo = info.getComponentInfo(index);
-        injectFromMap(componentInfo, info.isNestedCollection(), map, csonObject, index);
 
-    }
-
-    public static void injectFromMap(FieldInfo.ComponentInfo componentInfo,boolean isNestedCollection, Map<?, ?> map, CSONObject csonObject, int index) {
+    public static void injectFromMap(FieldInfo fieldInfo, Map<?, ?> map, CSONObject csonObject, int index) {
         Set<? extends Map.Entry<?, ?>> entrySet = map.entrySet();
-        byte componentType = componentInfo.getType();
-
+        byte fieldType = fieldInfo.getType();
+        boolean isNestedCollection = fieldInfo.isNestedCollection();
+        FieldInfo componentInfo = fieldInfo.getComponentInfo(index);
+        fieldType = componentInfo.getType();
         for(Map.Entry<?, ?> entry : entrySet) {
             Object key = entry.getKey();
             Object value = entry.getValue();
-            if(DataType.isJsonDefaultType(componentType) && !componentInfo.isArray())  {
+            if(DataType.isJsonDefaultType(fieldType) && !componentInfo.isArray())  {
                 csonObject.put(key.toString(), value);
             } else if(value instanceof Map && isNestedCollection)  {
                 CSONObject subObject = new CSONObject();
                 ++index;
-                injectFromMap(componentInfo,isNestedCollection, (Map<?, ?>)value, subObject, index);
+                injectFromMap(componentInfo, (Map<?, ?>)value, subObject, index);
                 csonObject.put(key.toString(), subObject);
                 --index;
             } else if(value instanceof Collection && isNestedCollection) {
                  ++index;
-                CSONArray subArray = collectionToCSONArray(componentInfo,isNestedCollection, (Collection<?>)value, index);
+                CSONArray subArray = collectionToCSONArray(componentInfo,(Collection<?>)value, index);
                 csonObject.put(key.toString(), subArray);
                 --index;
             }  else if(componentInfo.isArray()) {
-                CSONArray subArray = arrayObjectToCSONArray(componentInfo,isNestedCollection, value);
+                CSONArray subArray = arrayObjectToCSONArray(componentInfo,value);
                 csonObject.put(key.toString(), subArray);
             } else {
                 try {
@@ -144,16 +138,9 @@ public class CSONSerializer {
         }
     }
 
-
-    private static CSONArray collectionToCSONArray(FieldInfo fieldInfo,Collection<?> collectionObject,int index) {
-        FieldInfo.ComponentInfo componentInfo = fieldInfo.getComponentInfo(index);
-        boolean isNestedCollection = fieldInfo.isNestedCollection();
-        return collectionToCSONArray(componentInfo, isNestedCollection, collectionObject, index);
-    }
-
-    private static CSONArray collectionToCSONArray(FieldInfo.ComponentInfo componentInfo,boolean isNestedCollection, Collection<?> collectionObject, int index) {
+    private static CSONArray collectionToCSONArray(FieldInfo fieldInfo,Collection<?> collectionObject, int index) {
         CSONArray csonArray = new CSONArray();
-
+        FieldInfo componentInfo = fieldInfo.getComponentInfo(index);
         byte componentType = componentInfo.getType();
         if(componentType == DataType.TYPE_CSON_OBJECT) {
             for(Object value : collectionObject) {
@@ -177,13 +164,13 @@ public class CSONSerializer {
         } else if(componentType == DataType.TYPE_COLLECTION) {
             for(Object value : collectionObject) {
                 Collection<?> collectionValue = (Collection<?>)value;
-                CSONArray csonArrayValue = collectionToCSONArray(componentInfo,isNestedCollection, collectionValue, index + 1);
+                CSONArray csonArrayValue = collectionToCSONArray(componentInfo, collectionValue, index + 1);
                 csonArrayValue.put(csonArrayValue);
             }
         } else if(componentType == DataType.TYPE_MAP) {
             for(Object value : collectionObject) {
                 CSONObject csonObject = new CSONObject();
-                injectFromMap(componentInfo,isNestedCollection, (Map<?, ?>)value, csonObject, index + 1);
+                injectFromMap(componentInfo, (Map<?, ?>)value, csonObject, index + 1);
                 csonArray.put(csonObject);
             }
         }
@@ -196,13 +183,10 @@ public class CSONSerializer {
     }
 
 
-    private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj) {
-        FieldInfo.ComponentInfo componentInfo = info.getComponentInfo(0);
-        return arrayObjectToCSONArray(componentInfo,info.isNestedCollection(), arrayObj);
-    }
 
-    private static CSONArray arrayObjectToCSONArray(FieldInfo.ComponentInfo info,boolean isNestedCollection, Object arrayObj) {
+    private static CSONArray arrayObjectToCSONArray(FieldInfo info, Object arrayObj) {
         byte type = info.getType();
+
         CSONArray csonArray = new CSONArray();
         if(info.isPrimitive()) {
             if (type == DataType.TYPE_BYTE) {
@@ -314,7 +298,7 @@ public class CSONSerializer {
                         csonArray.put(null);
                     } else {
                         CSONObject csonObject = new CSONObject();
-                        injectFromMap(info,isNestedCollection, (Map)obj, csonObject, i);
+                        injectFromMap(info,(Map)obj, csonObject, i);
                         csonArray.put(csonObject);
                     }
                 }
@@ -324,14 +308,14 @@ public class CSONSerializer {
     }
 
 
-    private static void injectCSONObject(FieldInfo fieldInfo,Object object, CSONObject csonObject, int index) {
+    private static void injectCSONObject(FieldInfo fieldInfo,Object object, CSONObject csonObject) {
         Field field = fieldInfo.getField();
         Object value = null;
         try {
             value = field.get(object);
             if(value != null) {
                 if(value instanceof Map) {
-                    injectFromMap(fieldInfo,(Map)value, csonObject, index);
+                    injectFromMap(fieldInfo,(Map)value, csonObject, 0);
                 } else {
                     value = CSONSerializer.toCSONObject(value);
                 }

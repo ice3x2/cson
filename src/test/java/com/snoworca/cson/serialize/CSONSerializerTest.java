@@ -363,17 +363,16 @@ CSONSerializerTest  {
     @Cson
     public static class MapTestClass {
 
-        /*@Value
+        @Value
          Map<String, Integer> integerMap;
 
          @Value
-         Map<String, String> stringMap;*/
+         Map<String, String> stringMap;
 
 
          @Value
          Map<String, Map<String, Boolean>> stringBooleanMap;
 
-         /*
 
          @Value
          Map<String, Map<String, Collection<Integer>>> randomCollectionMap = new HashMap<>();
@@ -395,31 +394,28 @@ CSONSerializerTest  {
         ArrayList<Map<String, Key>> mapInList = new ArrayList<>();
 
 
-        @Value(key = "mapInArray")
-        Map<String, Key>[] mapArray = new Map[10];*/
-
 
         public MapTestClass init() {
-        /*
+
             integerMap = new HashMap<>();
-            integerMap.put("key1", 1);
-            integerMap.put("key2", 2);
-            integerMap.put("key3", 3);
-            integerMap.put("key4", 4);
+            integerMap.put("v1", 1);
+            integerMap.put("v2", 2);
+            integerMap.put("v3", 3);
+            integerMap.put("v4", 4);
 
             stringMap = new HashMap<>();
             stringMap.put("str1", "1");
             stringMap.put("str2", "2");
             stringMap.put("str3", "3");
             stringMap.put("str4", "4");
-*/
+
 
             stringBooleanMap = new LinkedHashMap<>();
             Map<String, Boolean> boolMap = new HashMap<>();
             boolMap.put("true", true);
             boolMap.put("false", false);
             stringBooleanMap.put("bool1", boolMap);
-            /*
+
 
             HashMap<String, Collection<Integer>> collectionMap = new HashMap<>();
             collectionMap.put("collection1", Arrays.asList(6,5,4,3,2,1));
@@ -466,13 +462,6 @@ CSONSerializerTest  {
 
 
 
-            for(int i = 0; i < mapArray.length; ++i) {
-                HashMap<String, Key> amap = new HashMap<>();
-                amap.put("key" + i, new Key("key" + i));
-                mapArray[i] = amap;
-            }
-*/
-
             return this;
 
         }
@@ -487,10 +476,10 @@ CSONSerializerTest  {
         CSONObject csonObject =  CSONSerializer.toCSONObject(new MapTestClass().init());
         System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
 
-        assertEquals(1, csonObject.get("key1"));
-        assertEquals(2, csonObject.get("key2"));
-        assertEquals(3, csonObject.get("key3"));
-        assertEquals(4, csonObject.get("key4"));
+        assertEquals(1, csonObject.get("v1"));
+        assertEquals(2, csonObject.get("v2"));
+        assertEquals(3, csonObject.get("v3"));
+        assertEquals(4, csonObject.get("v4"));
 
 
         assertEquals("1", csonObject.get("str1"));
@@ -517,14 +506,11 @@ CSONSerializerTest  {
         assertEquals("value2", csonObject.getString("key2"));
         assertEquals("value3", csonObject.getString("key3"));
 
-        assertEquals(1000, csonObject.getObject("child1").getObject("childMap").getInteger("value") );
+        assertEquals(1000, csonObject.getObject("childMap").getObject("child1").getObject("childMap").getInteger("value") );
 
         assertEquals("key1", csonObject.getArray("mapInList").getObject(0).getObject("key1").getString("key"));
         assertEquals("key6", csonObject.getArray("mapInList").getObject(1).getObject("key6").getString("key"));
 
-
-
-        assertEquals("key4", csonObject.getArray("mapInArray").getObject(4).getObject("key4").getString("key"));
 
 
 

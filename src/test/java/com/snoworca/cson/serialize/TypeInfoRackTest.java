@@ -80,26 +80,26 @@ public class TypeInfoRackTest {
 
         assertEquals(5, fieldInfo.componentInfoSize());
 
-        FieldInfo.ComponentInfo info = null;
+        FieldInfo info = null;
         info = fieldInfo.getComponentInfo(0);
-        assertEquals(info.type, DataType.TYPE_COLLECTION);
+        assertEquals(info.getType(), DataType.TYPE_COLLECTION);
         assertEquals(info.getCollectionConstructor(), ArrayList.class.getConstructor());
 
 
         info = fieldInfo.getComponentInfo(1);
-        assertEquals(info.type, DataType.TYPE_COLLECTION);
+        assertEquals(info.getType(), DataType.TYPE_COLLECTION);
         assertEquals(info.getCollectionConstructor(), TreeSet.class.getConstructor());
 
         info = fieldInfo.getComponentInfo(2);
-        assertEquals(info.type, DataType.TYPE_COLLECTION);
+        assertEquals(info.getType(), DataType.TYPE_COLLECTION);
         assertEquals(info.getCollectionConstructor(), ArrayList.class.getConstructor());
 
         info = fieldInfo.getComponentInfo(3);
-        assertEquals(info.type, DataType.TYPE_COLLECTION);
+        assertEquals(info.getType(), DataType.TYPE_COLLECTION);
         assertEquals(info.getCollectionConstructor(), ArrayDeque.class.getConstructor());
 
         info = fieldInfo.getComponentInfo(4);
-        assertEquals(info.type, DataType.TYPE_CSON_OBJECT);
+        assertEquals(info.getType(), DataType.TYPE_CSON_OBJECT);
         assertEquals(info.getCollectionConstructor(), HashSet.class.getConstructor());
         assertEquals(info.getComponentConstructor(), KeyNameValue.class.getConstructor());
 
@@ -108,12 +108,12 @@ public class TypeInfoRackTest {
 
         assertEquals(2, fieldInfo.componentInfoSize());
         info = fieldInfo.getComponentInfo(0);
-        assertEquals(info.type, DataType.TYPE_COLLECTION);
+        assertEquals(info.getType(), DataType.TYPE_COLLECTION);
         assertEquals(info.getCollectionConstructor(), ArrayList.class.getConstructor());
 
 
         info = fieldInfo.getComponentInfo(1);
-        assertEquals(info.type, DataType.TYPE_UNKNOWN);
+        assertEquals(info.getType(), DataType.TYPE_UNKNOWN);
         assertEquals(info.getCollectionConstructor(), ArrayList.class.getConstructor());
         assertEquals(info.getComponentConstructor(), Object.class.getConstructor());
 
