@@ -1,6 +1,7 @@
 package com.snoworca.cson.serialize;
 
 import com.snoworca.cson.CSONObject;
+import com.snoworca.cson.JSONOptions;
 import junit.framework.TestCase;
 import org.junit.Test;
 
@@ -172,6 +173,46 @@ public class TypeInfoRackTest {
         FieldInfo fieldInfo = typeInfo.getFieldInfo("pathKey");
         assertEquals("pathKey", fieldInfo.getField().getName());
     }
+
+
+    @Cson
+    public static class Grandchild {
+        @Value
+        String name = "grandchild";
+
+    }
+
+    @Cson
+    public static class ChildClass {
+        @Value
+        String name = "child";
+
+        @Value
+        Grandchild grandchild = new Grandchild();
+
+
+    }
+
+    @Cson
+    public static class ParentClass {
+        @Value("child")
+        ChildClass childClass = new ChildClass();
+    }
+
+    @Test
+    public void parentChildPathTest() {
+        TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(ParentClass.class);
+        assertNotNull(typeInfo.getFieldInfo("child"));
+
+
+        CSONObject csonObject = CSONSerializer.toCSONObject(new ParentClass());
+        System.out.println(csonObject.toString(JSONOptions.json5().setPretty(true)));
+
+
+
+    }
+
+
 
 
 }
