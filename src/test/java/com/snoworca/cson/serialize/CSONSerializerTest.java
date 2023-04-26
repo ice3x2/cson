@@ -513,10 +513,28 @@ CSONSerializerTest  {
 
 
 
+    }
+
+
+    @Cson
+    public static class MultiPath {
+        @Value("path1.path2.path3")
+        private String value = "100";
+    }
+
+
+    @Test
+    public void multiPathTest() {
+        MultiPath multiPath = new MultiPath();
+        CSONObject csonObject = CSONSerializer.toCSONObject(multiPath);
+        assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
 
 
 
     }
+
+
+
 
 
 }

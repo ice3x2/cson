@@ -12,11 +12,7 @@ public class FieldInfo implements Comparable {
 
 
 
-
-
-
     private boolean isComponent = false;
-    private String keyName = null;
     private boolean isError = false;
     private boolean isArray = false;
     private boolean isCollection = false;
@@ -33,6 +29,7 @@ public class FieldInfo implements Comparable {
     private Constructor<?> keyConstructor;
 
     private FieldInfo parent;
+
 
 
 
@@ -55,6 +52,8 @@ public class FieldInfo implements Comparable {
 
     private Field field;
     private String name;
+    private boolean isMultiPath = false;
+    private List<PathItem> pathItems;
 
 
     FieldInfo() {
@@ -63,7 +62,7 @@ public class FieldInfo implements Comparable {
 
     FieldInfo(Field field, String name) {
         this.field = field;
-        this.name = name;
+        setName(name);
         field.setAccessible(true);
         Class<?> type = this.field.getType();
         this.type = DataType.getDataType(type);
@@ -92,6 +91,8 @@ public class FieldInfo implements Comparable {
             readMapType(field.getGenericType());
         }
     }
+
+
 
 
     private void readMapType(Type type) {
@@ -407,7 +408,16 @@ public class FieldInfo implements Comparable {
         return name;
     }
 
+    public boolean isMultiPath() {
+        return isMultiPath;
+    }
+
     protected void setName(String name) {
+        List<PathItem> item = PathItem.parseMultiPath(name);
+        if(item.size() > 1) {
+            this.isMultiPath = true;
+            this.pathItems = item;
+        }
         this.name = name;
     }
 

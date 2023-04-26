@@ -10,10 +10,9 @@ public abstract  class CSONElement {
 
 	private final static Pattern BASE64_PREFIX_REPLACE_PATTERN = Pattern.compile("(?i)^base64,");
 	private final static Pattern BASE64_PREFIX_PATTERN = Pattern.compile("^((?i)base64,)([a-zA-Z0-9+/]*={0,2})$");
-
 	private CommentObject tailCommentObject = null;
 	private CommentObject headCommentObject = null;
-
+	private CSONPath csonPath = null;
 
 	public void setHeadComment(String comment) {
 		if(comment== null) {
@@ -70,8 +69,11 @@ public abstract  class CSONElement {
 	}
 
 
-	public final CSONPath path() {
-		return new CSONPath(this);
+	public final CSONPath getCsonPath() {
+		if(csonPath == null) {
+			csonPath = new CSONPath(this);
+		}
+		return csonPath;
 	}
 
 

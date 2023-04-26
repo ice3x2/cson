@@ -205,6 +205,8 @@ public class TypeInfoRackTest {
         assertNotNull(typeInfo.getFieldInfo("child"));
 
 
+
+
         CSONObject csonObject = CSONSerializer.toCSONObject(new ParentClass());
         System.out.println(csonObject.toString(JSONOptions.json5().setPretty(true)));
 

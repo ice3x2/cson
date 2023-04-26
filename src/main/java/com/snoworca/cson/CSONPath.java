@@ -1,5 +1,8 @@
 package com.snoworca.cson;
 
+
+import java.util.List;
+
 public class CSONPath {
 
     private CSONElement csonElement;
@@ -192,7 +195,84 @@ public class CSONPath {
 
 
 
+    public CSONPath put(String path, Object value) {
+        List<PathItem> list = PathItem.parseMultiPath(path);
+        CSONElement csonElement = this.csonElement;
+        int pathItemListSize = list.size();
+        int lastIndex = list.get(0).getIndex();
+        PathItem lastPathItem = null;
+        for(int i = 0,n = pathItemListSize - 1; i < n; ++i) {
+            PathItem pathItem = list.get(i);
+            String name = pathItem.getName();
+            boolean isArray = pathItem.isArrayItem();
+            if(csonElement instanceof CSONObject) {
+                Object childValue = ((CSONObject) csonElement).opt(name);
+                if(i == 0) {
+                    if(isArray) {
+                        //TODO 에러를 뿜어야함..
+                        throw new RuntimeException("");
+                    } else if(name.isEmpty()) {
+                        //TODO 에러를 뿜어야함..
+                        throw new RuntimeException("");
+                    }
+                }
+                if(lastIndex > -1) {
+                    //
+                }
+                else if(!isArray && !(childValue instanceof CSONObject)) {
+                    CSONElement childElement = new CSONObject();
+                    ((CSONObject)csonElement).put(name, childElement);
+                    csonElement = childElement;
+                } else if(isArray && !(childValue instanceof  CSONArray)) {
+                    CSONArray childElement = new CSONArray();
+                    ((CSONObject)csonElement).put(name, childElement);
+                    csonElement = childElement;
+                    lastIndex = pathItem.getIndex();
+                    int addCount = lastIndex - childElement.size() + 1;
+                    if(addCount < 0) {
+                        addCount = addCount * -1;
+                        for(int j = 0; j < addCount; ++j) {
+                            childElement.put(null);
+                        }
+                    }
+                } else {
+                    csonElement = (CSONElement)childValue;
+                }
+            } else {
+                Object childValue = ((CSONArray) csonElement).opt(lastIndex);
+                if(i == 0) {
+                    if(!isArray) {
+                        //TODO 에러를 뿜어야함..
+                        throw new RuntimeException("");
+                    } else if(!name.isEmpty()) {
+                        //TODO 에러를 뿜어야함..
+                        throw new RuntimeException("");
+                    }
+                    lastIndex = pathItem.getIndex();
+                }
+                else if(!isArray && !(childValue instanceof CSONObject)) {
+                    CSONElement childElement = new CSONObject();
+                    ((CSONObject)csonElement).put(name, childElement);
+                    csonElement = childElement;
+                    lastIndex = -1;
+                } else if(isArray && !(childValue instanceof  CSONArray)) {
+                    CSONArray childElement = new CSONArray();
+                    ((CSONObject)csonElement).put(name, childElement);
+                    csonElement = childElement;
+                    lastIndex = pathItem.getIndex();
+                    int addCount = lastIndex - childElement.size() + 1;
+                    if(addCount < 0) {
+                        addCount = addCount * -1;
+                        for(int j = 0; j < addCount; ++j) {
+                            childElement.put(null);
+                        }
+                    }
+                }
+            }
 
+        }
+        return this;
+    }
 
 
 

@@ -6,9 +6,10 @@ import java.util.*;
 public class TypeInfo {
     private Class<?> type;
 
-    private LinkedHashMap<String, FieldInfo> fieldInfoMap = new LinkedHashMap<>();
+
     private ArrayList<FieldInfo> fieldInfos;
     private Map<String, FieldInfo> filedInfoMap;
+
 
 
     protected ArrayList<FieldInfo> getFieldInfos() {

@@ -3,7 +3,6 @@ package com.snoworca.cson;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 public class CSONPathTest {
@@ -153,7 +152,7 @@ public class CSONPathTest {
     }
 
     @Test
-    public void get() {
+    public void getTest() {
         assertEquals(1, jsonPath.get("a"));
         assertEquals("true", jsonPath.get("b.c"));
         assertEquals(9.1234, jsonPath.get("b.e.h[3]"));
@@ -166,6 +165,17 @@ public class CSONPathTest {
         assertEquals("12", jsonPath.get("b.e.h[4].l"));
         assertEquals(new CSONObject().put("j", "10").put("k", "11").put("l", "12").toString(), jsonPath.get("b.e.h[4]").toString());
         assertEquals(new CSONArray().put(6).put(7).put(8).put(9.1234).put(new CSONObject().put("j", "10").put("k", "11").put("l", "12")).toString(), jsonPath.get("b.e.h").toString());
+
+    }
+
+    @Test
+    public void putTest() {
+        CSONObject csonObject = new CSONObject();
+        CSONPath csonPath =  csonObject.getCsonPath();
+        csonPath.put("path1.path2.path3", "100");
+        assertEquals(100, csonObject.getObject("path1").getObject("path2").getInt("path3"));
+        assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
+
 
     }
 
