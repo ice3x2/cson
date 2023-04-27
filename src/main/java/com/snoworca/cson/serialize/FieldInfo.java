@@ -1,7 +1,6 @@
 package com.snoworca.cson.serialize;
 
 
-import com.snoworca.cson.PathItem;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -355,6 +354,10 @@ public class FieldInfo implements Comparable {
         return isMap;
     }
 
+    public List<PathItem> getPathItems() {
+        return pathItems;
+    }
+
     public int getArraySize() {
         return arraySize;
     }
@@ -415,10 +418,10 @@ public class FieldInfo implements Comparable {
     }
 
     protected void setName(String name) {
-        List<PathItem> item = PathItem.parseMultiPath(name);
-        if(item.size() > 1) {
+        List<PathItem> items = PathItem.parseMultiPath(name);
+        if(items.size() > 1) {
             this.isMultiPath = true;
-            this.pathItems = item;
+            this.pathItems = items;
         }
         this.name = name;
     }

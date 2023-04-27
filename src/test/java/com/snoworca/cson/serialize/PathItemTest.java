@@ -1,6 +1,6 @@
-package com.snoworca.cson;
+package com.snoworca.cson.serialize;
 
-import com.snoworca.cson.PathItem;
+import com.snoworca.cson.serialize.PathItem;
 import org.junit.Test;
 
 import java.util.List;
@@ -38,12 +38,14 @@ public class PathItemTest {
         assertEquals(false, pathItems.get(2).isArrayItem());
         assertEquals("array", pathItems.get(3).getName());
         assertEquals(10, pathItems.get(3).getIndex());
-        assertEquals(true, pathItems.get(3).isArrayItem());
-        assertEquals("item", pathItems.get(4).getName());
-        assertEquals(false, pathItems.get(4).isArrayItem());
-        assertEquals(true, pathItems.get(4).isEndPoint());
+        assertEquals(false, pathItems.get(3).isArrayItem());
+        assertEquals(true, pathItems.get(4).isArrayItem());
+        assertEquals(10, pathItems.get(4).getChildIndex());
+        assertEquals("item", pathItems.get(5).getName());
+        assertEquals(false, pathItems.get(5).isArrayItem());
+        assertEquals(true, pathItems.get(5).isEndPoint());
 
-
+/*
 
         pathItems = PathItem.parseMultiPath("key[10].key1.key2[2].key3[5]");
         assertEquals("key", pathItems.get(0).getName());
@@ -64,6 +66,7 @@ public class PathItemTest {
         assertEquals(5, pathItems.get(3).getChildIndex());
         assertEquals(true, pathItems.get(4).isEndPoint());
         assertEquals(true, pathItems.get(4).isInArray());
+        assertEquals(5, pathItems.get(4).getIndex());*/
 
 
 

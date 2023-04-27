@@ -180,6 +180,19 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		add(e);
 		return this;
 	}
+
+	public CSONArray put(int index, Object e) {
+		if(list.size() <= index) {
+			list.ensureCapacity(index+1);
+			for (int i = list.size(); i < index; i++) {
+				list.add(new NullValue());
+			}
+			list.add(e);
+		} else {
+			list.set(index, e);
+		}
+		return this;
+	}
 	
 	
 	

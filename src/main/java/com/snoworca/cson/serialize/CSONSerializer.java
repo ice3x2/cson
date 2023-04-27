@@ -3,24 +3,15 @@ package com.snoworca.cson.serialize;
 import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONObject;
 
-import javax.swing.text.html.CSS;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CSONSerializer {
 
+
+
     public static CSONObject toCSONObject(Object object) {
-        return toCSONObject(object, 0);
-    }
-
-
-    private static CSONObject toCSONObject(Object object, int index) {
         TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(object.getClass());
         CSONObject csonObject = new CSONObject();
         serialize(object, typeInfo, csonObject);
@@ -90,15 +81,15 @@ public class CSONSerializer {
         try {
             value = field.get(object);
             if(value == null) {
-                csonObject.put(fieldInfo.getName(), null);
+                put(fieldInfo,null, csonObject);
                 return;
             }
             CSONArray csonArray =  fieldInfo.isArray() ? arrayObjectToCSONArray(fieldInfo, value, 0) :
                                    fieldInfo.isCollection() ? collectionToCSONArray(fieldInfo, (Collection<?>)value, 0) : null;
-            csonObject.put(fieldInfo.getName(), csonArray);
+            put(fieldInfo,csonArray, csonObject);
             return;
         } catch (IllegalAccessException e) {}
-        csonObject.put(fieldInfo.getName(), null);
+        put(fieldInfo,null, csonObject);;
     }
 
 
@@ -149,20 +140,20 @@ public class CSONSerializer {
         if(componentType == DataType.TYPE_CSON_OBJECT) {
             for(Object value : collectionObject) {
                 CSONObject csonObject = CSONSerializer.toCSONObject(value);
-                csonArray.put(csonObject);
+                put(fieldInfo,csonObject,csonArray);
             }
         } else if(componentType < 0) {
             for(Object value : collectionObject) {
                 if(value.getClass().getAnnotation(Cson.class) != null) {
                     CSONObject csonObject = CSONSerializer.toCSONObject(value);
-                    csonArray.put(csonObject);
+                    put(fieldInfo,csonObject,csonArray);
                 }
                 else if(value instanceof Collection) {
                     CSONArray childArray = toCSONArray((Collection<?>) value);
-                    csonArray.put(childArray);
+                    put(fieldInfo,childArray,csonArray);
                 }
                 else {
-                    csonArray.put(value);
+                    put(fieldInfo,value,csonArray);
                 }
             }
         } else if(componentType == DataType.TYPE_COLLECTION) {
@@ -326,7 +317,7 @@ public class CSONSerializer {
                 }
             }
         } catch (IllegalAccessException e) {}
-        csonObject.put(fieldInfo.getName(), value);
+        put(fieldInfo,value, csonObject);
     }
 
     private static void injectCSONValue(FieldInfo fieldInfo,Object object, CSONObject csonObject) {
@@ -335,9 +326,27 @@ public class CSONSerializer {
         try {
             value = field.get(object);
         } catch (IllegalAccessException e) {}
-        csonObject.put(fieldInfo.getName(), value);
+        put(fieldInfo,value, csonObject);
     }
 
+
+    private static void put(FieldInfo fieldInfo,Object object, CSONArray csonArray) {
+        List<PathItem> pathItemList = fieldInfo.getPathItems();
+        if(pathItemList == null || pathItemList.isEmpty()) {
+            put(fieldInfo, object, csonArray);
+            return;
+        }
+        CsonGeneratorViaPathItem.generate(csonArray,pathItemList,object);
+    }
+
+    private static void put(FieldInfo fieldInfo,Object object, CSONObject csonObject) {
+       List<PathItem> pathItemList = fieldInfo.getPathItems();
+       if(pathItemList == null || pathItemList.isEmpty()) {
+           csonObject.put(fieldInfo.getName(), object);
+           return;
+       }
+       CsonGeneratorViaPathItem.generate(csonObject,pathItemList,object);
+    }
 
 
 

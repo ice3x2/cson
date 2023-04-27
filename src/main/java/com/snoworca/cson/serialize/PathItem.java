@@ -1,4 +1,4 @@
-package com.snoworca.cson;
+package com.snoworca.cson.serialize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +12,7 @@ class PathItem {
 
     private boolean inArray = false;
     private boolean arrayItem = false;
+    private boolean objectItem = false;
     private boolean endPoint = false;
 
     private PathItem(String name) {
@@ -31,6 +32,8 @@ class PathItem {
         return name;
     }
 
+
+
     public boolean isArrayItem() {
         return arrayItem;
     }
@@ -48,10 +51,11 @@ class PathItem {
         return item;
     }
 
-    private static PathItem createEndpointItemInArray() {
+    private static PathItem createEndpointItemInArray(int index) {
         PathItem item = new PathItem("");
         item.endPoint = true;
         item.inArray = true;
+        item.index = index;
         return item;
     }
 
@@ -62,6 +66,10 @@ class PathItem {
             item.inArray = true;
         }
         return item;
+    }
+
+    public boolean isObject() {
+        return objectItem;
     }
 
 
@@ -78,6 +86,13 @@ class PathItem {
         PathItem item = new PathItem(name);
         item.index = index;
         item.arrayItem = true;
+        return item;
+    }
+
+    private static PathItem createObjectItem(String name, int index) {
+        PathItem item = new PathItem(name);
+        item.index = index;
+        item.objectItem = true;
         return item;
     }
 
@@ -109,6 +124,7 @@ class PathItem {
                 if(lastArrayItemIndex > -1) {
                     itemList.add(createArrayItemInArray(name, lastArrayItemIndex, indexValue));
                 } else {
+                    itemList.add(createObjectItem(name, indexValue));
                     itemList.add(createArrayItem(name, indexValue));
                 }
                 lastArrayItemIndex = indexValue;
@@ -121,7 +137,7 @@ class PathItem {
         if(size > 0) {
             PathItem pathItem = itemList.get(size - 1);
             if(pathItem.arrayItem) {
-                itemList.add(createEndpointItemInArray());
+                itemList.add(createEndpointItemInArray(lastArrayItemIndex));
             } else {
                 pathItem.endPoint = true;
             }

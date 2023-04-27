@@ -520,6 +520,12 @@ CSONSerializerTest  {
     public static class MultiPath {
         @Value("path1.path2.path3")
         private String value = "100";
+
+        @Value("path1.path2.array3[100]")
+        private String value2 = "100";
+
+        @Value("path1.array2[1].array3[1].value")
+        private String value3 = "200";
     }
 
 
@@ -527,7 +533,14 @@ CSONSerializerTest  {
     public void multiPathTest() {
         MultiPath multiPath = new MultiPath();
         CSONObject csonObject = CSONSerializer.toCSONObject(multiPath);
+        System.out.println(csonObject);
         assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
+        assertEquals("100", csonObject.getObject("path1").getObject("path2").getArray("array3").get(100));
+        assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
+
+        assertEquals("200", csonObject.getObject("path1").getArray("array2").getObject(1).getArray("array3").getObject(1).getString("value"));
+
+
 
 
 

@@ -168,15 +168,4 @@ public class CSONPathTest {
 
     }
 
-    @Test
-    public void putTest() {
-        CSONObject csonObject = new CSONObject();
-        CSONPath csonPath =  csonObject.getCsonPath();
-        csonPath.put("path1.path2.path3", "100");
-        assertEquals(100, csonObject.getObject("path1").getObject("path2").getInt("path3"));
-        assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
-
-
-    }
-
 }

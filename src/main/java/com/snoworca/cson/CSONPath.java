@@ -1,7 +1,6 @@
 package com.snoworca.cson;
 
 
-import java.util.List;
 
 public class CSONPath {
 
@@ -193,7 +192,7 @@ public class CSONPath {
         return null;
     }
 
-
+/*
 
     public CSONPath put(String path, Object value) {
         List<PathItem> list = PathItem.parseMultiPath(path);
@@ -272,7 +271,7 @@ public class CSONPath {
         }
         return this;
     }
-
+*/
 
 
     public Object get(String path) {
