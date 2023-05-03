@@ -13,8 +13,7 @@ class PathItem {
     private boolean inArray = false;
     private boolean arrayItem = false;
     private boolean objectItem = false;
-    private boolean endPoint = false;
-
+    private boolean endPoint = false;"w"
     private PathItem(String name) {
         this.name = name;
     }
