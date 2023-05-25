@@ -527,10 +527,8 @@ CSONSerializerTest  {
     public void multiPathTest() {
         MultiPath multiPath = new MultiPath();
         CSONObject csonObject = CSONSerializer.toCSONObject(multiPath);
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
         assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
-
-
-
     }
 
 
