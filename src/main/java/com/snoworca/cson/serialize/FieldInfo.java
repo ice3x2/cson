@@ -413,7 +413,7 @@ public class FieldInfo implements Comparable {
     }
 
     protected void setName(String name) {
-        List<PathItem> item = PathItem.parseMultiPath(name);
+        List<PathItem> item = PathItem.parseMultiPath2(name);
         if(item.size() > 1) {
             this.isMultiPath = true;
             this.pathItems = item;

@@ -19,6 +19,7 @@ public class TypeInfoRackTest {
 
     private static Random random = new Random(System.currentTimeMillis());
 
+    @Cson
     public class ClassA {
         @Value
         public int a;
@@ -30,6 +31,8 @@ public class TypeInfoRackTest {
         @Value("ValueC")
         public int valueC;
 
+        @Value("pathKey")
+        public String pathKeyOrigin;
 
         @Value("key1.key2.key3.pathKey")
         public int pathKey;
@@ -171,7 +174,8 @@ public class TypeInfoRackTest {
     public void pathKeyTest() {
         TypeInfo typeInfo = TypeInfoRack.getInstance().getTypeInfo(ClassA.class);
         FieldInfo fieldInfo = typeInfo.getFieldInfo("pathKey");
-        assertEquals("pathKey", fieldInfo.getField().getName());
+        assertEquals("pathKeyOrigin", fieldInfo.getField().getName());
+        assertEquals("pathKey", fieldInfo.getName());
     }
 
 

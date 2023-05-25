@@ -177,27 +177,52 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 	
 	public CSONArray put(Object e) {
-		add(e);
+		if(!add(e)) {
+			// TODO 넣을 수 없는 타입 에러.
+		}
 		return this;
 	}
-	
-	
-	
+
+	public CSONArray set(int index, Object e) {
+		int size = list.size();
+		Object value = convert(e);
+		if(value == null) {
+			// TODO 넣을 수 없는 타입 에러.
+		}
+		if(index >= size) {
+			for(int i = size; i < index; i++) {
+				add(null);
+			}
+			list.add(value);
+		} else {
+			list.set(index, value);
+		}
+		return this;
+	}
+
+
+	private Object convert(Object e) {
+		if(e == null || e instanceof  NullValue) list.add(new NullValue());
+		if(e instanceof Number) {
+			return e;
+		} else if(e instanceof CharSequence) {
+			return e.toString();
+		} else if(e instanceof CSONArray) {
+			if(e == this) e = ((CSONArray)e).clone();
+			return e;
+		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONObject || e instanceof byte[] ) {
+			return e;
+		}
+		return null;
+	}
+
 
 	@Override
 	public boolean add(Object e) {
-		if(e == null || e instanceof  NullValue) list.add(new NullValue());
-		if(e instanceof Number) {
-			return list.add(e);
-		} else if(e instanceof CharSequence) {
-			return list.add(e.toString());
-		} else if(e instanceof CSONArray) {
-			if(e == this) e = ((CSONArray)e).clone();
-			list.add(e);
-		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONObject || e instanceof byte[] ) {
-			return list.add(e);
-		}
-		return false; 
+		Object value = convert(e);
+		if(value == null) return false;
+		list.add(value);
+		return true;
 	}
 	
 	
