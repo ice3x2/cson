@@ -169,14 +169,30 @@ public class CSONPathTest {
     }
 
     @Test
-    public void putTest() {
+    public void putObjectTest() {
         CSONObject csonObject = new CSONObject();
         CSONPath csonPath =  csonObject.getCsonPath();
         csonPath.put("path1.path2.path3", "100");
         assertEquals(100, csonObject.getObject("path1").getObject("path2").getInt("path3"));
         assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
+    }
+
+    @Test
+    public void putArrayOrObjectMixedTest() {
+        CSONObject csonObject = new CSONObject();
+        CSONPath csonPath =  csonObject.getCsonPath();
+        csonPath.put("path1[0].path2[1][2]path3[3]", "100");
+        assertEquals(100, csonObject.getArray("path1").getObject(0).getArray("path2").getArray(1).getObject(2).getArray("path3").getInteger(3));
+    }
 
 
+    @Test
+    public void putArrayTest() {
+        CSONArray csonArray = new CSONArray();
+        CSONPath csonPath =  csonArray.getCsonPath();
+        csonPath.put("[0][1][2][3]", "100");
+        assertEquals(100, csonArray.getArray(0).getArray(1).getArray(2).getInteger(3));
+        assertEquals("100", csonArray.getArray(0).getArray(1).getArray(2).getString(3));
     }
 
 }

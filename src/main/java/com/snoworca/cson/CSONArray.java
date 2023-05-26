@@ -297,20 +297,40 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			return null;
 		}
 	}
-	
+
+
+
+
+	@Deprecated
 	public int getInteger(int index) {
+		return getInt(index);
+	}
+
+	public int getInt(int index) {
 		try {
 			return DataConverter.toInteger(list.get(index));
 		} catch (IndexOutOfBoundsException e) {
 			throw new CSONIndexNotFoundException(e);
 		}
 	}
-	
+
+	@Deprecated
 	public int optInteger(int index) {
-		return optInteger(index, 0);
+		return optInt(index);
 	}
-	
+
+	@Deprecated
 	public int optInteger(int index, int def) {
+		return optInt(index, def);
+	}
+
+
+
+	public int optInt(int index) {
+		return optInt(index, 0);
+	}
+
+	public int optInt(int index, int def) {
 		try {
 			return DataConverter.toInteger(list.get(index), def);
 		} catch (IndexOutOfBoundsException e) {

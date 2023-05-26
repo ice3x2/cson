@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class PathItemTest {
 
@@ -25,13 +25,22 @@ public class PathItemTest {
 
         List<PathItem>  pathItemsB = PathItem.parseMultiPath2("key1[0].key2[1].key3[2].pathKey[3]");
         assertEquals("key1", pathItemsB.get(0).getName());
+        assertTrue(pathItemsB.get(0).isArrayItem());
+        assertFalse(pathItemsB.get(0).isInArray());
         assertEquals(0, pathItemsB.get(1).getIndex());
-        assertEquals("key2", pathItemsB.get(2).getName());
-        assertEquals(1, pathItemsB.get(3).getIndex());
-        assertEquals("key3", pathItemsB.get(4).getName());
-        assertEquals(2, pathItemsB.get(5).getIndex());
-        assertEquals("pathKey", pathItemsB.get(6).getName());
-        assertEquals(3, pathItemsB.get(7).getIndex());
+        assertEquals("key2", pathItemsB.get(1).getName());
+        assertTrue(pathItemsB.get(1).isArrayItem());
+        assertTrue(pathItemsB.get(1).isInArray());
+        assertEquals("key3", pathItemsB.get(2).getName());
+        assertTrue(pathItemsB.get(2).isArrayItem());
+        assertTrue(pathItemsB.get(2).isInArray());
+        assertEquals("pathKey", pathItemsB.get(3).getName());
+        assertTrue(pathItemsB.get(3).isArrayItem());
+        assertTrue(pathItemsB.get(3).isInArray());
+        assertEquals(3, pathItemsB.get(4).getIndex());
+        asserT
+
+
 
         pathItemsB = PathItem.parseMultiPath2("key1[0]key2[1]key3[2]pathKey[3]");
         assertEquals("key1", pathItemsB.get(0).getName());

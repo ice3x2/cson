@@ -246,6 +246,17 @@ public class CSONPath {
                         csonObject.put(pathItem.getName(), childCsonObject);
                         lastCsonElement = childCsonObject;
                     }
+                } else if(arrayItem && lastCsonElement instanceof CSONArray) {
+                    CSONArray csonArray = ((CSONArray)lastCsonElement);
+                    if(pathItem.isEndPoint()) {
+                        csonArray.set(pathItem.getIndex(), value);
+                    } else {
+                        CSONArray childCsonArray = new CSONArray();
+                        csonArray.set(pathItem.getIndex(), childCsonArray);
+                        lastCsonElement = childCsonArray;
+                    }
+                } else {
+                    //TODO 에러
                 }
 
             }

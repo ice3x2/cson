@@ -13,6 +13,7 @@ public class PathItem {
     private final int index;
 
 
+    private boolean isInArray;
     private boolean isArrayItem;
     private boolean isEndPoint;
 
@@ -21,7 +22,7 @@ public class PathItem {
         this.name = name;
         this.index = index;
         if(index > -1) {
-            isArrayItem = true;
+            isInArray = true;
         }
     }
 
@@ -29,13 +30,8 @@ public class PathItem {
         this.name = "";
         this.index = index;
         if(index > -1) {
-            isArrayItem = true;
+            isInArray = true;
         }
-    }
-
-    private PathItem(String key) {
-        this.name = key;
-        this.index = -1;
     }
 
     public boolean isEndPoint() {
@@ -55,7 +51,9 @@ public class PathItem {
         return isArrayItem;
     }
 
-
+    public boolean isInArray() {
+        return isInArray;
+    }
 
     public static List<PathItem> parseMultiPath2(String path) {
         ArrayList<PathItem> itemList = new ArrayList<>();
@@ -63,6 +61,7 @@ public class PathItem {
         StringBuilder builder = new StringBuilder(path.length());
         PathItem lastItem = null;
         int readMode = READ_MODE_UNDEFINED;
+        int lastIndex = -1;
         for(int i = 0, n = chars.length; i < n; i++) {
             char c = chars[i];
             if(c == '.') {
@@ -70,7 +69,8 @@ public class PathItem {
                 key = key.trim();
                 builder.setLength(0);
                 if(!key.isEmpty()) {
-                    PathItem item = new PathItem(key, -1);
+                    PathItem item = new PathItem(key, lastIndex);
+                    lastIndex = -1;
                     itemList.add(item);
                 }
                 readMode = READ_MODE_KEY;
@@ -79,19 +79,21 @@ public class PathItem {
                 String key = builder.toString();
                 key = key.trim();
                 builder.setLength(0);
-                if(key.length() > 0) {
-                    PathItem item = new PathItem(key);
+                if(key.length() > 0 || lastIndex > -1) {
+                    PathItem item = new PathItem(key, lastIndex);
+                    lastIndex = -1;
+                    item.isArrayItem = true;
                     itemList.add(item);
                 }
-
                 readMode = READ_MODE_INDEX;
             } else if(c == ']' && readMode == READ_MODE_INDEX) {
                 String indexString = builder.toString().trim();
                 builder.setLength(0);
                 int index = Integer.parseInt(indexString);
-                lastItem = new PathItem(index);
-                itemList.add(lastItem);
-                readMode = READ_MODE_UNDEFINED;
+                lastIndex = index;
+                //lastItem = new PathItem(index);
+                //itemList.add(lastItem);
+                //readMode = READ_MODE_UNDEFINED;
             } else {
                 builder.append(c);
             }
@@ -99,7 +101,10 @@ public class PathItem {
         String key = builder.toString();
         key = key.trim();
         if(!key.isEmpty()) {
-            PathItem item = new PathItem(key);
+            PathItem item = new PathItem(key, lastIndex);
+            itemList.add(item);
+        } else if(lastIndex > -1) {
+            PathItem item = new PathItem(lastIndex);
             itemList.add(item);
         }
         if(itemList.size() > 0) {
@@ -108,8 +113,6 @@ public class PathItem {
         }
 
         return itemList;
-
-
     }
 
 }
