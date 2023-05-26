@@ -15,20 +15,26 @@ public class PathItem {
 
     private boolean isInArray;
     private boolean isArrayItem;
+
+    private final boolean isObject;
     private boolean isEndPoint;
 
 
     private PathItem(String name, int index) {
         this.name = name;
         this.index = index;
+        isObject = !this.name.isEmpty();
         if(index > -1) {
             isInArray = true;
         }
     }
 
+
+
     private PathItem(int index) {
         this.name = "";
         this.index = index;
+        this.isObject = false;
         if(index > -1) {
             isInArray = true;
         }
@@ -36,6 +42,10 @@ public class PathItem {
 
     public boolean isEndPoint() {
         return isEndPoint;
+    }
+
+    public boolean isObject() {
+        return isObject;
     }
 
 
@@ -47,7 +57,7 @@ public class PathItem {
         return name;
     }
 
-    public boolean isArrayItem() {
+    public boolean isArrayValue() {
         return isArrayItem;
     }
 

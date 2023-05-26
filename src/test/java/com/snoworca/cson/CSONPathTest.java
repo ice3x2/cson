@@ -187,6 +187,32 @@ public class CSONPathTest {
 
 
     @Test
+    public void putArrayOrObjectMixedTest2() {
+        CSONObject csonObject = new CSONObject();
+        CSONPath csonPath =  csonObject.getCsonPath();
+        csonPath.put("path1[0].path2[1][2]path3", "100");
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+        assertEquals(100, csonObject.getArray("path1").getObject(0).getArray("path2").getArray(1).getObject(2).getInt("path3"));
+    }
+
+    @Test
+    public void putArrayOrObjectMixedTest3() {
+        CSONObject csonObject = new CSONObject();
+        CSONPath csonPath =  csonObject.getCsonPath();
+        csonPath.put("path1[0].path2[1][2].path3.path4", "100");
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+        assertEquals(100, csonObject.getArray("path1").getObject(0).getArray("path2").getArray(1).getObject(2).getObject("path3").getInt("path4"));
+
+        csonPath.put("path1[0].path2[1][2]path3.path4", 200);
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+        assertEquals(200, csonObject.getArray("path1").getObject(0).getArray("path2").getArray(1).getObject(2).getObject("path3").getInt("path4"));
+
+        csonPath.put("path1[0].path2[1][2].path3.path4[20][0]", 400);
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+        assertEquals(400, csonObject.getArray("path1").getObject(0).getArray("path2").getArray(1).getObject(2).getObject("path3").getArray("path4").getArray(20).getInt(0));
+    }
+
+    @Test
     public void putArrayTest() {
         CSONArray csonArray = new CSONArray();
         CSONPath csonPath =  csonArray.getCsonPath();
