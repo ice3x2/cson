@@ -1,4 +1,4 @@
-package com.snoworca.cson.serialize;
+package com.snoworca.cson.path;
 
 import java.util.ArrayList;
 import java.util.List;

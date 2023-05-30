@@ -520,6 +520,16 @@ CSONSerializerTest  {
     public static class MultiPath {
         @Value("path1.path2.path3")
         private String value = "100";
+        @Value("path1.array[10]")
+        private int intValue = 100;
+
+        @Value("path1.arrayLink[10][20]")
+        private int intInArrayArrayValue = 100;
+
+        @Value("list.inList")
+        private List<String> list = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");ㅓㄱ용
+
+
     }
 
 
@@ -529,6 +539,20 @@ CSONSerializerTest  {
         CSONObject csonObject = CSONSerializer.toCSONObject(multiPath);
         System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
         assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
+        assertEquals(100, csonObject.getObject("path1").getArray("array").getInteger(10));
+        assertEquals(100, csonObject.getObject("path1").getArray("arrayLink").getArray(10).getInt(20));
+    }
+
+
+    @Test
+    public void multiPathMapTest() {
+        MultiPath multiPath = new MultiPath();
+        CSONObject csonObject = CSONSerializer.toCSONObject(multiPath);
+        System.out.println(csonObject.toString(JSONOptions.json().setPretty(true)));
+        assertEquals("100", csonObject.getObject("path1").getObject("path2").getString("path3"));
+        assertEquals(100, csonObject.getObject("path1").getArray("array").getInteger(10));
+        assertEquals(100, csonObject.getObject("path1").getArray("arrayLink").getArray(10).getInt(20));
+        assertEquals("10", csonObject.getObject("list").getArray("inList").getString(9));
     }
 
 

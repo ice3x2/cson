@@ -1,5 +1,7 @@
 package com.snoworca.cson;
 
+import com.snoworca.cson.path.CSONPath;
+
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 

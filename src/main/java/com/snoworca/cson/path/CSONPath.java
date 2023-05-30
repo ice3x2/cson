@@ -1,7 +1,9 @@
-package com.snoworca.cson;
+package com.snoworca.cson.path;
 
 
-import com.snoworca.cson.serialize.PathItem;
+import com.snoworca.cson.CSONArray;
+import com.snoworca.cson.CSONElement;
+import com.snoworca.cson.CSONObject;
 
 import java.util.List;
 
@@ -9,7 +11,7 @@ public class CSONPath {
 
     private CSONElement csonElement;
 
-    CSONPath(CSONElement csonElement) {
+    public CSONPath(CSONElement csonElement) {
         this.csonElement = csonElement;
     }
 
@@ -310,14 +312,12 @@ public class CSONPath {
 
             if (pathItem.isEndPoint()) {
                 if (pathItem.isInArray()) {
-
                     if(pathItem.isObject()) {
-                        if(pathItem.isArrayValue()) {
-                            return ((CSONObject) parents).optArray(pathItem.getName()).get(pathItem.getIndex());
-                        } else {
-                            return ((CSONObject) parents).opt(pathItem.getName());
-                        }
-                    } else {
+                        CSONObject endPointObject = ((CSONArray) parents).optObject(pathItem.getIndex());
+                        if(endPointObject == null) return null;
+                        return endPointObject.opt(pathItem.getName());
+                    }
+                    else {
                         return ((CSONArray)parents).get(pathItem.getIndex());
                     }
                 } else {
@@ -330,6 +330,9 @@ public class CSONPath {
             else {
                 if (pathItem.isInArray()) {
                     parents = ((CSONArray) parents).opt(pathItem.getIndex());
+                    if(pathItem.isObject() && parents instanceof CSONObject) {
+                        parents = ((CSONObject) parents).opt(pathItem.getName());
+                    }
                 } else {
                     parents = ((CSONObject) parents).opt(pathItem.getName());
                 }
@@ -339,27 +342,4 @@ public class CSONPath {
         return null;
     }
 
-    public Object get_(String path) {
-        String[] pathArray = path.split("\\.");
-        Object value = csonElement;
-        for (String key : pathArray) {
-            if (key.matches("^.*\\[\\d\\]$") && value instanceof CSONElement) {
-                int start = key.indexOf("[");
-                int index = Integer.parseInt(key.substring(start + 1, key.length() - 1));
-                String arrayKey = key.substring(0, start);
-                if(value instanceof CSONObject) {
-                    value = ((CSONObject) value).get(arrayKey);
-                }
-                if(!(value instanceof CSONArray)) {
-                    return null;
-                }
-                value = ((CSONArray) value).opt(index);
-            } else if (value instanceof CSONObject) {
-                value = ((CSONObject) value).opt(key);
-            } else {
-                return null;
-            }
-        }
-        return value;
-    }
 }

@@ -1,6 +1,8 @@
 package com.snoworca.cson.serialize;
 
 
+import com.snoworca.cson.path.PathItem;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;

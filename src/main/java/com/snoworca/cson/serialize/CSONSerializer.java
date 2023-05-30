@@ -41,11 +41,6 @@ public class CSONSerializer {
                 CSONArray childArray = toCSONArray((Collection<?>)object);
                 csonArray.add(childArray);
             }
-            else if(object instanceof Map) {
-                //TODO
-                String aa ;
-            }
-
             else {
                 CSONObject csonObject = toCSONObject(object);
                 csonArray.add(csonObject);
@@ -95,7 +90,11 @@ public class CSONSerializer {
             }
             CSONArray csonArray =  fieldInfo.isArray() ? arrayObjectToCSONArray(fieldInfo, value, 0) :
                                    fieldInfo.isCollection() ? collectionToCSONArray(fieldInfo, (Collection<?>)value, 0) : null;
-            csonObject.put(fieldInfo.getName(), csonArray);
+            if(fieldInfo.isMultiPath()) {
+                csonObject.getCsonPath().put(fieldInfo.getName(), csonArray);
+            } else {
+                csonObject.put(fieldInfo.getName(), csonArray);
+            }
             return;
         } catch (IllegalAccessException e) {}
         csonObject.put(fieldInfo.getName(), null);
@@ -136,8 +135,8 @@ public class CSONSerializer {
                     // todo 메시지 출력
                     throw new RuntimeException(e);
                 }
-            }
 
+            }
 
         }
     }
@@ -335,7 +334,11 @@ public class CSONSerializer {
         try {
             value = field.get(object);
         } catch (IllegalAccessException e) {}
-        csonObject.put(fieldInfo.getName(), value);
+        if(fieldInfo.isMultiPath()) {
+            csonObject.getCsonPath().put(fieldInfo.getName(), value);
+        } else {
+            csonObject.put(fieldInfo.getName(), value);
+        }
     }
 
 
