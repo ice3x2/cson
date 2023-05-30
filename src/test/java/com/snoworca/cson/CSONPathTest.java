@@ -108,8 +108,8 @@ public class CSONPathTest {
         String jsonArrayString = "[0,1,2,[{\"a\":true, \"b\": [10000,10001] }],4,5,[1,2,3,4,5,[6]],7,8,9,10]";
         CSONArray jsonArray = new CSONArray(jsonArrayString);
         CSONPath jsonPath = new CSONPath(jsonArray);
-        assertEquals(0, (int)jsonPath.optInteger("[0]"));
         assertEquals(10001, (int)jsonPath.optInteger("[3].[0].b[1]"));
+        assertEquals(0, (int)jsonPath.optInteger("[0]"));
         assertEquals(10000, (int)jsonPath.optInteger("[3].[0].b[0]"));
         assertEquals(10000, (int)jsonPath.optInteger("[3].[0].b[0]"));
         assertEquals(true, jsonPath.get("[3].[0].a"));
@@ -120,12 +120,15 @@ public class CSONPathTest {
 
     @Test
     public  void optInteger() {
+        assertEquals(10, (int)jsonPath.optInteger("b.e.h[4].j"));
+
+
+
         assertEquals(9,(int) jsonPath.optInteger("b.e.h[3]"));
         assertEquals(5, (int)jsonPath.optInteger("b.e.g"));
         assertEquals(4, (int)jsonPath.optInteger("b.e.f"));
         assertEquals(1, (int)jsonPath.optInteger("a"));
         assertEquals((int)Math.PI,(int) jsonPath.optInteger("b.d"));
-        assertEquals(10, (int)jsonPath.optInteger("b.e.h[4].j"));
         assertEquals(11, (int)jsonPath.optInteger("b.e.h[4].k"));
 
     }

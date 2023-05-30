@@ -298,13 +298,48 @@ public class CSONPath {
             }
             lastCsonElement = obtainOrCreateChild(lastCsonElement, pathItem);
         }
-
         return this;
     }
 
 
-
     public Object get(String path) {
+        List<PathItem> pathItemList = PathItem.parseMultiPath2(path);
+        Object parents = csonElement;
+        for (int i = 0, n = pathItemList.size(); i < n; ++i) {
+            PathItem pathItem = pathItemList.get(i);
+
+            if (pathItem.isEndPoint()) {
+                if (pathItem.isInArray()) {
+
+                    if(pathItem.isObject()) {
+                        if(pathItem.isArrayValue()) {
+                            return ((CSONObject) parents).optArray(pathItem.getName()).get(pathItem.getIndex());
+                        } else {
+                            return ((CSONObject) parents).opt(pathItem.getName());
+                        }
+                    } else {
+                        return ((CSONArray)parents).get(pathItem.getIndex());
+                    }
+                } else {
+                    return ((CSONObject) parents).opt(pathItem.getName());
+                }
+            }
+            else if((parents instanceof CSONObject && pathItem.isInArray()) || (parents instanceof CSONArray && !pathItem.isInArray())) {
+                return null;
+            }
+            else {
+                if (pathItem.isInArray()) {
+                    parents = ((CSONArray) parents).opt(pathItem.getIndex());
+                } else {
+                    parents = ((CSONObject) parents).opt(pathItem.getName());
+                }
+            }
+
+        }
+        return null;
+    }
+
+    public Object get_(String path) {
         String[] pathArray = path.split("\\.");
         Object value = csonElement;
         for (String key : pathArray) {
