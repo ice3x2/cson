@@ -1,15 +1,11 @@
-package com.snoworca.cson.path;
+package com.snoworca.cson;
 
-
-import com.snoworca.cson.CSONArray;
-import com.snoworca.cson.CSONElement;
-import com.snoworca.cson.CSONObject;
 
 import java.util.List;
 
 public class CSONPath {
 
-    private CSONElement csonElement;
+    private final CSONElement csonElement;
 
     public CSONPath(CSONElement csonElement) {
         this.csonElement = csonElement;
@@ -206,13 +202,18 @@ public class CSONPath {
                 CSONArray childCsonArray = csonObject.optArray(name);
                 if(childCsonArray == null) {
                     childCsonArray = new CSONArray();
+                    childCsonArray.setAllowRawValue(csonElement.isAllowRawValue())
+                                    .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                     csonObject.put(name, childCsonArray);
                 }
+
                 return childCsonArray;
             } else {
                 CSONObject childCsonObject = csonObject.optObject(name);
                 if(childCsonObject == null) {
                     childCsonObject = new CSONObject();
+                    childCsonObject.setAllowRawValue(csonElement.isAllowRawValue())
+                            .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                     csonObject.put(name, childCsonObject);
                 }
                 return childCsonObject;
@@ -224,13 +225,19 @@ public class CSONPath {
                 CSONObject childCsonObject = csonArray.optObject(index);
                 if(childCsonObject == null) {
                     childCsonObject = new CSONObject();
+                    childCsonObject.setAllowRawValue(csonElement.isAllowRawValue())
+                            .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                     csonArray.set(index, childCsonObject);
                     if(pathItem.isArrayValue()) {
                         CSONArray childCsonArray = new CSONArray();
+                        childCsonArray.setAllowRawValue(csonElement.isAllowRawValue())
+                                .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                         childCsonObject.put(pathItem.getName(), childCsonArray);
                         return childCsonArray;
                     }
                     CSONObject childAndChildCsonObject = new CSONObject();
+                    childAndChildCsonObject.setAllowRawValue(csonElement.isAllowRawValue())
+                            .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                     childCsonObject.put(pathItem.getName(), childAndChildCsonObject);
                     return childAndChildCsonObject;
                 } else  {
@@ -238,6 +245,8 @@ public class CSONPath {
                         CSONArray childChildCsonArray = childCsonObject.optArray(pathItem.getName());
                         if (childChildCsonArray == null) {
                             childChildCsonArray = new CSONArray();
+                            childChildCsonArray.setAllowRawValue(csonElement.isAllowRawValue())
+                                    .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                             childCsonObject.put(pathItem.getName(), childChildCsonArray);
                         }
                         return childChildCsonArray;
@@ -245,6 +254,8 @@ public class CSONPath {
                         CSONObject childAndChildCsonObject = childCsonObject.optObject(pathItem.getName());
                         if (childAndChildCsonObject == null) {
                             childAndChildCsonObject = new CSONObject();
+                            childAndChildCsonObject.setAllowRawValue(csonElement.isAllowRawValue())
+                                    .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                             childCsonObject.put(pathItem.getName(), childAndChildCsonObject);
                         }
                         return childAndChildCsonObject;
@@ -255,15 +266,20 @@ public class CSONPath {
                 CSONArray childCsonArray = csonArray.optArray(index);
                 if(childCsonArray == null) {
                     childCsonArray = new CSONArray();
+                    childCsonArray.setAllowRawValue(csonElement.isAllowRawValue())
+                            .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                     csonArray.set(index, childCsonArray);
                 }
                 return childCsonArray;
             }
+
             // TODO 에러를 뿜어야함..
-            throw new RuntimeException("Invalid path");
+            //throw new RuntimeException("Invalid path");
+            throw new IllegalArgumentException("Invalid path");
         } else {
             //TODO 에러를 뿜어야함..
-            throw new RuntimeException("Invalid path");
+            //throw new RuntimeException("Invalid path");
+            throw new IllegalArgumentException("Invalid path");
         }
     }
 
@@ -276,6 +292,8 @@ public class CSONPath {
                 CSONObject childCsonObject = ((CSONArray)csonElement).optObject(index);
                 if(childCsonObject == null) {
                     childCsonObject = new CSONObject();
+                    csonElement.setAllowRawValue(csonElement.isAllowRawValue())
+                            .setUnknownObjectToString(csonElement.isUnknownObjectToString());
                     ((CSONArray)csonElement).set(index, childCsonObject);
                 }
                 childCsonObject.put(pathItem.getName(), value);
@@ -292,6 +310,7 @@ public class CSONPath {
     public CSONPath put(String path, Object value) {
         List<PathItem> list = PathItem.parseMultiPath2(path);
         CSONElement lastCsonElement = this.csonElement;
+        //noinspection ForLoopReplaceableByForEach
         for(int i = 0, n = list.size(); i < n; ++i) {
             PathItem pathItem = list.get(i);
             if(pathItem.isEndPoint()) {
@@ -307,6 +326,7 @@ public class CSONPath {
     public Object get(String path) {
         List<PathItem> pathItemList = PathItem.parseMultiPath2(path);
         Object parents = csonElement;
+        //noinspection ForLoopReplaceableByForEach
         for (int i = 0, n = pathItemList.size(); i < n; ++i) {
             PathItem pathItem = pathItemList.get(i);
 
@@ -329,15 +349,16 @@ public class CSONPath {
             }
             else {
                 if (pathItem.isInArray()) {
+                    assert parents instanceof CSONArray;
                     parents = ((CSONArray) parents).opt(pathItem.getIndex());
                     if(pathItem.isObject() && parents instanceof CSONObject) {
                         parents = ((CSONObject) parents).opt(pathItem.getName());
                     }
                 } else {
+                    assert parents instanceof CSONObject;
                     parents = ((CSONObject) parents).opt(pathItem.getName());
                 }
             }
-
         }
         return null;
     }

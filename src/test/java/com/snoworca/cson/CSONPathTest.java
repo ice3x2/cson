@@ -1,6 +1,5 @@
 package com.snoworca.cson;
 
-import com.snoworca.cson.path.CSONPath;
 import org.junit.Before;
 import org.junit.Test;
 

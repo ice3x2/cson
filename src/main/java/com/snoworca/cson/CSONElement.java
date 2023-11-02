@@ -1,7 +1,5 @@
 package com.snoworca.cson;
 
-import com.snoworca.cson.path.CSONPath;
-
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 
@@ -15,6 +13,29 @@ public abstract  class CSONElement {
 	private CommentObject tailCommentObject = null;
 	private CommentObject headCommentObject = null;
 	private CSONPath csonPath = null;
+
+
+
+	private boolean allowRawValue = false;
+	private boolean unknownObjectToString = false;
+	protected CSONElement setAllowRawValue(boolean allowRawValue) {
+		this.allowRawValue = allowRawValue;
+		return this;
+	}
+
+	public CSONElement setUnknownObjectToString(boolean unknownObjectToString) {
+		this.unknownObjectToString = unknownObjectToString;
+		return this;
+	}
+
+	protected boolean isUnknownObjectToString() {
+		return unknownObjectToString;
+	}
+
+	protected boolean isAllowRawValue() {
+		return allowRawValue;
+	}
+
 
 	public void setHeadComment(String comment) {
 		if(comment== null) {

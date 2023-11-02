@@ -225,7 +225,8 @@ class DataConverter {
 		else if(value instanceof byte[]) {
 			byte[] buffer = (byte[])value;
   			return Base64.encode(buffer);
-		} 
+		}
+
 		return value + "";
 	}
 

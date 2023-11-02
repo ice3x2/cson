@@ -183,6 +183,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return this;
 	}
 
+
+
 	public CSONArray set(int index, Object e) {
 		int size = list.size();
 		Object value = convert(e);
@@ -212,9 +214,14 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			return e;
 		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONObject || e instanceof byte[] ) {
 			return e;
+		} else if(isAllowRawValue()) {
+			return e;
 		}
-		return null;
+		return isUnknownObjectToString() ? e + "" : null;
 	}
+
+
+
 
 
 	@Override
@@ -224,12 +231,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		list.add(value);
 		return true;
 	}
-	
-	
-	
-	
-	
-	
+
+
 	public Object get(int index) {
 		Object obj = list.get(index);
 		if(obj instanceof NullValue) return null;

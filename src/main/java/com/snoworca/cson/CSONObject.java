@@ -39,6 +39,8 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return this.dataMap.entrySet();
 	}
 
+
+
 	public Map<String, Object> toMap() {
 		Map<String, Object> results = new HashMap<String, Object>();
 		for (Entry<String, Object> entry : this.entrySet()) {
@@ -73,7 +75,6 @@ public class CSONObject extends CSONElement implements Cloneable {
 	}
 
 
-
 	public CSONObject put(String key, Object value) {
 		if(value == null) {
 			dataMap.put(key, new NullValue());
@@ -92,6 +93,11 @@ public class CSONObject extends CSONElement implements Cloneable {
 			dataMap.put(key, value);
 		} else if(value instanceof Character || value instanceof Boolean || value instanceof byte[] || value instanceof NullValue) {
 			dataMap.put(key, value);
+		}
+		else if(isAllowRawValue()) {
+			dataMap.put(key, value);
+		} else if(isUnknownObjectToString()) {
+			dataMap.put(key, value + "");
 		}
 		return this;
 	}
@@ -539,6 +545,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 			else if(obj instanceof Boolean) writer.key(key).value((boolean)obj);
 			else if(obj instanceof BigDecimal) writer.key(key).value(obj);
 			else if(obj instanceof byte[]) writer.key(key).value((byte[])obj);
+			else if(isAllowRawValue()) {
+				writer.key(key).value(obj.toString());
+			}
 		}
 		writer.nextCommentObject(getTailCommentObject());
 		writer.closeObject();

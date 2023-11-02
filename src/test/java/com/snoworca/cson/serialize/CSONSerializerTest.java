@@ -14,10 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.Assert.assertEquals;
 
-public class
-
-
-CSONSerializerTest  {
+public class CSONSerializerTest  {
 
     private static Random random = new Random(System.currentTimeMillis());
 
@@ -527,7 +524,7 @@ CSONSerializerTest  {
         private int intInArrayArrayValue = 100;
 
         @Value("list.inList")
-        private List<String> list = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");ㅓㄱ용
+        private List<String> list = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
 
 
     }
