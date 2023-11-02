@@ -1,6 +1,7 @@
 package com.snoworca.cson.object;
 
 import com.snoworca.cson.CSONArray;
+import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.CSONObject;
 import com.snoworca.cson.CSONPath;
 
@@ -41,13 +42,20 @@ public class TypeElement {
         }
         CSONObject csonObject = new CSONObject();
         Iterator<Map.Entry<String, Object>> iter = tree.toMap().entrySet().iterator();
+        ArrayDeque<Iterator<Map.Entry<String, Object>>> iterators = new ArrayDeque<>();
+        ArrayDeque<CSONElement> csonElements = new ArrayDeque<>();
+        iterators.add(iter);
         while(iter.hasNext()) {
             Map.Entry<String, Object> entry = iter.next();
             String key = entry.getKey();
             Object obj = entry.getValue();
             if(obj instanceof CSONArray) csonObject.put(key, ((CSONArray)obj).clone());
-            else if(obj instanceof CSONObject) {CSONObject csonObject1 = (CSONObject)obj;
-                csonObject.put(key, csonObject1.clone());
+            else if(obj instanceof CSONObject) {
+                CSONObject childObject = (CSONObject)obj;
+                iter = childObject.toMap().entrySet().iterator();
+                iterators.add(iter);
+                csonElements.add(csonObject);
+                csonObject = childObject;
             }
             else if(obj instanceof FieldRack) {
                 FieldRack fieldRack = (FieldRack)obj;
@@ -55,6 +63,9 @@ public class TypeElement {
                 csonObject.put(key, value);
             }
             else csonObject.put(key, obj);
+            if(!iter.hasNext() && !iterators.isEmpty()) {
+                iter = iterators.peekFirst();
+            }
         }
         return csonObject;
 
