@@ -27,7 +27,7 @@ public enum Types {
         return NumberTypeSet.contains(type);
     }
 
-    public static Types readType(Class<?> type) {
+    public static Types of(Class<?> type) {
         if(type == byte.class || type == Byte.class) {
             return Byte;
         } else if(type == short.class || type == Short.class) {

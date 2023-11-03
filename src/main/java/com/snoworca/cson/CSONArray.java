@@ -772,6 +772,22 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return array;
 	}
 
+	public void merge(CSONArray csonArray) {
+		for(int i = 0, n = csonArray.size(); i < n; ++i) {
+			Object newObj = csonArray.get(i);
+			Object originObj = opt(i);
+			if(originObj == null) {
+				add(newObj);
+			} else if(originObj instanceof CSONArray && newObj instanceof CSONArray) {
+				((CSONArray)originObj).merge((CSONArray)newObj);
+			} else if(originObj instanceof CSONObject && newObj instanceof CSONObject) {
+				((CSONObject)originObj).merge((CSONObject)newObj);
+			} else {
+				set(i, newObj);
+			}
+		}
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if(!(obj instanceof CSONArray)) return false;

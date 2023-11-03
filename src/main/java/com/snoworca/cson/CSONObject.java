@@ -12,7 +12,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 
 
-	private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
+	protected LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
 	private LinkedHashMap<String, KeyValueCommentObject> keyValueCommentMap;
 
 	private JSONOptions jsonOptions = JSONOptions.json();
@@ -147,6 +147,30 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return result;
 	}
 
+
+	public void merge(CSONObject csonObject) {
+		Set<String> keys = csonObject.keySet();
+		for(String key : keys) {
+			Object value = csonObject.get(key);
+			if(value instanceof CSONObject) {
+				CSONObject childObject = optObject(key);
+				if(childObject == null) {
+					childObject = new CSONObject();
+					put(key, childObject);
+				}
+				childObject.merge((CSONObject)value);
+			} else if(value instanceof CSONArray) {
+				CSONArray childArray = optArray(key);
+				if(childArray == null) {
+					childArray = new CSONArray();
+					put(key, childArray);
+				}
+				childArray.merge((CSONArray)value);
+			} else {
+				put(key, value);
+			}
+		}
+	}
 
 
 
@@ -424,6 +448,14 @@ public class CSONObject extends CSONElement implements Cloneable {
 			return (CSONObject)obj;
 		}
 		return null;
+	}
+
+	public CSONObject optObject(String key, CSONObject def) {
+		Object obj = dataMap.get(key);
+		if(obj instanceof CSONObject) {
+			return (CSONObject)obj;
+		}
+		return def;
 	}
 
 	public CSONObject getObject(String key) {
