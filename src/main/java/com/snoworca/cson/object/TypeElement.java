@@ -1,9 +1,5 @@
 package com.snoworca.cson.object;
 
-import com.snoworca.cson.CSONArray;
-import com.snoworca.cson.CSONElement;
-import com.snoworca.cson.CSONObject;
-import com.snoworca.cson.CSONPath;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -15,7 +11,7 @@ public class TypeElement {
     private final Class<?> type;
     private final Constructor<?> constructor;
 
-    private final CSONTypeObject tree;
+    private final ObjectNode tree;
 
 
     public static TypeElement create(Class<?> type) {
@@ -151,23 +147,22 @@ public class TypeElement {
 
     private CSONTypeObject init() {
         List<FieldRack> fieldRacks = searchAllCSONValueFields(type);
-        CSONTypeObject csonTypeObject = new CSONTypeObject();
-        CSONPath csonPath = csonTypeObject.getCsonPath();
+        ObjectNode objectNode = new ObjectNode();
+        NodePath nodePath = new NodePath(objectNode);
         for(FieldRack fieldRack : fieldRacks) {
             if(fieldRack.getType() == Types.Object) {
                 TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
                 CSONTypeObject childTree = (CSONTypeObject) typeElement.tree.clone();
-                findAndSetParentFieldRackIfFieldRackValue(childTree,fieldRack);
                 csonPath.put(fieldRack.getPath(),childTree);
                 continue;
             }
             csonPath.put(fieldRack.getPath(),fieldRack.copy());
         }
-        return csonTypeObject;
+        return objectNode;
     }
 
 
-    private void findAndSetParentFieldRackIfFieldRackValue(CSONObject csonObject,FieldRack parent) {
+    /*private void findAndSetParentFieldRackIfFieldRackValue(CSONObject csonObject,FieldRack parent) {
         for(String key : csonObject.keySet()) {
             Object element = csonObject.get(key);
             if(element instanceof CSONObject) {
@@ -179,7 +174,7 @@ public class TypeElement {
 
             }
         }
-    }
+    }*/
 
 
 

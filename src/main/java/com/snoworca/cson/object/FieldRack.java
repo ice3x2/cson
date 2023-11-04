@@ -2,8 +2,13 @@ package com.snoworca.cson.object;
 
 
 import java.lang.reflect.Field;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class FieldRack  {
+public class FieldRack implements Node {
+
+    private static final AtomicInteger LAST_ID = new AtomicInteger(0);
+
+    private final int id = LAST_ID.getAndIncrement();
     private final Field field;
     private final String path;
     private final boolean isPrimitive;
@@ -24,6 +29,10 @@ public class FieldRack  {
         if(key == null || key.isEmpty()) key = field.getName();
         boolean isByteArrayToCSONArray = csonValue.byteArrayToCSONArray();
         return new FieldRack(typeElement, field, key, isByteArrayToCSONArray);
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getPath() {

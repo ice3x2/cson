@@ -4,9 +4,7 @@ import com.snoworca.cson.CSONObject;
 
 public class CSONSerializer {
 
-    private CSONSerializer() {
-
-    }
+    private CSONSerializer() {}
 
     public static CSONObject serialize(Object obj) {
         Class<?> clazz = obj.getClass();
@@ -17,4 +15,6 @@ public class CSONSerializer {
     public static Object deserialize(CSONObject csonObject) {
         return null;
     }
+
+
 }
