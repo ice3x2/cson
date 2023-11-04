@@ -4,9 +4,9 @@ package com.snoworca.cson.object;
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class FieldRack implements Node {
+public class FieldRack implements SchemaNode {
 
-    private static final AtomicInteger LAST_ID = new AtomicInteger(0);
+    private static final AtomicInteger LAST_ID = new AtomicInteger(1);
 
     private final int id = LAST_ID.getAndIncrement();
     private final Field field;
@@ -64,7 +64,9 @@ public class FieldRack implements Node {
     }
 
     public FieldRack copy() {
-        return new FieldRack(typeElement, field, path, isByteArray);
+        FieldRack fieldRack = new FieldRack(typeElement, field, path, isByteArray);
+        fieldRack.parentFieldRack = parentFieldRack;
+        return fieldRack;
     }
 
     protected FieldRack getParentFieldRack() {
@@ -75,6 +77,9 @@ public class FieldRack implements Node {
         this.parentFieldRack = parent;
     }
 
+    protected Field getField() {
+        return field;
+    }
 
     public Object getValue(Object parent) {
         try {
@@ -85,4 +90,9 @@ public class FieldRack implements Node {
         }
     }
 
+    @Override
+    public SchemaNode copyNode() {
+        FieldRack fieldRack = copy();
+        return fieldRack;
+    }
 }

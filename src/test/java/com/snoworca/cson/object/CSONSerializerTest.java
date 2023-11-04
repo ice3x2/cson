@@ -10,9 +10,19 @@ import static junit.framework.TestCase.assertEquals;
 public class CSONSerializerTest  {
 
     @CSON
+    static class TestClassC {
+        @CSONValue
+        private String name = "C";
+    }
+
+    @CSON
     public static class TestClassB {
         @CSONValue
         private String name = "B";
+
+        @CSONValue
+        private TestClassC testC = new TestClassC();
+
     }
 
     @CSON
@@ -37,6 +47,7 @@ public class CSONSerializerTest  {
         TestClassA testClassA = new TestClassA();
         testClassA.testBInTestB.name="BInB";
         CSONObject csonObject = CSONSerializer.serialize(testClassA);
+        System.out.println(csonObject);
         //assertEquals("A", csonObject.get("name"));
         //assertEquals(1, csonObject.getObject("value").get("int"));
         assertEquals("B", csonObject.getObject("testB").get("name"));

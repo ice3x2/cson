@@ -7,9 +7,9 @@ import java.util.List;
 
 public class NodePath {
 
-    private final Node Node;
+    private final SchemaNode Node;
 
-    public NodePath(Node Node) {
+    public NodePath(SchemaNode Node) {
         this.Node = Node;
     }
 
@@ -178,72 +178,72 @@ public class NodePath {
         return optString(path, null);
     }
 
-    public ObjectNode getObjectNodeNode(String path) {
+    public SchemaObjectNode getObjectNodeNode(String path) {
         Object obj = get(path);
-        if (obj instanceof ObjectNode) {
-            return (ObjectNode) obj;
+        if (obj instanceof SchemaObjectNode) {
+            return (SchemaObjectNode) obj;
         }
         return null;
     }
 
 
-    public ArrayNode getArrayNodeNode(String path) {
+    public SchemaArrayNode getArrayNodeNode(String path) {
         Object obj = get(path);
-        if (obj instanceof ArrayNode) {
-            return (ArrayNode) obj;
+        if (obj instanceof SchemaArrayNode) {
+            return (SchemaArrayNode) obj;
         }
         return null;
     }
 
 
-    private Node obtainOrCreateChild(Node Node, PathItem pathItem) {
-        if(Node instanceof ObjectNode && !pathItem.isInArray() && pathItem.isObject()) {
-            ObjectNode ObjectNode = (ObjectNode)Node;
+    private SchemaNode obtainOrCreateChild(SchemaNode Node, PathItem pathItem) {
+        if(Node instanceof SchemaObjectNode && !pathItem.isInArray() && pathItem.isObject()) {
+            SchemaObjectNode ObjectNode = (SchemaObjectNode)Node;
             String name = pathItem.getName();
             if(pathItem.isArrayValue()) {
-                ArrayNode childArrayNode = ObjectNode.getArrayNode(name);
+                SchemaArrayNode childArrayNode = ObjectNode.getArrayNode(name);
                 if(childArrayNode == null) {
-                    childArrayNode = new ArrayNode();
+                    childArrayNode = new SchemaArrayNode();
                     ObjectNode.put(name, childArrayNode);
                 }
 
                 return childArrayNode;
             } else {
-                ObjectNode childObjectNode = ObjectNode.getObjectNode(name);
+                SchemaObjectNode childObjectNode = ObjectNode.getObjectNode(name);
                 if(childObjectNode == null) {
-                    childObjectNode = new ObjectNode();
+                    childObjectNode = new SchemaObjectNode();
                     ObjectNode.put(name, childObjectNode);
                 }
                 return childObjectNode;
             }
-        } else if(Node instanceof ArrayNode && pathItem.isInArray()) {
-            ArrayNode ArrayNode = (ArrayNode)Node;
+        } else if(Node instanceof SchemaArrayNode && pathItem.isInArray()) {
+            SchemaArrayNode ArrayNode = (SchemaArrayNode)Node;
             int index = pathItem.getIndex();
             if(pathItem.isObject()) {
-                ObjectNode childObjectNode = ArrayNode.getObjectNode(index);
+                SchemaObjectNode childObjectNode = ArrayNode.getObjectNode(index);
                 if(childObjectNode == null) {
-                    childObjectNode = new ObjectNode();
+                    childObjectNode = new SchemaObjectNode();
                     ArrayNode.set(index, childObjectNode);
                     if(pathItem.isArrayValue()) {
-                        ArrayNode childArrayNode = new ArrayNode();
+                        SchemaArrayNode childArrayNode = new SchemaArrayNode();
                         childObjectNode.put(pathItem.getName(), childArrayNode);
                         return childArrayNode;
                     }
-                    ObjectNode childAndChildObjectNode = new ObjectNode();
+                    SchemaObjectNode childAndChildObjectNode = new SchemaObjectNode();
                     childObjectNode.put(pathItem.getName(), childAndChildObjectNode);
                     return childAndChildObjectNode;
                 } else  {
                     if(pathItem.isArrayValue()) {
-                        ArrayNode childChildArrayNode = childObjectNode.getArrayNode(pathItem.getName());
+                        SchemaArrayNode childChildArrayNode = childObjectNode.getArrayNode(pathItem.getName());
                         if (childChildArrayNode == null) {
-                            childChildArrayNode = new ArrayNode();
+                            childChildArrayNode = new SchemaArrayNode();
                             childObjectNode.put(pathItem.getName(), childChildArrayNode);
                         }
                         return childChildArrayNode;
                     } else {
-                        ObjectNode childAndChildObjectNode = childObjectNode.getObjectNode(pathItem.getName());
+                        SchemaObjectNode childAndChildObjectNode = childObjectNode.getObjectNode(pathItem.getName());
                         if (childAndChildObjectNode == null) {
-                            childAndChildObjectNode = new ObjectNode();
+                            childAndChildObjectNode = new SchemaObjectNode();
                             childObjectNode.put(pathItem.getName(), childAndChildObjectNode);
                         }
                         return childAndChildObjectNode;
@@ -251,9 +251,9 @@ public class NodePath {
                 }
             }
             else if(pathItem.isArrayValue()) {
-                ArrayNode childArrayNode = ArrayNode.getArrayNode(index);
+                SchemaArrayNode childArrayNode = ArrayNode.getArrayNode(index);
                 if(childArrayNode == null) {
-                    childArrayNode = new ArrayNode();
+                    childArrayNode = new SchemaArrayNode();
                     ArrayNode.set(index, childArrayNode);
                 }
                 return childArrayNode;
@@ -271,29 +271,29 @@ public class NodePath {
 
 
 
-    private void putNode(Node Node, PathItem pathItem, Node value) {
+    private void putNode(SchemaNode Node, PathItem pathItem, SchemaNode value) {
         if(pathItem.isInArray()) {
             if(pathItem.isObject()) {
                 int index = pathItem.getIndex();
-                ObjectNode childObjectNode = ((ArrayNode)Node).getObjectNode(index);
+                SchemaObjectNode childObjectNode = ((SchemaArrayNode)Node).getObjectNode(index);
                 if(childObjectNode == null) {
-                    childObjectNode = new ObjectNode();
-                    ((ArrayNode)Node).set(index, childObjectNode);
+                    childObjectNode = new SchemaObjectNode();
+                    ((SchemaArrayNode)Node).set(index, childObjectNode);
                 }
                 childObjectNode.put(pathItem.getName(), value);
             } else {
-                ((ArrayNode)Node).set(pathItem.getIndex(), value);
+                ((SchemaArrayNode)Node).set(pathItem.getIndex(), value);
             }
         } else {
-            ((ObjectNode)Node).put(pathItem.getName(), value);
+            ((SchemaObjectNode)Node).put(pathItem.getName(), value);
         }
     }
 
 
 
-    public NodePath put(String path, Node value) {
+    public NodePath put(String path, SchemaNode value) {
         List<PathItem> list = PathItem.parseMultiPath2(path);
-        Node lastNode = this.Node;
+        SchemaNode lastNode = this.Node;
         //noinspection ForLoopReplaceableByForEach
         for(int i = 0, n = list.size(); i < n; ++i) {
             PathItem pathItem = list.get(i);
@@ -317,30 +317,30 @@ public class NodePath {
             if (pathItem.isEndPoint()) {
                 if (pathItem.isInArray()) {
                     if(pathItem.isObject()) {
-                        ObjectNode endPointObject = ((ArrayNode) parents).getObjectNode(pathItem.getIndex());
+                        SchemaObjectNode endPointObject = ((SchemaArrayNode) parents).getObjectNode(pathItem.getIndex());
                         if(endPointObject == null) return null;
                         return endPointObject.get(pathItem.getName());
                     }
                     else {
-                        return ((ArrayNode)parents).get(pathItem.getIndex());
+                        return ((SchemaArrayNode)parents).get(pathItem.getIndex());
                     }
                 } else {
-                    return ((ObjectNode) parents).get(pathItem.getName());
+                    return ((SchemaObjectNode) parents).get(pathItem.getName());
                 }
             }
-            else if((parents instanceof ObjectNode && pathItem.isInArray()) || (parents instanceof ArrayNode && !pathItem.isInArray())) {
+            else if((parents instanceof SchemaObjectNode && pathItem.isInArray()) || (parents instanceof SchemaArrayNode && !pathItem.isInArray())) {
                 return null;
             }
             else {
                 if (pathItem.isInArray()) {
-                    assert parents instanceof ArrayNode;
-                    parents = ((ArrayNode) parents).get(pathItem.getIndex());
-                    if(pathItem.isObject() && parents instanceof ObjectNode) {
-                        parents = ((ObjectNode) parents).get(pathItem.getName());
+                    assert parents instanceof SchemaArrayNode;
+                    parents = ((SchemaArrayNode) parents).get(pathItem.getIndex());
+                    if(pathItem.isObject() && parents instanceof SchemaObjectNode) {
+                        parents = ((SchemaObjectNode) parents).get(pathItem.getName());
                     }
                 } else {
-                    assert parents instanceof ObjectNode;
-                    parents = ((ObjectNode) parents).get(pathItem.getName());
+                    assert parents instanceof SchemaObjectNode;
+                    parents = ((SchemaObjectNode) parents).get(pathItem.getName());
                 }
             }
         }

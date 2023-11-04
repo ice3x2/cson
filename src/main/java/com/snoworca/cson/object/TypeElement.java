@@ -1,6 +1,9 @@
 package com.snoworca.cson.object;
 
 
+import com.snoworca.cson.CSONElement;
+import com.snoworca.cson.CSONObject;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,7 +14,7 @@ public class TypeElement {
     private final Class<?> type;
     private final Constructor<?> constructor;
 
-    private final ObjectNode tree;
+    private final SchemaObjectNode tree;
 
 
     public static TypeElement create(Class<?> type) {
@@ -39,7 +42,7 @@ public class TypeElement {
     protected CSONObject serialize(Object typeObject) {
         return serialize(typeObject,null);
     }
-    protected CSONObject serialize(Object typeObject,CSONObject origin) {
+    protected CSONObject serialize(final Object typeObject,CSONObject origin) {
         if(typeObject.getClass() != this.type) {
             throw new CSONObjectException("Type mismatch error. " + this.type.getName() + "!=" + typeObject.getClass().getName());
         }
@@ -47,60 +50,97 @@ public class TypeElement {
             return null;
         }
 
+        HashMap<Integer, Object> parentObjMap = new HashMap<>();
+        HashMap<Class<?>, Object> parentsObjMap = new HashMap<>();
+        int currentFieldRackId = 0;
+
+
+
         CSONObject csonObject = origin == null? new CSONObject() : origin;
-        CSONObject treeObject = tree;
+        SchemaObjectNode treeObject = tree;
         Iterator<String> iter = tree.keySet().iterator();
         ArrayDeque<Iterator<String>> iterators = new ArrayDeque<>();
         ArrayDeque<CSONElement> resultElements = new ArrayDeque<>();
-        ArrayDeque<CSONElement> treeElements = new ArrayDeque<>();
+        ArrayDeque<SchemaNode> treeElements = new ArrayDeque<>();
         ArrayDeque<Object> parents = new ArrayDeque<>();
         ArrayDeque<Object> typeObjects = new ArrayDeque<>();
         iterators.add(iter);
-        treeElements.add(tree);
+        //treeElements.add(tree);
         typeObjects.add(typeObject);
         resultElements.add(csonObject);
         parents.add(typeObject);
         FieldRack lastParentFieldRack = null;
         while(iter.hasNext()) {
             String key = iter.next();
-            Object treeObj = treeObject.get(key);
-            if(treeObj instanceof CSONArray) csonObject.put(key, ((CSONArray)treeObj).clone());
-            else if(treeObj instanceof CSONObject) {
+            SchemaNode node = treeObject.get(key);
+            if(node instanceof SchemaArrayNode) {}//csonObject.put(key, ((CSONArray)node).clone());
+            else if(node instanceof SchemaObjectNode) {
                 CSONObject childObject = csonObject.optObject(key);
                 if(childObject == null) {
                     childObject = new CSONObject();
                     csonObject.put(key, childObject);
                 }
                 csonObject = childObject;
-                treeObject = (CSONObject)treeObj;
+                treeObject = (SchemaObjectNode)node;
                 iter = treeObject.keySet().iterator();
                 iterators.add(iter);
                 resultElements.add(csonObject);
+                List<FieldRack> parentFieldRack = treeObject.getParentFieldRackList();
+                for(FieldRack fieldRack : parentFieldRack) {
+                    int id = fieldRack.getId();
+                    if(parentObjMap.containsKey(id)) {
+                        continue;
+                    }
+                    FieldRack grandFieldRack = fieldRack.getParentFieldRack();
+                    if (grandFieldRack == null) {
+                        Object obj = fieldRack.getValue(typeObject);
+                        parentObjMap.put(id, obj);
+                    }
+                    else {
+                        Object grandObj = parentObjMap.get(grandFieldRack.getId());
+                        Object obj = fieldRack.getValue(grandObj);
+                        parentObjMap.put(id, obj);
+                    }
+                }
                 treeElements.add(treeObject);
             }
-            else if(treeObj instanceof FieldRack) {
-                FieldRack fieldRack = (FieldRack)treeObj;
-                FieldRack parentFieldRack  = fieldRack.getParentFieldRack();
-                if(parentFieldRack != null && parentFieldRack != lastParentFieldRack) {
-                    typeObject = parentFieldRack.getValue(typeObject);
-                    lastParentFieldRack = parentFieldRack;
-                    parents.add(typeObject);
-                } else if(parentFieldRack != lastParentFieldRack){
-                    typeObject = parents.peekFirst();
-                }
-                Object value = fieldRack.getValue(typeObject);
+            else if(node instanceof FieldRack) {
+                FieldRack fieldRack = (FieldRack)node;
+                Object parent =obtainParentObjects(parentObjMap, fieldRack, typeObject);
+                Object value = fieldRack.getValue(parent);
                 csonObject.put(key, value);
-
             }
-            else csonObject.put(key, treeObj);
+            else csonObject.put(key, node);
             if(!iter.hasNext() && !iterators.isEmpty()) {
                 iter = iterators.peekFirst();
-                treeObject = (CSONObject) treeElements.peekFirst();
+                treeObject = (SchemaObjectNode)treeElements.peekFirst();
                 csonObject = (CSONObject) resultElements.peekFirst();
             }
         }
         return csonObject;
+    }
 
+
+
+    private Object obtainParentObjects(Map<Integer, Object> parentsMap, FieldRack fieldRack, Object rootObject) {
+        FieldRack parentFieldRack = fieldRack.getParentFieldRack();
+        if(parentFieldRack == null) {
+            return rootObject;
+        }
+        int parentId = parentFieldRack.getId();
+        Object parent = parentsMap.get(parentId);
+        if(parent != null) {
+            return parent;
+        }
+        FieldRack grandParentFieldRack = parentFieldRack.getParentFieldRack();
+        if(grandParentFieldRack == null) {
+            parent = parentFieldRack.getValue(rootObject);
+        }
+        else {
+            parent = obtainParentObjects(parentsMap, parentFieldRack, rootObject);
+            parentsMap.put(parentId, parent);
+        }
+        return parent;
     }
 
 
@@ -145,18 +185,24 @@ public class TypeElement {
 
 
 
-    private CSONTypeObject init() {
+    private SchemaObjectNode init() {
+        return makeTree(null);
+    }
+
+    protected SchemaObjectNode makeTree(FieldRack parentFieldRack) {
         List<FieldRack> fieldRacks = searchAllCSONValueFields(type);
-        ObjectNode objectNode = new ObjectNode();
+        SchemaObjectNode objectNode = new SchemaObjectNode();
         NodePath nodePath = new NodePath(objectNode);
         for(FieldRack fieldRack : fieldRacks) {
+            fieldRack.setParentFiledRack(parentFieldRack);
             if(fieldRack.getType() == Types.Object) {
                 TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
-                CSONTypeObject childTree = (CSONTypeObject) typeElement.tree.clone();
-                csonPath.put(fieldRack.getPath(),childTree);
+                SchemaObjectNode childTree = typeElement.makeTree(fieldRack);
+                childTree.addParentFieldRack(fieldRack);
+                nodePath.put(fieldRack.getPath(),childTree);
                 continue;
             }
-            csonPath.put(fieldRack.getPath(),fieldRack.copy());
+            nodePath.put(fieldRack.getPath(),fieldRack);
         }
         return objectNode;
     }
