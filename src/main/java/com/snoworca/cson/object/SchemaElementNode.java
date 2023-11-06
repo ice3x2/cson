@@ -1,6 +1,8 @@
 package com.snoworca.cson.object;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class SchemaElementNode implements SchemaNode {
@@ -27,9 +29,21 @@ public abstract class SchemaElementNode implements SchemaNode {
     }
 
     public SchemaElementNode addParentFieldRack(FieldRack parentFieldRack) {
+        if(this.parentFieldRackList.contains(parentFieldRack)) {
+            return this;
+        }
         this.parentFieldRackList.add(parentFieldRack);
         return this;
     }
+
+    public SchemaElementNode addParentFieldRackAll(Collection<FieldRack> parentFieldRackCollection) {
+        for(FieldRack parentFieldRack : parentFieldRackCollection) {
+            addParentFieldRack(parentFieldRack);
+        }
+        return this;
+    }
+
+    public abstract void merge(SchemaElementNode schemaElementNode);
 
 
 }

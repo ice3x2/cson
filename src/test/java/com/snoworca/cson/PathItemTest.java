@@ -1,4 +1,4 @@
-package com.snoworca.cson.serialize;
+package com.snoworca.cson;
 
 import com.snoworca.cson.PathItem;
 import org.junit.Test;

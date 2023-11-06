@@ -59,5 +59,26 @@ public class SchemaArrayNode extends SchemaElementNode {
     }
 
 
+    @Override
+    public void merge(SchemaElementNode schemaElementNode) {
+        if(schemaElementNode instanceof SchemaArrayNode) {
+            SchemaArrayNode arrayNode = (SchemaArrayNode) schemaElementNode;
+            for(int i = 0, n = arrayNode.size(); i < n; i++) {
+                SchemaNode node = arrayNode.get(i);
+                if(i < list.size()) {
+                    SchemaNode oldNode = list.get(i);
+                    if(oldNode instanceof SchemaObjectNode && node instanceof SchemaObjectNode) {
+                        ((SchemaObjectNode) oldNode).merge((SchemaObjectNode) node);
+                    } else if(oldNode instanceof SchemaArrayNode && node instanceof SchemaArrayNode) {
+                        ((SchemaArrayNode) oldNode).merge((SchemaArrayNode) node);
+                    } else {
+                        list.set(i, node);
+                    }
+                } else {
+                    list.add(node);
+                }
+            }
+        }
 
+    }
 }

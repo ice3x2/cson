@@ -95,4 +95,19 @@ public class FieldRack implements SchemaNode {
         FieldRack fieldRack = copy();
         return fieldRack;
     }
+
+    @Override
+    public String toString() {
+        return id + ""; /*"FieldRack{" +
+                "id=" + id +
+                ", field=" + field +
+                ", path='" + path + '\'' +
+                ", isPrimitive=" + isPrimitive +
+                ", isByteArray=" + isByteArray +
+                ", typeElement=" + typeElement +
+                ", fieldType=" + fieldType +
+                ", type=" + type +
+                ", parentFieldRack=" + parentFieldRack +
+                '}';*/
+    }
 }
