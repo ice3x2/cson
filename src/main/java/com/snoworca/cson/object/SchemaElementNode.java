@@ -2,12 +2,11 @@ package com.snoworca.cson.object;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class SchemaElementNode implements SchemaNode {
     private SchemaNode parent;
-    private List<FieldRack> parentFieldRackList = new ArrayList<>();
+    private List<SchemaField> parentFieldRackList = new ArrayList<>();
 
     public SchemaElementNode() {}
 
@@ -20,15 +19,15 @@ public abstract class SchemaElementNode implements SchemaNode {
         return this;
     }
 
-    protected List<FieldRack> getParentFieldRackList() {
+    protected List<SchemaField> getParentFieldRackList() {
         return parentFieldRackList;
     }
 
-    protected void setParentFieldRackList(List<FieldRack> parentFieldRackList) {
+    protected void setParentFieldRackList(List<SchemaField> parentFieldRackList) {
         this.parentFieldRackList = parentFieldRackList;
     }
 
-    public SchemaElementNode addParentFieldRack(FieldRack parentFieldRack) {
+    public SchemaElementNode addParentFieldRack(SchemaField parentFieldRack) {
         if(this.parentFieldRackList.contains(parentFieldRack)) {
             return this;
         }
@@ -36,8 +35,8 @@ public abstract class SchemaElementNode implements SchemaNode {
         return this;
     }
 
-    public SchemaElementNode addParentFieldRackAll(Collection<FieldRack> parentFieldRackCollection) {
-        for(FieldRack parentFieldRack : parentFieldRackCollection) {
+    public SchemaElementNode addParentFieldRackAll(Collection<SchemaField> parentFieldRackCollection) {
+        for(SchemaField parentFieldRack : parentFieldRackCollection) {
             addParentFieldRack(parentFieldRack);
         }
         return this;

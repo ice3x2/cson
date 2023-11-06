@@ -42,12 +42,6 @@ class TypeElement {
 
 
 
-
-
-
-
-
-
     private static void checkCSONAnnotation(Class<?> type) {
          Annotation a = type.getAnnotation(CSON.class);
          if(a == null) {
@@ -69,13 +63,13 @@ class TypeElement {
     }
 
 
-    private List<FieldRack> searchAllCSONValueFields(Class<?> clazz) {
+    private List<SchemaField> searchAllCSONValueFields(Class<?> clazz) {
         Set<String> fieldPaths = new HashSet<>();
-        List<FieldRack> results = new ArrayList<>();
+        List<SchemaField> results = new ArrayList<>();
         Class<?> currentClass = clazz;
         while(currentClass != Object.class) {
             for(Field field : clazz.getDeclaredFields()) {
-                FieldRack fieldRack = FieldRack.of(this,field);
+                SchemaField fieldRack = SchemaField.of(this,field);
                 if(fieldRack != null && !fieldPaths.contains(fieldRack.getPath())) {
                     // 동일한 path 가 있으면 거른다.
                     fieldPaths.add(fieldRack.getPath());
@@ -93,12 +87,12 @@ class TypeElement {
         return makeSchema(null);
     }
 
-    protected SchemaObjectNode makeSchema(FieldRack parentFieldRack) {
-        List<FieldRack> fieldRacks = searchAllCSONValueFields(type);
+    protected SchemaObjectNode makeSchema(SchemaField parentFieldRack) {
+        List<SchemaField> fieldRacks = searchAllCSONValueFields(type);
         SchemaObjectNode objectNode = new SchemaObjectNode();
         NodePath nodePath = new NodePath(objectNode);
-        for(FieldRack fieldRack : fieldRacks) {
-            fieldRack.setParentFiledRack(parentFieldRack);
+        for(SchemaField fieldRack : fieldRacks) {
+            fieldRack.setParentFiled(parentFieldRack);
             if(fieldRack.getType() == Types.Object) {
                 TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
                 SchemaObjectNode childTree = typeElement.makeSchema(fieldRack);

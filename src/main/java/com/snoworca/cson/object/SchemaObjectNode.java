@@ -10,17 +10,17 @@ import java.util.Set;
 public class SchemaObjectNode extends SchemaElementNode {
 
     private final Map<String, SchemaNode> map = new LinkedHashMap<>();
-    private FieldRack fieldRack;
+    private SchemaFieldNormal fieldRack;
 
 
     public SchemaObjectNode() {}
 
 
-    public FieldRack getFieldRack() {
+    public SchemaFieldNormal getFieldRack() {
         return fieldRack;
     }
 
-    public SchemaObjectNode setFieldRack(FieldRack fieldRack) {
+    public SchemaObjectNode setFieldRack(SchemaFieldNormal fieldRack) {
         this.fieldRack = fieldRack;
         return this;
     }
