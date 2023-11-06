@@ -1,17 +1,10 @@
 package com.snoworca.cson.object;
 
-import com.snoworca.cson.CSONArray;
-import com.snoworca.cson.CSONObject;
-import com.snoworca.cson.JSONOptions;
-
 import java.util.ArrayList;
-import java.util.Map;
 
 public class SchemaArrayNode extends SchemaElementNode {
 
     private final ArrayList<SchemaNode> list = new ArrayList<>();
-
-
 
     public ArrayList<SchemaNode> getList() {
         return list;

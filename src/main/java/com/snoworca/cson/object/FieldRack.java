@@ -2,12 +2,16 @@ package com.snoworca.cson.object;
 
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FieldRack implements SchemaNode {
 
     private static final AtomicInteger LAST_ID = new AtomicInteger(1);
 
+    private final List<FieldRack> parentFieldRackList = new ArrayList<>();
     private final int id = LAST_ID.getAndIncrement();
     private final Field field;
     private final String path;
@@ -51,6 +55,43 @@ public class FieldRack implements SchemaNode {
         if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
             throw new CSONObjectException("Field type is not annotated with @CSON");
         }
+
+        if(Collection.class.isAssignableFrom(this.fieldType)) {
+            java.lang.reflect.Type[] genericTypes = this.fieldType.getGenericInterfaces();
+            if(genericTypes.length == 0) {
+                //todo 필드 이름 표시해야함/
+                throw new CSONObjectException("Raw Collection type is not supported. Be sure to use generic type.");
+            }
+            java.lang.reflect.Type genericType = genericTypes[0];
+            if(genericType instanceof java.lang.reflect.ParameterizedType) {
+                java.lang.reflect.ParameterizedType parameterizedType = (java.lang.reflect.ParameterizedType) genericType;
+                java.lang.reflect.Type[] actualTypes = parameterizedType.getActualTypeArguments();
+                if(actualTypes.length == 0) {
+                    //todo 필드 이름 표시해야함/
+                    throw new CSONObjectException("Raw Collection type is not supported. Be sure to use generic type.");
+                }
+                java.lang.reflect.Type actualType = actualTypes[0];
+                Class fieldArgClass = (Class) actualType;
+                if(actualType instanceof Class) {
+                    Class<?> actualClass = (Class<?>) actualType;
+                    if(actualClass.getAnnotation(CSON.class) == null) {
+                        //todo 필드 이름 표시해야함/
+                       // throw new CSONObjectException("Collection type is not annotated with @CSON");
+                    }
+                } else {
+                    //todo 필드 이름 표시해야함/
+                   // throw new CSONObjectException("Collection type is not annotated with @CSON");
+                }
+            } else {
+                //todo 필드 이름 표시해야함/
+              //  throw new CSONObjectException("Raw Collection type is not supported. Be sure to use generic type.");
+            }
+
+
+
+
+        }
+
 
     }
 
