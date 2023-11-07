@@ -35,9 +35,6 @@ public class CSONSerializer {
         ObjectSerializeDequeueItem currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonObject);
         objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
 
-        boolean nullObject = false;
-        String lastKey = null;
-
         while(iter.hasNext()) {
             String key = iter.next();
             SchemaNode node = schemaNode.get(key);
@@ -47,9 +44,8 @@ public class CSONSerializer {
                 schemaNode = (SchemaObjectNode)node;
                 iter = schemaNode.keySet().iterator();
                 List<SchemaField> parentFieldRack = schemaNode.getParentFieldRackList();
-                boolean isNull = !parentFieldRack.isEmpty();
+                int nullCount = parentFieldRack.size();
                 for(SchemaField fieldRack : parentFieldRack) {
-                    lastKey = key;
                     int id = fieldRack.getId();
                     if(parentObjMap.containsKey(id)) {
                         continue;
@@ -57,30 +53,47 @@ public class CSONSerializer {
                     SchemaField grandFieldRack = fieldRack.getParentField();
                     if (grandFieldRack == null) {
                         Object obj = fieldRack.getValue(rootObject);
-                        parentObjMap.put(id, obj);
-                        nullObject = true;
+                        if(obj == null) {
+
+                        }
+                        else {
+                            parentObjMap.put(id, obj);
+                            nullCount--;
+                        }
+
                     }
                     else {
                         Object grandObj = parentObjMap.get(grandFieldRack.getId());
                         if(grandObj == null) {
-                            parentObjMap.put(id, null);
+
                         } else {
                             Object obj = fieldRack.getValue(grandObj);
-                            parentObjMap.put(id, obj);
-                            nullObject = true;
+                            if(obj == null) {
+
+                            }
+                            else {
+                                parentObjMap.put(id, obj);
+                                nullCount--;
+                            }
                         }
                     }
                 }
 
-                CSONObject childObject = csonObject.optObject(key);
-                CSONObject parentObject = csonObject;
-                if(childObject == null) {
-                    childObject = new CSONObject();
-                    csonObject.put(key, childObject);
-                    csonObject = childObject;
+                if(!schema.isBranchNode() && nullCount > 0) {
+                    csonObject.put(key,null);
+                    while (iter.hasNext())  {
+                        iter.next();
+                    }
+                } else {
+                    CSONObject childObject = csonObject.optObject(key);
+                    CSONObject parentObject = csonObject;
+                    if(childObject == null) {
+                        childObject = new CSONObject();
+                        csonObject.put(key, childObject);
+                        csonObject = childObject;
+                    }
+                    objectSerializeDequeueItems.add(new ObjectSerializeDequeueItem(iter, schemaNode, csonObject));
                 }
-                objectSerializeDequeueItems.add(new ObjectSerializeDequeueItem(iter, schemaNode, csonObject));
-
             }
             else if(node instanceof SchemaFieldNormal) {
                 SchemaFieldNormal fieldRack = (SchemaFieldNormal)node;
@@ -88,9 +101,8 @@ public class CSONSerializer {
                 if(parent != null) {
                     Object value = fieldRack.getValue(parent);
                     csonObject.put(key, value);
-                    nullObject = false;
                 } else {
-                    nullObject = true;
+
                 }
             } else if(node instanceof SchemaFieldArray) {
                 SchemaFieldArray schemaFieldArray = (SchemaFieldArray)node;
@@ -99,17 +111,13 @@ public class CSONSerializer {
                     Object value = schemaFieldArray.getValue(parent);
                     CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
                     csonObject.put(key, csonArray);
-                    nullObject = false;
+
                 } else {
-                    nullObject = true;
+
                 }
             }
             while(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
-                if(lastKey != null && nullObject) {
-                    csonObject.remove(lastKey);
-                    lastKey = null;
-                    nullObject = false;
-                }
+
 
 
                 ObjectSerializeDequeueItem objectSerializeDequeueItem = objectSerializeDequeueItems.getFirst();

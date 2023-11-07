@@ -8,11 +8,24 @@ public abstract class SchemaElementNode implements SchemaNode {
     private SchemaNode parent;
     private List<SchemaField> parentFieldRackList = new ArrayList<>();
 
+    protected boolean isBranchNode = true;
+
+    protected boolean isBranchNode() {
+        return isBranchNode;
+    }
+
+    protected void setBranchNode(boolean branchNode) {
+        isBranchNode = branchNode;
+    }
     public SchemaElementNode() {}
 
     public SchemaNode getParent() {
         return parent;
     }
+
+
+
+
 
     public SchemaElementNode setParent(SchemaNode parent) {
         this.parent = parent;
@@ -24,6 +37,7 @@ public abstract class SchemaElementNode implements SchemaNode {
     }
 
     protected void setParentFieldRackList(List<SchemaField> parentFieldRackList) {
+        isBranchNode = parentFieldRackList.isEmpty();
         this.parentFieldRackList = parentFieldRackList;
     }
 
@@ -31,6 +45,7 @@ public abstract class SchemaElementNode implements SchemaNode {
         if(this.parentFieldRackList.contains(parentFieldRack)) {
             return this;
         }
+        isBranchNode = false;
         this.parentFieldRackList.add(parentFieldRack);
         return this;
     }

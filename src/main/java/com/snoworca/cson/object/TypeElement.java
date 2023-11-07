@@ -90,6 +90,7 @@ class TypeElement {
     protected SchemaObjectNode makeSchema(SchemaField parentFieldRack) {
         List<SchemaField> fieldRacks = searchAllCSONValueFields(type);
         SchemaObjectNode objectNode = new SchemaObjectNode();
+        objectNode.setBranchNode(false);
         NodePath nodePath = new NodePath(objectNode);
         for(SchemaField fieldRack : fieldRacks) {
             fieldRack.setParentFiled(parentFieldRack);

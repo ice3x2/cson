@@ -80,6 +80,8 @@ public abstract class SchemaField implements SchemaNode {
 
     protected void setParentFiled(SchemaField parent) {
         this.parentFieldRack = parent;
+
+
     }
 
 

@@ -13,6 +13,7 @@ public class SchemaObjectNode extends SchemaElementNode {
     private SchemaFieldNormal fieldRack;
 
 
+
     public SchemaObjectNode() {}
 
 
@@ -24,6 +25,7 @@ public class SchemaObjectNode extends SchemaElementNode {
         this.fieldRack = fieldRack;
         return this;
     }
+
 
 
 
@@ -93,6 +95,9 @@ public class SchemaObjectNode extends SchemaElementNode {
             }
         }
         addParentFieldRackAll(schemaElementNode.getParentFieldRackList());
+        if(schemaElementNode.isBranchNode()) {
+            setBranchNode(true);
+        }
 
     }
 
