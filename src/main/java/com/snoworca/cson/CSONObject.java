@@ -74,6 +74,10 @@ public class CSONObject extends CSONElement implements Cloneable {
 		super(ElementType.Object);
 	}
 
+	public boolean remove(String key) {
+		return dataMap.remove(key) != null;
+	}
+
 
 	public CSONObject put(String key, Object value) {
 		if(value == null) {

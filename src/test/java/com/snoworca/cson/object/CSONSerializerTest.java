@@ -3,15 +3,13 @@ package com.snoworca.cson.object;
 import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONObject;
 import com.snoworca.cson.JSONOptions;
+import org.json.JSONObject;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.*;
 
 public class CSONSerializerTest  {
 
@@ -58,11 +56,15 @@ public class CSONSerializerTest  {
 
         @CSONValue
         private ArrayList<String> strArray = new ArrayList<>();
+        @CSONValue
+        private ArrayList<LinkedList<Deque<String>>> strArraySet = new ArrayList<>();
 
         @CSONValue
-        private ArrayList<HashSet<Deque<String>>> strArraySet = new ArrayList<>();
+        private ArrayList<TestClassB> testBArray = new ArrayList<>();
 
     }
+
+
 
     private static String makeRandomString(int length) {
         StringBuilder sb = new StringBuilder();
@@ -73,11 +75,11 @@ public class CSONSerializerTest  {
     }
 
 
-    public void fillRandomValues(ArrayList<HashSet<Deque<String>>> strArraySet) {
+    public void fillRandomValues(ArrayList<LinkedList<Deque<String>>> strArraySet) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int numSets = random.nextInt(5) + 1; // 랜덤한 개수의 HashSet 추가
         for (int i = 0; i < numSets; i++) {
-            HashSet<Deque<String>> hashSet = new HashSet<>();
+            LinkedList<Deque<String>> hashSet = new LinkedList<>();
             int numDeques = random.nextInt(5) + 1; // 랜덤한 개수의 Deque 추가
             for (int j = 0; j < numDeques; j++) {
                 Deque<String> deque = new LinkedList<>();
@@ -91,8 +93,21 @@ public class CSONSerializerTest  {
         }
     }
 
-
-
+    public void fillRandomTestBCalss(Collection<TestClassB> testBObjectList) {
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            int numSets = random.nextInt(5,10); // 랜덤한 개수의 HashSet 추가
+            for (int i = 0; i < numSets; i++) {
+                TestClassB testClassB = new TestClassB();
+                testClassB.name = makeRandomString(ThreadLocalRandom.current().nextInt(1,50));
+                if(random.nextBoolean()) {
+                    testClassB.testC = null;
+                } else {
+                    testClassB.testC = new TestClassC();
+                    testClassB.testC.name = makeRandomString(ThreadLocalRandom.current().nextInt(1,50));
+                }
+                testBObjectList.add(testClassB);
+            }
+    }
 
     @Test
     public void serializeTest() {
@@ -104,6 +119,8 @@ public class CSONSerializerTest  {
             testClassA.strArray.add(makeRandomString(ThreadLocalRandom.current().nextInt(1,50)));
             strArray.add(makeRandomString(ThreadLocalRandom.current().nextInt(1,50)));
         }
+
+        fillRandomTestBCalss(testClassA.testBArray);
 
         this.fillRandomValues(testClassA.strArraySet);
 
@@ -125,24 +142,61 @@ public class CSONSerializerTest  {
         }
 
         for(int i = 0; i < testClassA.strArraySet.size(); i++) {
-            HashSet<Deque<String>> hashSet = testClassA.strArraySet.get(i);
+            LinkedList<Deque<String>> linkedList = testClassA.strArraySet.get(i);
             CSONArray csonArray = csonObject.getArray("strArraySet").getArray(i);
-            assertEquals(hashSet.size(), csonArray.size());
-            int j = 0;
-            for(Deque<String> deque : hashSet) {
-                CSONArray deque2 = (CSONArray) csonArray.iterator().next();
-                assertEquals(deque.size(), csonArray.size());
-                int k = 0;
+            assertEquals(linkedList.size(), csonArray.size());
+            Iterator<Object> csonArrayIter = csonArray.iterator();
+            for(Deque<String> deque : linkedList) {
+                CSONArray array2 = (CSONArray)csonArrayIter.next();
+                assertEquals(deque.size(), array2.size());
+                Iterator<Object> array2Iter = array2.iterator();
                 for(String str : deque) {
-                    assertEquals(str, deque2.iterator().next());
-                    k++;
+                    assertEquals(str, array2Iter.next());
                 }
-                j++;
             }
         }
+    }
+
+
+
+
+
+
+
+
+    @CSON
+    private static class TestClassNull {
+
+        @CSONValue
+        private TestClassA testClassA0 = null;
+        @CSONValue
+        private TestClassB testClassB1 = new TestClassB();
+
+        @CSONValue("testClassB1.testC.name")
+        private String classCName = "C";
 
 
 
     }
+    @Test
+    public void nullObjectSerializeTest() {
+        //JSONObject jsonObject = new JSONObject("{\"ok\": null}");
+        //Object op = jsonObject.getJSONObject("ok");
+
+        TestClassNull testClassNull = new TestClassNull();
+
+        testClassNull.testClassB1.testC = null;
+
+        CSONObject csonObject = CSONSerializer.serialize(testClassNull);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+
+        //assertNotNull(csonObject.getObject("testClassB").getObject("testC"));
+       // assertNull(csonObject.get("testClassA0"));
+        //assertNull(csonObject.getObject("testClassB1").get("testC"));
+    }
+
+
+
+
 
 }

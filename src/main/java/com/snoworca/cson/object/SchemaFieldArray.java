@@ -11,13 +11,26 @@ public class SchemaFieldArray extends SchemaField {
     //private final Types valueType;
 
     private final List<CollectionItems> collectionBundles;
+    private final Types valueType;
+    private final TypeElement objectValueTypeElement;
 
     protected SchemaFieldArray(TypeElement typeElement, Field field, String path, boolean isByteArray) {
         super(typeElement, field, path, isByteArray);
         this.collectionBundles = getGenericType(field.getType());
+        Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
+        valueType = Types.of(valueClass);
+        if(valueType == Types.Object) {
+            objectValueTypeElement = TypeElements.getInstance().getTypeInfo(valueClass);
+        } else {
+            objectValueTypeElement = null;
+        }
     }
 
-    protected List<CollectionItems> getCollectionBundles() {
+    protected TypeElement getObjectValueTypeElement() {
+        return objectValueTypeElement;
+    }
+
+    protected List<CollectionItems> getCollectionItems() {
         return collectionBundles;
     }
 
@@ -92,14 +105,14 @@ public class SchemaFieldArray extends SchemaField {
             this.collectionConstructor = (Constructor<? extends Collection<?>>) constructorOfCollection(collectionType);
             Type[] actualTypes =  type.getActualTypeArguments();
             if(actualTypes.length > 0 && actualTypes[0] instanceof Class<?>) {
-                this.valueType = (Class<?>) type.getActualTypeArguments()[0];
+                this.valueClass = (Class<?>) type.getActualTypeArguments()[0];
             } else {
-                this.valueType = null;
+                this.valueClass = null;
             }
         }
         protected final Constructor<? extends Collection<?>> collectionConstructor;
         protected final Class<?> collectionType;
-        protected final Class<?> valueType;
+        protected final Class<?> valueClass;
 
 
 

@@ -97,12 +97,8 @@ class TypeElement {
                 TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
                 SchemaObjectNode childTree = typeElement.makeSchema(fieldRack);
                 childTree.addParentFieldRack(fieldRack);
-                System.out.println(fieldRack.getPath());
-
                 nodePath.put(fieldRack.getPath(),childTree);
-                if(fieldRack.getPath().equals("testB.testB")) {
-                    System.out.println(objectNode.toString());
-                }
+
                 continue;
             }
             nodePath.put(fieldRack.getPath(),fieldRack);
