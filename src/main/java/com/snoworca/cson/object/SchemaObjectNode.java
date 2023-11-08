@@ -16,6 +16,11 @@ public class SchemaObjectNode extends SchemaElementNode {
 
     public SchemaObjectNode() {}
 
+    @Override
+    protected void onBranchNode(boolean branchNode) {
+
+    }
+
 
     public SchemaFieldNormal getFieldRack() {
         return fieldRack;
@@ -61,7 +66,7 @@ public class SchemaObjectNode extends SchemaElementNode {
         for(Map.Entry<String, SchemaNode> entry : map.entrySet()) {
             SchemaNode node = entry.getValue().copyNode();
             if(node instanceof SchemaElementNode) {
-                ((SchemaElementNode) node).setParentFieldRackList(getParentFieldRackList());
+                ((SchemaElementNode) node).setParentSchemaFieldList(getParentSchemaFieldList());
             }
 
             objectNode.put(entry.getKey(), node);
@@ -87,6 +92,7 @@ public class SchemaObjectNode extends SchemaElementNode {
                 SchemaNode thisNode = map.get(key);
                 if(thisNode instanceof  SchemaObjectNode && node instanceof SchemaObjectNode) {
                     ((SchemaObjectNode) thisNode).merge((SchemaObjectNode) node);
+
                 } else if(thisNode instanceof SchemaArrayNode && node instanceof SchemaArrayNode) {
                     ((SchemaArrayNode) thisNode).merge((SchemaArrayNode) node);
                 } else {
@@ -94,10 +100,8 @@ public class SchemaObjectNode extends SchemaElementNode {
                 }
             }
         }
-        addParentFieldRackAll(schemaElementNode.getParentFieldRackList());
-        if(schemaElementNode.isBranchNode()) {
-            setBranchNode(true);
-        }
+        addParentFieldRackAll(schemaElementNode.getParentSchemaFieldList());
+        setBranchNode(schemaElementNode.isBranchNode() || this.isBranchNode());
 
     }
 
@@ -107,7 +111,9 @@ public class SchemaObjectNode extends SchemaElementNode {
         stringBuilder.append("{");
         Set<Map.Entry<String, SchemaNode>> entrySet = map.entrySet();
         for(Map.Entry<String, SchemaNode> entry : entrySet) {
-            stringBuilder.append(entry.getKey()).append(":").append(entry.getValue().toString()).append(",");
+            int branchMode = entry.getValue() instanceof SchemaElementNode ? ((SchemaElementNode) entry.getValue()).isBranchNode() ? 1 : 0 : -1;
+
+            stringBuilder.append(entry.getKey()).append(branchMode > 0 ? "(b)" : "").append(":").append(entry.getValue().toString()).append(",");
         }
         if(stringBuilder.length() > 1) {
             stringBuilder.deleteCharAt(stringBuilder.length() - 1);

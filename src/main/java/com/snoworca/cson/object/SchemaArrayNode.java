@@ -53,6 +53,11 @@ public class SchemaArrayNode extends SchemaElementNode {
 
 
     @Override
+    protected void onBranchNode(boolean branchNode) {
+
+    }
+
+    @Override
     public void merge(SchemaElementNode schemaElementNode) {
         if(schemaElementNode instanceof SchemaArrayNode) {
             SchemaArrayNode arrayNode = (SchemaArrayNode) schemaElementNode;

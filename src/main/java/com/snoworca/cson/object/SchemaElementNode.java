@@ -6,17 +6,26 @@ import java.util.List;
 
 public abstract class SchemaElementNode implements SchemaNode {
     private SchemaNode parent;
-    private List<SchemaField> parentFieldRackList = new ArrayList<>();
+    private List<SchemaField> parentSchemaFieldList = new ArrayList<>();
 
+    /**
+     * 브런치 노드. 참조된 필드가 없는 노드.
+     */
     protected boolean isBranchNode = true;
+
 
     protected boolean isBranchNode() {
         return isBranchNode;
     }
 
-    protected void setBranchNode(boolean branchNode) {
+    @SuppressWarnings("unchecked")
+    protected <T extends SchemaElementNode> T setBranchNode(boolean branchNode) {
         isBranchNode = branchNode;
+        this.onBranchNode(branchNode);
+        return (T) this;
     }
+
+
     public SchemaElementNode() {}
 
     public SchemaNode getParent() {
@@ -24,7 +33,7 @@ public abstract class SchemaElementNode implements SchemaNode {
     }
 
 
-
+    protected abstract void onBranchNode(boolean branchNode);
 
 
     public SchemaElementNode setParent(SchemaNode parent) {
@@ -32,21 +41,19 @@ public abstract class SchemaElementNode implements SchemaNode {
         return this;
     }
 
-    protected List<SchemaField> getParentFieldRackList() {
-        return parentFieldRackList;
+    protected List<SchemaField> getParentSchemaFieldList() {
+        return parentSchemaFieldList;
     }
 
-    protected void setParentFieldRackList(List<SchemaField> parentFieldRackList) {
-        isBranchNode = parentFieldRackList.isEmpty();
-        this.parentFieldRackList = parentFieldRackList;
+    protected void setParentSchemaFieldList(List<SchemaField> parentSchemaFieldList) {
+        this.parentSchemaFieldList = parentSchemaFieldList;
     }
 
     public SchemaElementNode addParentFieldRack(SchemaField parentFieldRack) {
-        if(this.parentFieldRackList.contains(parentFieldRack)) {
+        if(this.parentSchemaFieldList.contains(parentFieldRack)) {
             return this;
         }
-        isBranchNode = false;
-        this.parentFieldRackList.add(parentFieldRack);
+        this.parentSchemaFieldList.add(parentFieldRack);
         return this;
     }
 

@@ -61,6 +61,8 @@ public class CSONSerializerTest  {
 
         @CSONValue
         private ArrayList<TestClassB> testBArray = new ArrayList<>();
+        @CSONValue
+        private Deque<ArrayList<TestClassB>> testBInTestBArray = new ArrayDeque<>();
 
     }
 
@@ -121,6 +123,11 @@ public class CSONSerializerTest  {
         }
 
         fillRandomTestBCalss(testClassA.testBArray);
+        for(int i = 0, n = ThreadLocalRandom.current().nextInt(5,10); i < n; ++i) {
+            ArrayList<TestClassB> testBInTestBArray = new ArrayList<>();
+            fillRandomTestBCalss(testBInTestBArray);
+            testClassA.testBInTestBArray.add(testBInTestBArray);
+        }
 
         this.fillRandomValues(testClassA.strArraySet);
 
@@ -155,6 +162,39 @@ public class CSONSerializerTest  {
                 }
             }
         }
+
+        assertEquals(testClassA.testBArray.size(), csonObject.getArray("testBArray").size());
+
+        for(int i = 0; i < testClassA.testBArray.size(); i++) {
+            TestClassB testClassB = testClassA.testBArray.get(i);
+            CSONObject csonObject1 = csonObject.getArray("testBArray").getObject(i);
+            assertEquals(testClassB.name, csonObject1.get("name"));
+            if(testClassB.testC == null) {
+                assertNull(csonObject1.get("testC"));
+            } else {
+                assertEquals(testClassB.testC.name, csonObject1.getObject("testC").get("name"));
+            }
+        }
+
+        assertEquals(testClassA.testBInTestBArray.size(), csonObject.getArray("testBInTestBArray").size());
+
+        Iterator<ArrayList<TestClassB>> iter = testClassA.testBInTestBArray.iterator();
+        for(int i = 0, n = testClassA.testBInTestBArray.size(); i< n; ++i) {
+            ArrayList<TestClassB> testBInTestBArray = iter.next();
+            CSONArray csonArray = csonObject.getArray("testBInTestBArray").getArray(i);
+            assertEquals(testBInTestBArray.size(), csonArray.size());
+            Iterator<Object> csonArrayIter = csonArray.iterator();
+            for(TestClassB testClassB : testBInTestBArray) {
+                CSONObject csonObject1 = (CSONObject)csonArrayIter.next();
+                assertEquals(testClassB.name, csonObject1.get("name"));
+                if(testClassB.testC == null) {
+                    assertNull(csonObject1.get("testC"));
+                } else {
+                    assertEquals(testClassB.testC.name, csonObject1.getObject("testC").get("name"));
+                }
+            }
+
+        }
     }
 
 
@@ -173,11 +213,20 @@ public class CSONSerializerTest  {
         private TestClassB testClassB1 = new TestClassB();
 
         @CSONValue("testClassB1.testC.name")
-        private String classCName = "C";
+        private String classCName = "nameC";
+
+        @CSONValue("testClassB1.testC.int")
+        private int d = 2000;
 
 
+        @CSONValue("testClassB1.testClassA1")
+        private TestClassA testClassA1 = null;
+
+        @CSONValue("testClassB1.testClassA2")
+        private TestClassA testClassA2 = new TestClassA();
 
     }
+
     @Test
     public void nullObjectSerializeTest() {
         //JSONObject jsonObject = new JSONObject("{\"ok\": null}");
@@ -186,12 +235,23 @@ public class CSONSerializerTest  {
         TestClassNull testClassNull = new TestClassNull();
 
         testClassNull.testClassB1.testC = null;
+        testClassNull.testClassA2.testB = null;
+        testClassNull.testClassA2.pi2 = 41.3f;
+        testClassNull.testClassA2.testBInTestB = null;
 
         CSONObject csonObject = CSONSerializer.serialize(testClassNull);
         System.out.println(csonObject.toString(JSONOptions.json5()));
 
-        //assertNotNull(csonObject.getObject("testClassB").getObject("testC"));
-       // assertNull(csonObject.get("testClassA0"));
+        assertNotNull(csonObject.getObject("testClassB1").getObject("testC"));
+        assertEquals("nameC", csonObject.getObject("testClassB1").getObject("testC").getString("name"));
+        assertEquals(2000, csonObject.getObject("testClassB1").getObject("testC").getInt("int"));
+        assertEquals(2000, csonObject.getObject("testClassB1").getObject("testC").getInt("int"));
+
+        assertNull(csonObject.getObject("testClassB1").get("testClassA1"));
+        assertEquals(3.14f, csonObject.getObject("testClassB1").getObject("testClassA2").getObject("testB").getObject("testC").getFloat("float"));
+
+
+        assertNull(csonObject.get("testClassA0"));
         //assertNull(csonObject.getObject("testClassB1").get("testC"));
     }
 

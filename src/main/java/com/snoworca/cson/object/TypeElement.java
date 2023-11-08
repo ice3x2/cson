@@ -3,18 +3,20 @@ package com.snoworca.cson.object;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.*;
 
 class TypeElement {
 
     private final Class<?> type;
     private final Constructor<?> constructor;
 
-    private final SchemaObjectNode schema;
+    private SchemaObjectNode schema;
 
 
     protected SchemaObjectNode getSchema() {
+        if(schema == null) {
+            schema = NodePath.makeSchema(this,null);
+            System.out.println(schema);
+        }
         return schema;
     }
 
@@ -33,7 +35,8 @@ class TypeElement {
     private TypeElement(Class<?> type, Constructor<?> constructor) {
         this.type = type;
         this.constructor = constructor;
-        this.schema = init();
+        //this.schema = NodePath.makeSchema(this,null);
+        //System.out.println(this.schema.toString());
     }
 
     protected Class<?> getType() {
@@ -62,50 +65,6 @@ class TypeElement {
 
     }
 
-
-    private List<SchemaField> searchAllCSONValueFields(Class<?> clazz) {
-        Set<String> fieldPaths = new HashSet<>();
-        List<SchemaField> results = new ArrayList<>();
-        Class<?> currentClass = clazz;
-        while(currentClass != Object.class) {
-            for(Field field : clazz.getDeclaredFields()) {
-                SchemaField fieldRack = SchemaField.of(this,field);
-                if(fieldRack != null && !fieldPaths.contains(fieldRack.getPath())) {
-                    // 동일한 path 가 있으면 거른다.
-                    fieldPaths.add(fieldRack.getPath());
-                    results.add(fieldRack);
-                }
-            }
-            currentClass = currentClass.getSuperclass();
-        }
-        return results;
-    }
-
-
-
-    private SchemaObjectNode init() {
-        return makeSchema(null);
-    }
-
-    protected SchemaObjectNode makeSchema(SchemaField parentFieldRack) {
-        List<SchemaField> fieldRacks = searchAllCSONValueFields(type);
-        SchemaObjectNode objectNode = new SchemaObjectNode();
-        objectNode.setBranchNode(false);
-        NodePath nodePath = new NodePath(objectNode);
-        for(SchemaField fieldRack : fieldRacks) {
-            fieldRack.setParentFiled(parentFieldRack);
-            if(fieldRack.getType() == Types.Object) {
-                TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
-                SchemaObjectNode childTree = typeElement.makeSchema(fieldRack);
-                childTree.addParentFieldRack(fieldRack);
-                nodePath.put(fieldRack.getPath(),childTree);
-
-                continue;
-            }
-            nodePath.put(fieldRack.getPath(),fieldRack);
-        }
-        return objectNode;
-    }
 
 
 

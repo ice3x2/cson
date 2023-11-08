@@ -1,9 +1,14 @@
 package com.snoworca.cson.object;
 
 
+import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.PathItem;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NodePath {
 
@@ -14,8 +19,57 @@ public class NodePath {
     }
 
 
+    protected static SchemaObjectNode makeSchema(TypeElement targetTypeElement,  SchemaField parentFieldRack) {
+        List<SchemaField> fieldRacks = searchAllCSONValueFields(targetTypeElement, targetTypeElement.getType());
+        SchemaObjectNode objectNode = new SchemaObjectNode().setBranchNode(false);
+        NodePath nodePath = new NodePath(objectNode);
 
-    private SchemaElementNode obtainOrCreateChild(SchemaElementNode Node, PathItem pathItem) {
+        for(SchemaField fieldRack : fieldRacks) {
+            fieldRack.setParentFiled(parentFieldRack);
+            String path = fieldRack.getPath();
+            if(fieldRack.getType() == Types.Object) {
+                TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
+                SchemaObjectNode childTree = makeSchema(typeElement,fieldRack);
+                childTree.addParentFieldRack(fieldRack);
+                childTree.setBranchNode(false);
+                SchemaElementNode elementNode = makeSubTree(path, childTree);
+                elementNode.setBranchNode(false);
+                objectNode.merge(elementNode);
+                continue;
+            }
+
+            SchemaElementNode elementNode = makeSubTree(path, fieldRack);
+            objectNode.merge(elementNode);
+            //nodePath.put(fieldRack.getPath(),fieldRack);
+        }
+        if(parentFieldRack == null) {
+            objectNode.setBranchNode(false);
+        }
+        return objectNode;
+    }
+
+
+    private static List<SchemaField> searchAllCSONValueFields(TypeElement typeElement, Class<?> clazz) {
+        Set<String> fieldPaths = new HashSet<>();
+        List<SchemaField> results = new ArrayList<>();
+        Class<?> currentClass = clazz;
+        while(currentClass != Object.class) {
+            for(Field field : clazz.getDeclaredFields()) {
+                SchemaField fieldRack = SchemaField.of(typeElement,field);
+                if(fieldRack != null && !fieldPaths.contains(fieldRack.getPath())) {
+                    // 동일한 path 가 있으면 거른다.
+                    fieldPaths.add(fieldRack.getPath());
+                    results.add(fieldRack);
+                }
+            }
+            currentClass = currentClass.getSuperclass();
+        }
+        return results;
+    }
+
+
+
+    private static SchemaElementNode obtainOrCreateChild(SchemaElementNode Node, PathItem pathItem) {
         if(Node instanceof SchemaObjectNode && !pathItem.isInArray() && pathItem.isObject()) {
             SchemaObjectNode ObjectNode = (SchemaObjectNode)Node;
             String name = pathItem.getName();
@@ -90,7 +144,7 @@ public class NodePath {
 
 
 
-    private void putNode(SchemaNode Node, PathItem pathItem, SchemaNode value) {
+    private static void putNode(SchemaNode Node, PathItem pathItem, SchemaNode value) {
         if(pathItem.isInArray()) {
             if(pathItem.isObject()) {
                 int index = pathItem.getIndex();
@@ -110,9 +164,8 @@ public class NodePath {
 
 
 
-    public NodePath put(String path, SchemaNode value) {
+    public static SchemaElementNode makeSubTree(String path, SchemaNode value) {
         List<PathItem> list = PathItem.parseMultiPath2(path);
-
         SchemaElementNode rootNode = new SchemaObjectNode();
         SchemaElementNode schemaNode = rootNode;
         //noinspection ForLoopReplaceableByForEach
@@ -124,8 +177,7 @@ public class NodePath {
             }
             schemaNode = obtainOrCreateChild(schemaNode, pathItem);
         }
-        this.node.merge(rootNode);
-        return this;
+        return rootNode;
     }
 
 
