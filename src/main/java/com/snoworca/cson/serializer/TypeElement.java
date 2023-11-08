@@ -32,6 +32,14 @@ class TypeElement {
         return new TypeElement(type, constructor);
     }
 
+    protected Object newInstance() {
+        try {
+            return constructor.newInstance();
+        } catch (Exception e) {
+            throw new CSONObjectException("Failed to create instance of " + type.getName(), e);
+        }
+    }
+
     private TypeElement(Class<?> type, Constructor<?> constructor) {
         this.type = type;
         this.constructor = constructor;

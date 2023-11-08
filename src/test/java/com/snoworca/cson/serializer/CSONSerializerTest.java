@@ -113,6 +113,9 @@ public class CSONSerializerTest {
     @Test
     public void serializeTest() {
 
+        String line = "     documentPageCountWrite(config, key, 0, false, log);";
+        System.out.println(line.matches("^[\t|' ']{1,}documentPageCountWrite.*"));
+
         TestClassA testClassA = new TestClassA();
 
         ArrayList<String> strArray = new ArrayList<>();
@@ -253,6 +256,65 @@ public class CSONSerializerTest {
         assertNull(csonObject.get("testClassA0"));
         //assertNull(csonObject.getObject("testClassB1").get("testC"));
     }
+
+
+    @CSON
+    public static class Item {
+        @CSONValue
+        private String name = "item";
+        @CSONValue
+        private int value = 1;
+    }
+
+    @CSON
+    public static class ArrayTestClass {
+        @CSONValue("array[10]")
+        int array10 = 10;
+
+
+        @CSONValue("arrayInArray[10].[3]")
+        int array10array3 = 3;
+
+        @CSONValue("arrayInArray[10][2]")
+        int array10array2 = 2;
+
+        @CSONValue("arrayInArray[10][1].name")
+        String name = "name";
+
+        @CSONValue("arrayInArray[10][0]")
+        Item item = new Item();
+
+        @CSONValue("arrayInArray[10][0].itemInItem")
+        Item itemInItem = new Item();
+
+        @CSONValue("arrayInArray[10][0].stringValue")
+        String strValue = "1";
+
+
+    }
+
+    @Test
+    public void arraySerializeTest() {
+        ArrayTestClass arrayTestClass = new ArrayTestClass();
+        CSONObject csonObject = CSONSerializer.toCSONObject(arrayTestClass);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        assertEquals(11, csonObject.getArray("array").size());
+        assertEquals(10, csonObject.getArray("array").getInt(10));
+
+        assertEquals(11, csonObject.getArray("arrayInArray").size());
+        assertEquals(4, csonObject.getArray("arrayInArray").getArray(10).size());
+        assertEquals(3, csonObject.getArray("arrayInArray").getArray(10).getInt(3));
+        assertEquals(2, csonObject.getArray("arrayInArray").getArray(10).getInt(2));
+
+        assertEquals("name", csonObject.getArray("arrayInArray").getArray(10).getObject(1).getString("name"));
+        assertEquals("item", csonObject.getArray("arrayInArray").getArray(10).getObject(0).getString("name"));
+        assertEquals("item", csonObject.getArray("arrayInArray").getArray(10).getObject(0).getObject("itemInItem").getString("name"));
+        assertEquals("1", csonObject.getArray("arrayInArray").getArray(10).getObject(0).getString("stringValue"));
+
+
+
+    }
+
 
 
 
