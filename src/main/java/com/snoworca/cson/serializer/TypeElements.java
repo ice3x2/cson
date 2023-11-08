@@ -1,4 +1,4 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

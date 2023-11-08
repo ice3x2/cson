@@ -1,7 +1,6 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 
-import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.PathItem;
 
 import java.lang.reflect.Field;

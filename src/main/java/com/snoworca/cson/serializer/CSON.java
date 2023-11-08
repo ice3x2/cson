@@ -1,4 +1,4 @@
-package com.snoworca.cson.serialize;
+package com.snoworca.cson.serializer;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,5 +7,5 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Cson {
+public @interface CSON {
 }

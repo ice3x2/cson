@@ -1,4 +1,4 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 
 import java.lang.annotation.Annotation;

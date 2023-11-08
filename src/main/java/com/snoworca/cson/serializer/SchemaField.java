@@ -1,5 +1,6 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,8 +46,13 @@ public abstract class SchemaField implements SchemaNode {
         this.isByteArray = isByteArray;
         this.typeElement = typeElement;
         this.type = Types.of(field.getType());
+
+        Annotation at = this.field.getType().getAnnotation(CSON.class);
+        if(this.field.getType().isArray()) {
+            throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
+        }
         if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
-            throw new CSONObjectException("Object type " + this.field.getType().getName() + " is not annotated with @CSON");
+            throw new CSONObjectException("Object field '" + this.field.getName() + "' is not annotated with @CSON");
         }
     }
 

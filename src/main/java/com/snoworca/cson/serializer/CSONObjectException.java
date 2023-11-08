@@ -1,4 +1,4 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 public class CSONObjectException extends RuntimeException {
 

@@ -1,4 +1,4 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 
 
@@ -10,6 +10,7 @@ import java.util.Set;
 public class SchemaObjectNode extends SchemaElementNode {
 
     private final Map<String, SchemaNode> map = new LinkedHashMap<>();
+
     private SchemaFieldNormal fieldRack;
 
 

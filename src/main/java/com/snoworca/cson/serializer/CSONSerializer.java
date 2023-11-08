@@ -1,4 +1,4 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONElement;
@@ -10,7 +10,7 @@ public class CSONSerializer {
 
     private CSONSerializer() {}
 
-    public static CSONObject serialize(Object obj) {
+    public static CSONObject toCSONObject(Object obj) {
         Class<?> clazz = obj.getClass();
         TypeElement typeElement = TypeElements.getInstance().getTypeInfo(clazz);
         return serializeTypeElement(typeElement,obj);

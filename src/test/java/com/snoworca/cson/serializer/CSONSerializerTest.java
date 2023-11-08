@@ -1,9 +1,8 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
 import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONObject;
 import com.snoworca.cson.JSONOptions;
-import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.*;
@@ -11,7 +10,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static junit.framework.TestCase.*;
 
-public class CSONSerializerTest  {
+public class CSONSerializerTest {
 
     @CSON
     static class TestClassC {
@@ -132,7 +131,7 @@ public class CSONSerializerTest  {
         this.fillRandomValues(testClassA.strArraySet);
 
         testClassA.testBInTestB.name="BInB";
-        CSONObject csonObject = CSONSerializer.serialize(testClassA);
+        CSONObject csonObject = CSONSerializer.toCSONObject(testClassA);
         System.out.println(csonObject.toString(JSONOptions.json5()));
         assertEquals("A", csonObject.get("name"));
         assertEquals(1, csonObject.getObject("value").get("int"));
@@ -239,7 +238,7 @@ public class CSONSerializerTest  {
         testClassNull.testClassA2.pi2 = 41.3f;
         testClassNull.testClassA2.testBInTestB = null;
 
-        CSONObject csonObject = CSONSerializer.serialize(testClassNull);
+        CSONObject csonObject = CSONSerializer.toCSONObject(testClassNull);
         System.out.println(csonObject.toString(JSONOptions.json5()));
 
         assertNotNull(csonObject.getObject("testClassB1").getObject("testC"));

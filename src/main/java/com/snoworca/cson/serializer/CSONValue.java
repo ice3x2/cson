@@ -1,4 +1,4 @@
-package com.snoworca.cson.serialize;
+package com.snoworca.cson.serializer;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Value {
+public @interface CSONValue {
 
 
     String value() default "";

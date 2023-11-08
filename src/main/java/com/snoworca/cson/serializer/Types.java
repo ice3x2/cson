@@ -1,7 +1,5 @@
-package com.snoworca.cson.object;
+package com.snoworca.cson.serializer;
 
-import java.util.Collection;
-import java.util.EnumMap;
 import java.util.EnumSet;
 
 public enum Types {
