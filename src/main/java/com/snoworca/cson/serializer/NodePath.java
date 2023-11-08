@@ -13,7 +13,7 @@ public class NodePath {
 
     private final SchemaElementNode node;
 
-    public NodePath(SchemaElementNode Node) {
+    protected NodePath(SchemaElementNode Node) {
         this.node = Node;
     }
 
@@ -21,7 +21,6 @@ public class NodePath {
     protected static SchemaObjectNode makeSchema(TypeElement targetTypeElement,  SchemaField parentFieldRack) {
         List<SchemaField> fieldRacks = searchAllCSONValueFields(targetTypeElement, targetTypeElement.getType());
         SchemaObjectNode objectNode = new SchemaObjectNode().setBranchNode(false);
-        NodePath nodePath = new NodePath(objectNode);
 
         for(SchemaField fieldRack : fieldRacks) {
             fieldRack.setParentFiled(parentFieldRack);

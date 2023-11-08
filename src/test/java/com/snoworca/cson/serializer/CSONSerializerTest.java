@@ -113,6 +113,9 @@ public class CSONSerializerTest {
     @Test
     public void serializeTest() {
 
+        String line = "     documentPageCountWrite(config, key, 0, false, log);";
+        System.out.println(line.matches("^[\t|' ']{1,}documentPageCountWrite.*"));
+
         TestClassA testClassA = new TestClassA();
 
         ArrayList<String> strArray = new ArrayList<>();

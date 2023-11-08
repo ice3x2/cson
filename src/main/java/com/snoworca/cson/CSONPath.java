@@ -7,7 +7,7 @@ public class CSONPath {
 
     private final CSONElement csonElement;
 
-    public CSONPath(CSONElement csonElement) {
+    protected CSONPath(CSONElement csonElement) {
         this.csonElement = csonElement;
     }
 
