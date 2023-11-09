@@ -89,11 +89,11 @@ public class CSONSerializer {
                     } else {
                         CSONArray currentObject = ((CSONArray)csonElement);
                         CSONArray currentArray = ((CSONArray)csonElement);
-                        CSONArray childObject = currentArray.optArray((Integer) key);
-                        if(childObject == null) {
-                            childObject = new CSONArray();
-                            currentObject.set((int)key, childObject);
-                            csonElement = childObject;
+                        CSONElement childElement = (CSONElement) currentArray.opt((Integer) key);
+                        if(childElement == null) {
+                            childElement =  (schemaNode instanceof SchemaArrayNode) ? new CSONArray() : new CSONObject();
+                            currentObject.set((int)key, childElement);
+                            csonElement = childElement;
                         }
                     }
 
@@ -107,12 +107,11 @@ public class CSONSerializer {
                 if(parent != null) {
                     Object value = fieldRack.getValue(parent);
                     if(key instanceof String) {
-                        if(csonElement instanceof CSONArray) {
-
-
-                        } else {
+                        //if(csonElement instanceof CSONArray) {
+                        //    ((CSONArray) csonElement).set((int) key, value);
+                        //} else {
                             ((CSONObject) csonElement).put((String) key, value);
-                        }
+                        //}
 
 
                     }
