@@ -258,6 +258,22 @@ public class CSONSerializerTest {
     }
 
 
+    @CSON
+    public static class ArrayTestClass {
+        @CSONValue("array[10]")
+        int array10 = 10;
+    }
+
+    @Test
+    public void arraySerializeTest() {
+        ArrayTestClass arrayTestClass = new ArrayTestClass();
+        CSONObject csonObject = CSONSerializer.toCSONObject(arrayTestClass);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        assertEquals(10, csonObject.getArray("array").size());
+    }
+
+
+
 
 
 

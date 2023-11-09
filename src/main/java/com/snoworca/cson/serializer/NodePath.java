@@ -94,7 +94,7 @@ public class NodePath {
                 SchemaObjectNode childObjectNode = ArrayNode.getObjectNode(index);
                 if(childObjectNode == null) {
                     childObjectNode = new SchemaObjectNode();
-                    ArrayNode.set(index, childObjectNode);
+                    ArrayNode.put(index, childObjectNode);
                     if(pathItem.isArrayValue()) {
                         SchemaArrayNode childArrayNode = new SchemaArrayNode();
                         childObjectNode.put(pathItem.getName(), childArrayNode);
@@ -125,7 +125,7 @@ public class NodePath {
                 SchemaArrayNode childArrayNode = ArrayNode.getArrayNode(index);
                 if(childArrayNode == null) {
                     childArrayNode = new SchemaArrayNode();
-                    ArrayNode.set(index, childArrayNode);
+                    ArrayNode.put(index, childArrayNode);
                 }
                 return childArrayNode;
             }
@@ -149,11 +149,11 @@ public class NodePath {
                 SchemaObjectNode childObjectNode = ((SchemaArrayNode)Node).getObjectNode(index);
                 if(childObjectNode == null) {
                     childObjectNode = new SchemaObjectNode();
-                    ((SchemaArrayNode)Node).set(index, childObjectNode);
+                    ((SchemaArrayNode)Node).put(index, childObjectNode);
                 }
                 childObjectNode.put(pathItem.getName(), value);
             } else {
-                ((SchemaArrayNode)Node).set(pathItem.getIndex(), value);
+                ((SchemaArrayNode)Node).put(pathItem.getIndex(), value);
             }
         } else {
             ((SchemaObjectNode)Node).put(pathItem.getName(), value);
