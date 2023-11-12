@@ -259,6 +259,14 @@ public class CSONSerializerTest {
 
 
     @CSON
+    public static class Item {
+        @CSONValue
+        private String name = "item";
+        @CSONValue
+        private int value = 1;
+    }
+
+    @CSON
     public static class ArrayTestClass {
         @CSONValue("array[10]")
         int array10 = 10;
@@ -272,6 +280,17 @@ public class CSONSerializerTest {
 
         @CSONValue("arrayInArray[10][1].name")
         String name = "name";
+
+        @CSONValue("arrayInArray[10][0]")
+        Item item = new Item();
+
+        @CSONValue("arrayInArray[10][0].itemInItem")
+        Item itemInItem = new Item();
+
+        @CSONValue("arrayInArray[10][0].stringValue")
+        String strValue = "1";
+
+
     }
 
     @Test
@@ -286,6 +305,13 @@ public class CSONSerializerTest {
         assertEquals(4, csonObject.getArray("arrayInArray").getArray(10).size());
         assertEquals(3, csonObject.getArray("arrayInArray").getArray(10).getInt(3));
         assertEquals(2, csonObject.getArray("arrayInArray").getArray(10).getInt(2));
+
+        assertEquals("name", csonObject.getArray("arrayInArray").getArray(10).getObject(1).getString("name"));
+        assertEquals("item", csonObject.getArray("arrayInArray").getArray(10).getObject(0).getString("name"));
+        assertEquals("item", csonObject.getArray("arrayInArray").getArray(10).getObject(0).getObject("itemInItem").getString("name"));
+        assertEquals("1", csonObject.getArray("arrayInArray").getArray(10).getObject(0).getString("stringValue"));
+
+
 
     }
 
