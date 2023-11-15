@@ -22,7 +22,7 @@ class TypeElement {
 
     protected static TypeElement create(Class<?> type) {
         checkCSONAnnotation(type);
-        checkConstructor(type);
+        //checkConstructor(type);
         Constructor<?> constructor = null;
         try {
             constructor = type.getDeclaredConstructor();
@@ -34,10 +34,15 @@ class TypeElement {
 
     protected Object newInstance() {
         try {
+            if(constructor == null) {
+                checkConstructor(type);
+                return null;
+            }
             return constructor.newInstance();
         } catch (Exception e) {
             throw new CSONObjectException("Failed to create instance of " + type.getName(), e);
         }
+
     }
 
     private TypeElement(Class<?> type, Constructor<?> constructor) {
@@ -50,6 +55,7 @@ class TypeElement {
     protected Class<?> getType() {
         return type;
     }
+
 
 
 

@@ -57,6 +57,12 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
+    protected Object newInstance() {
+        if(typeElement == null) return null;
+        return typeElement.newInstance();
+    }
+
+
 
     protected Types getType() {
         return type;
@@ -86,8 +92,6 @@ public abstract class SchemaField implements SchemaNode {
 
     protected void setParentFiled(SchemaField parent) {
         this.parentFieldRack = parent;
-
-
     }
 
 
@@ -99,6 +103,99 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
+
+    protected Object setValue(Object parent, Object value) {
+        try {
+            field.set(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+    protected Object setValue(Object parent, short value) {
+        try {
+            field.setShort(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, int value) {
+        try {
+            field.setInt(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, long value) {
+        try {
+            field.setLong(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, float value) {
+        try {
+            field.setFloat(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, double value) {
+        try {
+            field.setDouble(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, boolean value) {
+        try {
+            field.setBoolean(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, char value) {
+        try {
+            field.setChar(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    protected Object setValue(Object parent, byte value) {
+        try {
+            field.setByte(parent, value);
+            return value;
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 
     @Override
     public String toString() {
