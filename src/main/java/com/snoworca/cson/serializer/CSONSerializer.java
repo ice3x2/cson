@@ -268,7 +268,10 @@ public class CSONSerializer {
             schemaField.setValue(parents, csonObject.optDouble(key));
         } else if(Types.String == valueType) {
             schemaField.setValue(parents, csonObject.optString(key));
+        } else if(Types.Collection == valueType) {
+            // todo
         }
+
         else {
             try {
                 schemaField.setValue(parents, null);
