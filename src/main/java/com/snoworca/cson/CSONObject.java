@@ -40,6 +40,10 @@ public class CSONObject extends CSONElement implements Cloneable {
 	}
 
 
+	public boolean has(String key) {
+		return dataMap.containsKey(key);
+	}
+
 
 	public Map<String, Object> toMap() {
 		Map<String, Object> results = new HashMap<String, Object>();
@@ -211,6 +215,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return optInteger(key);
 	}
 
+
 	public int optInt(String key,int def) {
 		return optInteger(key, def);
 	}
@@ -230,6 +235,17 @@ public class CSONObject extends CSONElement implements Cloneable {
 		if(obj == null) return def;
 		return DataConverter.toFloat(obj);
 	}
+
+	public double optDouble(String key, double def) {
+		Object obj = dataMap.get(key);
+		if(obj == null) return def;
+		return DataConverter.toDouble(obj);
+	}
+
+	public double optDouble(String key) {
+		return optDouble(key, Double.NaN);
+	}
+
 
 	public float getFloat(String key) {
 		Object obj = dataMap.get(key);

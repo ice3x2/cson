@@ -4,6 +4,7 @@ import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.CSONObject;
 
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class CSONSerializer {
@@ -41,25 +42,25 @@ public class CSONSerializer {
             if(node instanceof SchemaObjectNode) {
                 schemaNode = (SchemaObjectNode)node;
                 iter = schemaNode.keySet().iterator();
-                List<SchemaField> parentFieldRack = schemaNode.getParentSchemaFieldList();
-                int nullCount = parentFieldRack.size();
-                for(SchemaField fieldRack : parentFieldRack) {
-                    int id = fieldRack.getId();
+                List<SchemaField> parentschemaField = schemaNode.getParentSchemaFieldList();
+                int nullCount = parentschemaField.size();
+                for(SchemaField schemaField : parentschemaField) {
+                    int id = schemaField.getId();
                     if(parentObjMap.containsKey(id)) {
                         continue;
                     }
-                    SchemaField grandFieldRack = fieldRack.getParentField();
-                    if (grandFieldRack == null) {
-                        Object obj = fieldRack.getValue(rootObject);
+                    SchemaField grandschemaField = schemaField.getParentField();
+                    if (grandschemaField == null) {
+                        Object obj = schemaField.getValue(rootObject);
                         if(obj != null) {
                             parentObjMap.put(id, obj);
                             nullCount--;
                         }
                     }
                     else {
-                        Object grandObj = parentObjMap.get(grandFieldRack.getId());
+                        Object grandObj = parentObjMap.get(grandschemaField.getId());
                         if(grandObj != null) {
-                            Object obj = fieldRack.getValue(grandObj);
+                            Object obj = schemaField.getValue(grandObj);
                             if(obj != null) {
                                 parentObjMap.put(id, obj);
                                 nullCount--;
@@ -102,10 +103,10 @@ public class CSONSerializer {
                 }
             }
             else if(node instanceof SchemaFieldNormal) {
-                SchemaFieldNormal fieldRack = (SchemaFieldNormal)node;
-                Object parent = obtainParentObjects(parentObjMap, fieldRack, rootObject);
+                SchemaFieldNormal schemaField = (SchemaFieldNormal)node;
+                Object parent = obtainParentObjects(parentObjMap, schemaField, rootObject);
                 if(parent != null) {
-                    Object value = fieldRack.getValue(parent);
+                    Object value = schemaField.getValue(parent);
                     if(key instanceof String) {
                         //if(csonElement instanceof CSONArray) {
                         //    ((CSONArray) csonElement).set((int) key, value);
@@ -187,46 +188,110 @@ public class CSONSerializer {
     }
 
 
-    private static Object obtainParentObjects(Map<Integer, Object> parentsMap, SchemaField fieldRack, Object rootObject) {
-        SchemaField parentFieldRack = fieldRack.getParentField();
-        if(parentFieldRack == null) {
+    private static Object obtainParentObjects(Map<Integer, Object> parentsMap, SchemaField schemaField, Object rootObject) {
+        SchemaField parentschemaField = schemaField.getParentField();
+        if(parentschemaField == null) {
             return rootObject;
         }
-        int parentId = parentFieldRack.getId();
+        int parentId = parentschemaField.getId();
         Object parent = parentsMap.get(parentId);
         return parent;
 
         /*if(parent != null) {
             return parent;
         }
-        SchemaField grandParentFieldRack = parentFieldRack.getParentField();
-        if(grandParentFieldRack == null) {
-            parent = parentFieldRack.getValue(rootObject);
+        SchemaField grandParentschemaField = parentschemaField.getParentField();
+        if(grandParentschemaField == null) {
+            parent = parentschemaField.getValue(rootObject);
         }
         else {
-            parent = obtainParentObjects(parentsMap, parentFieldRack, rootObject);
+            parent = obtainParentObjects(parentsMap, parentschemaField, rootObject);
             parentsMap.put(parentId, parent);
         }
         return parent;*/
     }
 
 
-    public static Object fromCSONObject(CSONObject csonObject, Class<?> clazz) {
+    @SuppressWarnings("unchecked")
+    public static<T> T fromCSONObject(CSONObject csonObject, Class<T> clazz) {
         TypeElement typeElement = TypeElements.getInstance().getTypeInfo(clazz);
         Object object = typeElement.newInstance();
-        return fromCSONObject(csonObject, object);
+        return (T) fromCSONObject(csonObject, object);
     }
 
-    public static Object fromCSONObject(CSONObject csonObject, Object targetObject) {
+
+    public static<T> T fromCSONObject(CSONObject csonObject, T targetObject) {
         TypeElement typeElement = TypeElements.getInstance().getTypeInfo(targetObject.getClass());
         SchemaObjectNode schemaRoot = typeElement.getSchema();
-        HashMap<Integer, Object> parentObjMap = new HashMap<>();
-        CSONElement csonElement = new CSONObject();
-        CSONObject root = (CSONObject) csonElement;
         ArrayDeque<ObjectSerializeDequeueItem> objectSerializeDequeueItems = new ArrayDeque<>();
         Iterator<Object> iter = schemaRoot.keySet().iterator();
         SchemaObjectNode schemaNode = schemaRoot;
-        ObjectSerializeDequeueItem currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonElement);
+        ObjectSerializeDequeueItem currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonObject);
+        objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
+        while(iter.hasNext()) {
+            Object key = iter.next();
+            SchemaNode node = schemaNode.get(key);
+            if(node instanceof SchemaFieldNormal) {
+                SchemaFieldNormal schemaField = (SchemaFieldNormal)node;
+                SchemaField parentField = schemaField.getParentField();
+                Object parent = null;
+                if(parentField == null) {
+                    parent = targetObject;
+                }
+                if(key instanceof String) {
+                  setValueTargetFromCSONObject(parent,schemaField, csonObject, (String)key);
+                } else if(key instanceof Integer) {
+                }
+            }
+        }
+        return targetObject;
+    }
+
+    private static void setValueTargetFromCSONObject(Object parents,SchemaFieldNormal schemaField, CSONObject csonObject, String key) {
+        Object value = csonObject.opt(key);
+        //todo null 값에 대하여 어떻게 할 것인지 고민해봐야함.
+        if(value == null) return;
+        Types valueType = schemaField.getType();
+        if(Types.Boolean == valueType) {
+             schemaField.setValue(parents, csonObject.optBoolean(key));
+        } else if(Types.Byte == valueType) {
+            schemaField.setValue(parents, csonObject.optByte(key));
+        } else if(Types.Character == valueType) {
+            schemaField.setValue(parents, csonObject.optChar(key, '\0'));
+        } else if(Types.Short == valueType) {
+            schemaField.setValue(parents, csonObject.optShort(key));
+        } else if(Types.Integer == valueType) {
+            schemaField.setValue(parents, csonObject.optInt(key));
+        } else if(Types.Float == valueType) {
+            schemaField.setValue(parents, csonObject.optInt(key));
+        } else if(Types.Double == valueType) {
+            schemaField.setValue(parents, csonObject.optDouble(key));
+        } else if(Types.String == valueType) {
+            schemaField.setValue(parents, csonObject.optString(key));
+        }
+        else {
+            try {
+                schemaField.setValue(parents, null);
+            } catch (Exception ignored) {}
+        }
+
+
+
+
+
+
+    }
+
+    public static Object fromCSONObject2(CSONObject csonObject, Object targetObject) {
+        TypeElement typeElement = TypeElements.getInstance().getTypeInfo(targetObject.getClass());
+        SchemaObjectNode schemaRoot = typeElement.getSchema();
+        HashMap<Integer, Object> parentObjMap = new HashMap<>();
+        CSONObject rootObject = csonObject;
+        CSONElement csonElement = csonObject;
+        ArrayDeque<ObjectSerializeDequeueItem> objectSerializeDequeueItems = new ArrayDeque<>();
+        Iterator<Object> iter = schemaRoot.keySet().iterator();
+        SchemaObjectNode schemaNode = schemaRoot;
+        ObjectSerializeDequeueItem currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonObject);
         objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
 
         while(iter.hasNext()) {
@@ -235,38 +300,44 @@ public class CSONSerializer {
             if(node instanceof SchemaObjectNode) {
                 schemaNode = (SchemaObjectNode)node;
                 iter = schemaNode.keySet().iterator();
-                List<SchemaField> parentFieldRack = schemaNode.getParentSchemaFieldList();
-                int nullCount = parentFieldRack.size();
-                for(SchemaField fieldRack : parentFieldRack) {
-                    int id = fieldRack.getId();
+                List<SchemaField> parentschemaField = schemaNode.getParentSchemaFieldList();
+                //int nullCount = parentschemaField.size();
+                // 부모 object 를 찾는다.
+                for(SchemaField schemaField : parentschemaField) {
+                    int id = schemaField.getId();
                     if(parentObjMap.containsKey(id)) {
                         continue;
                     }
-                    SchemaField grandFieldRack = fieldRack.getParentField();
-                    if (grandFieldRack == null) {
-                        Object obj = fieldRack.getValue(rootObject);
+                    SchemaField grandschemaField = schemaField.getParentField();
+                    if (grandschemaField == null) {
+                        Object obj = schemaField.getValue(targetObject);
+                        if(obj == null) {
+                            obj = schemaField.newInstance();
+                        }
                         if(obj != null) {
                             parentObjMap.put(id, obj);
-                            nullCount--;
+                            //nullCount--;
                         }
                     }
                     else {
-                        Object grandObj = parentObjMap.get(grandFieldRack.getId());
+                        Object grandObj = parentObjMap.get(grandschemaField.getId());
+                        if(grandObj == null) {
+                            grandObj = grandschemaField.newInstance();
+                        }
                         if(grandObj != null) {
-                            Object obj = fieldRack.getValue(grandObj);
+                            Object obj = schemaField.getValue(grandObj);
                             if(obj != null) {
                                 parentObjMap.put(id, obj);
-                                nullCount--;
+                                //nullCount--;
                             }
                         }
                     }
                 }
-
-                if(!schemaNode.isBranchNode() && nullCount > 0) {
+                if(!schemaNode.isBranchNode() /*&& nullCount > 0*/) {
                     if(key instanceof String) {
-                        ((CSONObject)csonElement).put((String) key,null);
+                        //((CSONObject)csonElement).put((String) key,null);
                     } else {
-                        ((CSONArray)csonElement).set((Integer) key,null);
+                        //((CSONArray)csonElement).set((Integer) key,null);
                     }
                     while (iter.hasNext())  {
                         iter.next();
@@ -296,10 +367,10 @@ public class CSONSerializer {
                 }
             }
             else if(node instanceof SchemaFieldNormal) {
-                SchemaFieldNormal fieldRack = (SchemaFieldNormal)node;
-                Object parent = obtainParentObjects(parentObjMap, fieldRack, rootObject);
+                SchemaFieldNormal schemaField = (SchemaFieldNormal)node;
+                Object parent = obtainParentObjects(parentObjMap, schemaField, rootObject);
                 if(parent != null) {
-                    Object value = fieldRack.getValue(parent);
+                    Object value = schemaField.getValue(parent);
                     if(key instanceof String) {
                         //if(csonElement instanceof CSONArray) {
                         //    ((CSONArray) csonElement).set((int) key, value);
@@ -339,7 +410,7 @@ public class CSONSerializer {
                 }
             }
         }
-        return root;
+        return rootObject;
 
 
 
