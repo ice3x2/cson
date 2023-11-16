@@ -18,6 +18,7 @@ public abstract class SchemaField implements SchemaNode {
     protected final boolean isByteArray;
     protected final Types type;
 
+
     private SchemaField parentFieldRack;
     protected final Class<?> fieldType;
 
