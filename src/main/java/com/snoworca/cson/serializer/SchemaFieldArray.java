@@ -11,7 +11,7 @@ public class SchemaFieldArray extends SchemaField {
     //private final Types valueType;
 
     private final List<CollectionItems> collectionBundles;
-    private final Types valueType;
+    protected final Types valueType;
     private final TypeElement objectValueTypeElement;
 
     protected SchemaFieldArray(TypeElement typeElement, Field field, String path, boolean isByteArray) {
@@ -113,6 +113,15 @@ public class SchemaFieldArray extends SchemaField {
         protected final Constructor<? extends Collection<?>> collectionConstructor;
         protected final Class<?> collectionType;
         protected final Class<?> valueClass;
+
+
+        protected Collection<?> newInstance() {
+            try {
+                return collectionConstructor.newInstance();
+            } catch (Exception e) {
+                throw new CSONObjectException("Collection field '" + collectionType.getName() + "' has no default constructor");
+            }
+        }
 
 
 

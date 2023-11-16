@@ -65,6 +65,16 @@ public class CSONDeserializerTest {
             assertEquals(testClass.childrenNames.get(i), newClass.childrenNames.get(i));
         }
 
+        assertEquals(testClass.tourDates.size(), newClass.tourDates.size());
+        for (int i = 0; i < testClass.tourDates.size(); i++) {
+            ArrayList<Integer> list1 = testClass.tourDates.get(i);
+            ArrayList<Integer> list2 = newClass.tourDates.get(i);
+            assertEquals(list1.size(), list2.size());
+            for(int j = 0; j < list1.size(); j++) {
+                assertEquals(list1.get(j), list2.get(j));
+            }
+        }
+
 
 
 
