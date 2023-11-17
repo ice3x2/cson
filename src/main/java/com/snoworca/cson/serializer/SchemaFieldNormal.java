@@ -20,7 +20,7 @@ public class SchemaFieldNormal extends SchemaField {
 
 
     public SchemaFieldNormal copy() {
-        SchemaFieldNormal fieldRack = new SchemaFieldNormal(typeElement, field, path, isByteArray);
+        SchemaFieldNormal fieldRack = new SchemaFieldNormal(parentsTypeElement, field, path, isByteArray);
         fieldRack.setParentFiled(getParentField());
         return fieldRack;
     }

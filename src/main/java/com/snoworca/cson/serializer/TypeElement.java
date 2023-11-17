@@ -26,9 +26,10 @@ class TypeElement {
         Constructor<?> constructor = null;
         try {
             constructor = type.getDeclaredConstructor();
+            constructor.setAccessible(true);
         } catch (NoSuchMethodException ignored) {}
         //noinspection DataFlowIssue
-        constructor.setAccessible(true);
+
         return new TypeElement(type, constructor);
     }
 
@@ -71,10 +72,10 @@ class TypeElement {
         try {
             constructor = type.getDeclaredConstructor();
             if(constructor == null) {
-                throw new CSONObjectException("Type " + type.getName() + " has no constructor");
+                throw new CSONObjectException("Type " + type.getName() + " has no default constructor");
             }
         } catch (NoSuchMethodException e) {
-            throw new CSONObjectException("Type " + type.getName() + " has invalid constructor");
+            throw new CSONObjectException("Type " + type.getName() + " has invalid default constructor");
         }
 
     }
