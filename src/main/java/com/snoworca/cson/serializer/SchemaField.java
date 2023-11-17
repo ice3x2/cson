@@ -11,7 +11,8 @@ public abstract class SchemaField implements SchemaNode {
 
     private final int id = LAST_ID.getAndIncrement();
 
-    protected final TypeElement typeElement;
+    protected final TypeElement parentsTypeElement;
+    protected final TypeElement objectTypeElement;
 
     protected final Field field;
     protected final String path;
@@ -39,14 +40,19 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
-    protected SchemaField(TypeElement typeElement, Field field, String path, boolean isByteArray) {
+    protected SchemaField(TypeElement parentsTypeElement, Field field, String path, boolean isByteArray) {
         this.field = field;
         field.setAccessible(true);
         this.path = path;
         this.fieldType = field.getType();
         this.isByteArray = isByteArray;
-        this.typeElement = typeElement;
+        this.parentsTypeElement = parentsTypeElement;
         this.type = Types.of(field.getType());
+        if(this.type == Types.Object) {
+            this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
+        } else {
+            this.objectTypeElement = null;
+        }
 
         Annotation at = this.field.getType().getAnnotation(CSON.class);
         if(this.field.getType().isArray()) {
@@ -59,8 +65,8 @@ public abstract class SchemaField implements SchemaNode {
 
 
     protected Object newInstance() {
-        if(typeElement == null) return null;
-        return typeElement.newInstance();
+        if(objectTypeElement == null) return null;
+        return objectTypeElement.newInstance();
     }
 
 

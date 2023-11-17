@@ -254,6 +254,10 @@ public class CSONSerializerTest {
 
 
         assertNull(csonObject.get("testClassA0"));
+
+
+
+
         //assertNull(csonObject.getObject("testClassB1").get("testC"));
     }
 

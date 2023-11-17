@@ -90,7 +90,7 @@ public class SchemaFieldArray extends SchemaField {
 
     @Override
     public SchemaNode copyNode() {
-        SchemaFieldArray fieldRack = new SchemaFieldArray(typeElement, field, path, isByteArray);
+        SchemaFieldArray fieldRack = new SchemaFieldArray(parentsTypeElement, field, path, isByteArray);
 
         return fieldRack;
     }

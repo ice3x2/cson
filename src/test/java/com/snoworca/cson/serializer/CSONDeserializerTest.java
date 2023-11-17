@@ -1,15 +1,85 @@
 package com.snoworca.cson.serializer;
 
 import com.snoworca.cson.CSONObject;
+import com.snoworca.cson.JSONOptions;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class CSONDeserializerTest {
+
+
+    @CSON
+    public static class TestListInListInListClass {
+        @CSONValue
+        public LinkedList<ArrayDeque<ArrayList<String>>> list = new LinkedList<>();
+    }
+    @Test
+    public void listInListInListTest() {
+        TestListInListInListClass testObj = new TestListInListInListClass();
+        testObj.list.add(null);
+        ArrayDeque<ArrayList<String>> list1 = new ArrayDeque<>();
+        ArrayList<String> list2 = new ArrayList<>();
+        list2.add(null);
+        list2.add("test2");
+        list2.add("test3");
+        list1.add(list2);
+        testObj.list.add(list1);
+
+        ArrayDeque<ArrayList<String>> list1_1 = new ArrayDeque<>();
+        ArrayList<String> list2_1 = new ArrayList<>();
+        list2_1.add("test1");
+        list2_1.add("test2");
+        list2_1.add(null);
+        list2_1.add("test3");
+        list1_1.add(list2_1);
+        testObj.list.add(list1_1);
+
+        ArrayDeque<ArrayList<String>> list1_2 = new ArrayDeque<>();
+        ArrayList<String> list2_2 = new ArrayList<>();
+        list2_2.add("test1");
+        list2_2.add("test2");
+        list2_2.add("test3");
+        list1_2.add(list2_2);
+        testObj.list.add(list1_2);
+
+        testObj.list.add(null);
+        testObj.list.add(null);
+
+
+
+
+        CSONObject cson = CSONSerializer.toCSONObject(testObj);
+        TestListInListInListClass resultObj = CSONSerializer.fromCSONObject(cson, new TestListInListInListClass());
+        assertEquals(testObj.list.size(), resultObj.list.size());
+
+        for(int i = 0; i < testObj.list.size(); ++i) {
+            ArrayDeque<ArrayList<String>> list1_3 = testObj.list.get(i);
+            ArrayDeque<ArrayList<String>> list1_4 = resultObj.list.get(i);
+            if(list1_3 == null) {
+                assertNull(list1_4);
+                continue;
+            }
+
+            assertEquals(list1_3.size(), list1_4.size());
+            Iterator<ArrayList<String>> iterator1_3 = list1_3.iterator();
+            Iterator<ArrayList<String>> iterator1_4 = list1_4.iterator();
+            while(iterator1_3.hasNext()) {
+                ArrayList<String> list2_3 = iterator1_3.next();
+                ArrayList<String> list2_4 = iterator1_4.next();
+                assertEquals(list2_3.size(), list2_4.size());
+                for(int k = 0; k < list2_3.size(); ++k) {
+                    assertEquals(list2_3.get(k), list2_4.get(k));
+                }
+            }
+        }
+
+
+    }
 
     @CSON
     public static class TestClass {
@@ -25,8 +95,11 @@ public class CSONDeserializerTest {
         @CSONValue
         public ArrayList<String> childrenNames = new ArrayList<>();
         @CSONValue
-        public ArrayList<ArrayList<Integer>> tourDates  = new ArrayList<>();
+        public ArrayList<TreeSet<Integer>> tourDates  = new ArrayList<>();
 
+
+        @CSONValue
+        public LinkedList<ArrayDeque<ArrayList<String>>> family  = new LinkedList<>();
     }
 
     @Test
@@ -39,17 +112,37 @@ public class CSONDeserializerTest {
         testClass.childrenNames.add("김영희");
         testClass.childrenNames.add("김영수");
 
-        ArrayList list = new ArrayList<>();
+        TreeSet list = new TreeSet<>();
         list.add(20180111);
         list.add(20180112);
         list.add(20180113);
         testClass.tourDates.add(list);
 
-        list = new ArrayList<>();
+        list = new TreeSet<>();
         list.add(20190301);
         list.add(20190302);
-        list.add(20190303);
         testClass.tourDates.add(list);
+
+
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        // 무작위 문자열 생성 및 리스트에 추가
+        for (int i = 0; i < random.nextInt(3, 4); i++) { // 예를 들어, 5개의 무작위 문자열을 생성하여 추가합니다.
+            ArrayDeque<ArrayList<String>> set = new ArrayDeque<>();
+            for (int j = 0; j < random.nextInt(3, 4); j++) { // 각 HashSet에 3개의 ArrayDeque를 추가합니다.
+                ArrayList<String> randomStrings = new ArrayList<>();
+                for (int k = 0; k < random.nextInt(3, 4); k++) { // 각 ArrayDeque에 4개의 무작위 문자열을 추가합니다.
+                    String randomString = UUID.randomUUID().toString();
+                    if(random.nextBoolean())
+                        randomStrings.add(null);
+                    else
+                        randomStrings.add(randomString);
+                }
+                set.add(randomStrings);
+            }
+            testClass.family.add(set);
+        }
+
+
 
 
         CSONObject cson = CSONSerializer.toCSONObject(testClass);
@@ -65,18 +158,158 @@ public class CSONDeserializerTest {
             assertEquals(testClass.childrenNames.get(i), newClass.childrenNames.get(i));
         }
 
+
+        //System.out.println(cson.toString());
+
         assertEquals(testClass.tourDates.size(), newClass.tourDates.size());
         for (int i = 0; i < testClass.tourDates.size(); i++) {
-            ArrayList<Integer> list1 = testClass.tourDates.get(i);
-            ArrayList<Integer> list2 = newClass.tourDates.get(i);
+            System.out.println(newClass.tourDates.get(i).getClass());
+            assertTrue(newClass.tourDates.get(i) instanceof TreeSet);
+            ArrayList<Integer> list1 = new ArrayList<>(testClass.tourDates.get(i));
+            ArrayList<Integer> list2 = new ArrayList<>(newClass.tourDates.get(i));
             assertEquals(list1.size(), list2.size());
             for(int j = 0; j < list1.size(); j++) {
                 assertEquals(list1.get(j), list2.get(j));
             }
         }
 
+        assertEquals(testClass.family.size(), newClass.family.size());
+        Iterator<ArrayDeque<ArrayList<String>>> iterator1 = testClass.family.iterator();
+        Iterator<ArrayDeque<ArrayList<String>>> iterator2 = newClass.family.iterator();
+        while(iterator1.hasNext()) {
+            ArrayDeque<ArrayList<String>> set1 = iterator1.next();
+            ArrayDeque<ArrayList<String>> set2 = iterator2.next();
+            assertEquals(set1.size(), set2.size());
+            Iterator<ArrayList<String>> iterator3 = set1.iterator();
+            Iterator<ArrayList<String>> iterator4 = set2.iterator();
+            while(iterator3.hasNext()) {
+                ArrayList<String> list1 = iterator3.next();
+                ArrayList<String> list2 = iterator4.next();
+                assertEquals(list1.size(), list2.size());
+                for(int i = 0; i < list1.size(); i++) {
+                    assertEquals(list1.get(i), list2.get(i));
+                }
+            }
+        }
+    }
 
+
+    @CSON
+    public static class User {
+        String name;
+        int age;
+        boolean isMale;
 
 
     }
+
+    @CSON
+    public static class Address {
+        @CSONValue
+        String city;
+        @CSONValue
+        String street;
+        @CSONValue
+        int zipcode;
+
+        @CSONValue
+        HouseType houseType;
+
+        @CSONValue
+        TransportationFacilities transportationFacilities;
+
+
+    }
+
+
+    @CSON
+    public static class TransportationFacilities  {
+        @CSONValue
+        boolean subway;
+
+        @CSONValue
+        boolean bus;
+
+
+    }
+
+
+    @CSON
+    public static class HouseType {
+        @CSONValue
+        String type;
+
+        @CSONValue
+        float buildingHeight;
+    }
+
+    @CSON
+    public static class HouseTypeEx{
+        @CSONValue
+        int totalFloor;
+
+        @CSONValue
+        String buildingName;
+
+        @CSONValue
+        String tk = null;
+
+    }
+
+    @CSON
+    public static class Home  {
+
+        @CSONValue
+        Address address;
+        @CSONValue("address.phone")
+        String phoneNumber;
+
+        @CSONValue("address.houseType")
+        HouseTypeEx houseTypeEx;
+
+        @CSONValue("address.houseType")
+        HouseTypeEx houseTypeEx2;
+
+        @CSONValue("address.houseTypeNull")
+        HouseTypeEx houseTypeExNull;
+
+    }
+
+    @Test
+    public void objectInObjectTest() {
+        Home home = new Home();
+        home.address = new Address();
+        home.address.city = "Seoul";
+        home.address.street = "Gangnam";
+        home.address.zipcode = 12345;
+        home.phoneNumber = "010-1234-5678";
+        home.address.houseType = new HouseType();
+        home.address.houseType.type = "office";
+        home.address.houseType.buildingHeight = 72.5f;
+        home.houseTypeEx = new HouseTypeEx();
+        home.houseTypeEx.totalFloor = 19;
+        home.houseTypeEx.buildingName = "Dreamplus Tower";
+        home.houseTypeEx2 = new HouseTypeEx();
+
+        CSONObject cson = CSONSerializer.toCSONObject(home);
+        System.out.println(cson.toString(JSONOptions.json5()));
+        Home resultHome = CSONSerializer.fromCSONObject(cson, new Home());
+        assertEquals(home.address.city, resultHome.address.city);
+        assertEquals(home.address.street, resultHome.address.street);
+        assertEquals(home.address.zipcode, resultHome.address.zipcode);
+        assertEquals(home.phoneNumber, resultHome.phoneNumber);
+        assertEquals(home.address.houseType.type, resultHome.address.houseType.type);
+        assertEquals(home.address.houseType.buildingHeight, resultHome.address.houseType.buildingHeight, 0.0001f);
+        assertEquals(home.houseTypeEx.totalFloor, resultHome.houseTypeEx.totalFloor);
+        assertEquals(home.houseTypeEx.buildingName, resultHome.houseTypeEx.buildingName);
+        assertNull(resultHome.houseTypeEx.tk);
+        assertNull(resultHome.houseTypeExNull);
+        assertEquals(home.houseTypeEx2, resultHome.houseTypeEx2);
+
+
+        System.out.println(CSONSerializer.toCSONObject(resultHome).toString(JSONOptions.json5()));
+
+
+    }
+
 }
