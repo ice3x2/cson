@@ -134,6 +134,12 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return DataConverter.toString(obj);
 	}
 
+
+	public boolean isNull(String key) {
+		Object obj = dataMap.get(key);
+		return obj instanceof NullValue;
+	}
+
 	public Object opt(String key) {
 		Object obj = dataMap.get(key);
 		if(obj instanceof NullValue) return null;

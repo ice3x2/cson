@@ -223,7 +223,14 @@ public class CSONSerializer {
                 if(key instanceof String) {
                     //noinspection DataFlowIssue
                     csonElement = ((CSONObject)csonElement).optObject((String) key);
-                    if(csonElement == null) continue;
+                    if(csonElement == null) {
+                        if(((CSONObject)csonElement).isNull((String) key)) {
+                         getOrCreateParentObject((SchemaField)node, parentObjMap, targetObject, true);
+                        }
+
+
+                        continue;
+                    }
                     schemaNode = (SchemaObjectNode)node;
                     List<SchemaField> parentSchemaFieldList = schemaNode.getParentSchemaFieldList();
                     for(SchemaField parentSchemaField : parentSchemaFieldList) {
@@ -242,6 +249,9 @@ public class CSONSerializer {
                 SchemaField parentField = schemaField.getParentField();
                 Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
                 if(key instanceof String) {
+                    if(csonElement == null) {
+                        System.out.println("오잉?");
+                    }
                   setValueTargetFromCSONObject(obj,schemaField, (CSONObject)csonElement, (String)key);
                 } else if(key instanceof Integer) {
                 }
@@ -260,8 +270,11 @@ public class CSONSerializer {
         return targetObject;
     }
 
-
     private static Object getOrCreateParentObject(SchemaField parentSchemaField, HashMap<Integer, Object> parentObjMap, Object root) {
+        return getOrCreateParentObject(parentSchemaField, parentObjMap, root, false);
+    }
+
+    private static Object getOrCreateParentObject(SchemaField parentSchemaField, HashMap<Integer, Object> parentObjMap, Object root, boolean setNull) {
         if(parentSchemaField == null) return root;
 
         int id = parentSchemaField.getId();
@@ -277,15 +290,19 @@ public class CSONSerializer {
         }
         Collections.reverse(pedigreeList);
         parent = root;
+        SchemaField last = pedigreeList.get(pedigreeList.size() - 1);
         for(SchemaField schemaField : pedigreeList) {
-            int parentId = schemaField.getId();
+           int parentId = schemaField.getId();
            Object child = parentObjMap.get(parentId);
-            if(child == null) {
+           if(setNull && child != null) {
+                schemaField.setValue(parent, null);
+           }
+           else if(!setNull && child == null) {
                 child = schemaField.newInstance();
                 parentObjMap.put(parentId, child);
                 schemaField.setValue(parent, child);
-            }
-            parent = child;
+           }
+           parent = child;
         }
         return parent;
 
