@@ -10,6 +10,7 @@ public class CSONSerializer {
     private CSONSerializer() {}
 
     public static CSONObject toCSONObject(Object obj) {
+        Objects.requireNonNull(obj, "obj is null");
         Class<?> clazz = obj.getClass();
         TypeElement typeElement = TypeElements.getInstance().getTypeInfo(clazz);
         return serializeTypeElement(typeElement,obj);
@@ -169,8 +170,12 @@ public class CSONSerializer {
             } else if(objectValueTypeElement == null) {
                 csonArray.add(object);
             } else {
-                CSONObject childObject = serializeTypeElement(objectValueTypeElement, object);
-                csonArray.add(childObject);
+                if(object == null)  {
+                    csonArray.add(null);
+                } else {
+                    CSONObject childObject = serializeTypeElement(objectValueTypeElement, object);
+                    csonArray.add(childObject);
+                }
             }
             while(!iter.hasNext() && !arraySerializeDequeueItems.isEmpty()) {
                 ArraySerializeDequeueItem arraySerializeDequeueItem = arraySerializeDequeueItems.getFirst();
@@ -222,24 +227,24 @@ public class CSONSerializer {
             if(node instanceof SchemaObjectNode) {
                 if(key instanceof String) {
                     //noinspection DataFlowIssue
-                    csonElement = ((CSONObject)csonElement).optObject((String) key);
+                    CSONObject parentObject = (CSONObject) csonElement;
+                    csonElement = parentObject.optObject((String) key);
+                    boolean nullValue = false;
                     if(csonElement == null) {
-                        if(((CSONObject)csonElement).isNull((String) key)) {
-                         getOrCreateParentObject((SchemaField)node, parentObjMap, targetObject, true);
+                        if(parentObject.isNull((String) key)) {
+                            nullValue = true;
+                        } else {
+                            continue;
                         }
-
-
-                        continue;
                     }
                     schemaNode = (SchemaObjectNode)node;
                     List<SchemaField> parentSchemaFieldList = schemaNode.getParentSchemaFieldList();
                     for(SchemaField parentSchemaField : parentSchemaFieldList) {
-                        getOrCreateParentObject(parentSchemaField, parentObjMap, targetObject);
+                        getOrCreateParentObject(parentSchemaField, parentObjMap, targetObject, nullValue);
                     }
                     iter = schemaNode.keySet().iterator();
                     currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonElement);
                     objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
-
                 } else {
 
                 }
@@ -247,12 +252,13 @@ public class CSONSerializer {
             else if(node instanceof SchemaField && ((SchemaField)node).type != Types.Object) {
                 SchemaField schemaField = (SchemaField) node;
                 SchemaField parentField = schemaField.getParentField();
-                Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
                 if(key instanceof String) {
                     if(csonElement == null) {
-                        System.out.println("오잉?");
+                        System.out.println(key);
+                    } else {
+                        Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
+                        setValueTargetFromCSONObject(obj, schemaField, (CSONObject) csonElement, (String) key);
                     }
-                  setValueTargetFromCSONObject(obj,schemaField, (CSONObject)csonElement, (String)key);
                 } else if(key instanceof Integer) {
                 }
             }
@@ -282,7 +288,6 @@ public class CSONSerializer {
         if (parent != null) {
             return parent;
         }
-        Object grandObj = null;
         ArrayList<SchemaField>  pedigreeList = new ArrayList<>();
         while(parentSchemaField != null) {
             pedigreeList.add(parentSchemaField);
@@ -294,7 +299,7 @@ public class CSONSerializer {
         for(SchemaField schemaField : pedigreeList) {
            int parentId = schemaField.getId();
            Object child = parentObjMap.get(parentId);
-           if(setNull && child != null) {
+           if(setNull && child == null && schemaField == last) {
                 schemaField.setValue(parent, null);
            }
            else if(!setNull && child == null) {
@@ -345,8 +350,8 @@ public class CSONSerializer {
     }
 
 
-    private static Object optValueInCSONArray(CSONArray csonArray, int index, Types valueType) {
-        switch (valueType) {
+    private static Object optValueInCSONArray(CSONArray csonArray, int index, SchemaFieldArray schemaFieldArray) {
+        switch (schemaFieldArray.ValueType) {
             case Byte:
                 return csonArray.optByte(index);
             case Short:
@@ -365,6 +370,11 @@ public class CSONSerializer {
                 return csonArray.optChar(index, '\0');
             case String:
                 return csonArray.optString(index);
+            case Object:
+                Object object = csonArray.optObject(index);
+                if(object != null) {
+                    schemaFieldArray.getObjectValueTypeElement().newInstance();
+                }
         }
         return null;
     }
@@ -391,15 +401,14 @@ public class CSONSerializer {
             System.out.println("테스트 시작");
         }
 
-
         for(int index = 0; index <= end; ++index) {
             objectItem.setArrayIndex(index);
-            if(collectionItem.valueClass != null) {
-                Object value = optValueInCSONArray(objectItem.csonArray, index, schemaFieldArray.valueType);
+            if (collectionItem.valueClass != null) {
+                Object value = optValueInCSONArray(objectItem.csonArray, index, schemaFieldArray);
                 objectItem.collectionObject.add(value);
             } else {
                 CSONArray inArray = objectItem.csonArray.optArray(index);
-                if(inArray == null) {
+                if (inArray == null) {
                     objectItem.collectionObject.add(null);
                 } else {
                     collectionItem = collectionItems.get(++collectionItemIndex);
@@ -412,9 +421,10 @@ public class CSONSerializer {
                     objectItem = newArraySerializeDequeueItem;
                 }
             }
-            while(index == end) {
+
+            while (index == end) {
                 arraySerializeDequeueItems.remove(arraySerializeDequeueItems.size() - 1);
-                if(arraySerializeDequeueItems.isEmpty()) {
+                if (arraySerializeDequeueItems.isEmpty()) {
                     break;
                 }
                 objectItem = arraySerializeDequeueItems.get(arraySerializeDequeueItems.size() - 1);
@@ -423,8 +433,6 @@ public class CSONSerializer {
                 collectionItem = collectionItems.get(--collectionItemIndex);
             }
         }
-
-
 
     }
 

@@ -254,6 +254,16 @@ public class CSONDeserializerTest {
         @CSONValue
         String tk = null;
 
+        @Override
+        public boolean equals(Object obj) {
+            if(obj instanceof HouseTypeEx) {
+                HouseTypeEx houseTypeEx = (HouseTypeEx) obj;
+                return totalFloor == houseTypeEx.totalFloor &&
+                        ((buildingName == null || houseTypeEx.buildingName == null) || buildingName.equals(houseTypeEx.buildingName)) &&
+                        ((tk == null || houseTypeEx.tk == null) || tk.equals(houseTypeEx.tk));
+            }
+            return false;
+        }
     }
 
     @CSON
@@ -267,7 +277,7 @@ public class CSONDeserializerTest {
         @CSONValue("address.houseType")
         HouseTypeEx houseTypeEx;
 
-        @CSONValue("address.houseType")
+        @CSONValue("address.houseType.ex")
         HouseTypeEx houseTypeEx2;
 
         @CSONValue("address.houseTypeNull")
@@ -308,6 +318,43 @@ public class CSONDeserializerTest {
 
 
         System.out.println(CSONSerializer.toCSONObject(resultHome).toString(JSONOptions.json5()));
+
+    }
+
+
+
+
+    @CSON
+    public static class SimpleObjectInArray {
+        @CSONValue
+        ArrayList<HouseType> transportationFacilities = new ArrayList<>();
+    }
+
+    @Test
+    public void objectInCollectionTest() {
+        SimpleObjectInArray simpleObjectInArray = new SimpleObjectInArray();
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for(int i = 0; i < random.nextInt(3, 10); i++) {
+            HouseType houseType = new HouseType();
+            houseType.type = UUID.randomUUID().toString();
+            houseType.buildingHeight = random.nextFloat();
+            if(random.nextInt(0, 3) == 2) {
+                simpleObjectInArray.transportationFacilities.add(null);
+            } else {
+                simpleObjectInArray.transportationFacilities.add(houseType);
+            }
+        }
+        CSONObject cson = CSONSerializer.toCSONObject(simpleObjectInArray);
+        System.out.println(cson.toString(JSONOptions.json5()));
+
+        System.out.println(CSONSerializer.toCSONObject(CSONSerializer.fromCSONObject(cson, new SimpleObjectInArray())).toString(JSONOptions.json5()));
+
+        assertEquals(cson.toString(JSONOptions.json5()), CSONSerializer.toCSONObject(CSONSerializer.fromCSONObject(cson, new SimpleObjectInArray())).toString(JSONOptions.json5()));
+
+
+
+
+
 
 
     }
