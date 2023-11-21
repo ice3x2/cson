@@ -11,15 +11,15 @@ public class SchemaFieldArray extends SchemaField {
     //private final Types valueType;
 
     private final List<CollectionItems> collectionBundles;
-    protected final Types valueType;
+    protected final Types ValueType;
     private final TypeElement objectValueTypeElement;
 
     protected SchemaFieldArray(TypeElement typeElement, Field field, String path, boolean isByteArray) {
         super(typeElement, field, path, isByteArray);
         this.collectionBundles = getGenericType(field.getType());
         Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
-        valueType = Types.of(valueClass);
-        if(valueType == Types.Object) {
+        ValueType = Types.of(valueClass);
+        if(ValueType == Types.Object) {
             objectValueTypeElement = TypeElements.getInstance().getTypeInfo(valueClass);
         } else {
             objectValueTypeElement = null;
