@@ -18,6 +18,9 @@ public abstract class SchemaField implements SchemaNode {
     protected final String path;
     protected final Types type;
 
+    protected final String comment;
+    protected final String afterComment;
+
     private final boolean isPrimitive;
 
 
@@ -49,6 +52,13 @@ public abstract class SchemaField implements SchemaNode {
         this.parentsTypeElement = parentsTypeElement;
         this.type = Types.of(field.getType());
 
+        CSONValue csonValue = field.getAnnotation(CSONValue.class);
+        String comment = csonValue.comment();
+        String afterComment = csonValue.afterComment();
+        this.comment = comment.isEmpty() ? null : comment;
+        this.afterComment = afterComment.isEmpty() ? null : afterComment;
+
+
         if(this.type == Types.Object) {
             this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
         } else {
@@ -56,7 +66,7 @@ public abstract class SchemaField implements SchemaNode {
         }
 
 
-        if(this.field.getType().isArray()) {
+        if(this.field.getType().isArray() &&  this.type != Types.BYTEArray && this.type == Types.ByteArray) {
             throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
         }
         if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
@@ -75,6 +85,8 @@ public abstract class SchemaField implements SchemaNode {
     protected boolean isPrimitive() {
         return isPrimitive;
     }
+
+
 
     protected Types getType() {
         return type;
