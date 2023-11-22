@@ -19,6 +19,8 @@ public abstract class SchemaField implements SchemaNode {
     protected final boolean isByteArray;
     protected final Types type;
 
+    private final boolean isPrimitive;
+
 
     private SchemaField parentFieldRack;
     protected final Class<?> fieldType;
@@ -48,19 +50,21 @@ public abstract class SchemaField implements SchemaNode {
         this.isByteArray = isByteArray;
         this.parentsTypeElement = parentsTypeElement;
         this.type = Types.of(field.getType());
+
         if(this.type == Types.Object) {
             this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
         } else {
             this.objectTypeElement = null;
         }
 
-        Annotation at = this.field.getType().getAnnotation(CSON.class);
+
         if(this.field.getType().isArray()) {
             throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
         }
         if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
             throw new CSONObjectException("Object field '" + this.field.getName() + "' is not annotated with @CSON");
         }
+        this.isPrimitive = field.getType().isPrimitive();
     }
 
 
@@ -70,6 +74,9 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
+    protected boolean isPrimitive() {
+        return isPrimitive;
+    }
 
     protected Types getType() {
         return type;

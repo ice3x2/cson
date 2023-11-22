@@ -95,6 +95,10 @@ public class SchemaFieldArray extends SchemaField {
         return fieldRack;
     }
 
+    @Override
+    public Object newInstance() {
+        return collectionBundles.get(0).newInstance();
+    }
 
     protected static class CollectionItems {
 
@@ -113,6 +117,7 @@ public class SchemaFieldArray extends SchemaField {
         protected final Constructor<? extends Collection<?>> collectionConstructor;
         protected final Class<?> collectionType;
         protected final Class<?> valueClass;
+
 
 
         protected Collection<?> newInstance() {
