@@ -1,8 +1,6 @@
 package com.snoworca.cson.serializer;
 
-import java.util.EnumSet;
-
-public enum Types {
+enum Types {
     Byte,
     Short,
     Integer,
@@ -13,17 +11,12 @@ public enum Types {
     Character,
     String,
     ByteArray,
+    BYTEArray,
     Object,
-    Null,
     Collection;
 
-    private static final EnumSet<Types> NumberTypeSet =  EnumSet.of(Byte, Short, Integer, Long, Float, Double);
 
 
-
-    public static boolean isNumberType(Types type) {
-        return NumberTypeSet.contains(type);
-    }
 
     public static Types of(Class<?> type) {
         if(type == byte.class || type == Byte.class) {
@@ -44,8 +37,10 @@ public enum Types {
             return Character;
         } else if(type == String.class) {
             return String;
-        } else if(type == byte[].class) {
+        } else if(type == byte[].class ) {
             return ByteArray;
+        } else if(type == Byte[].class ) {
+            return BYTEArray;
         } else if(java.util.Collection.class.isAssignableFrom(type)) {
             return Collection;
         } else {

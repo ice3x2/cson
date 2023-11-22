@@ -1,6 +1,5 @@
 package com.snoworca.cson.serializer;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -11,43 +10,53 @@ public abstract class SchemaField implements SchemaNode {
 
     private final int id = LAST_ID.getAndIncrement();
 
-    protected final TypeElement parentsTypeElement;
-    protected final TypeElement objectTypeElement;
+    final TypeElement parentsTypeElement;
+    final TypeElement objectTypeElement;
 
-    protected final Field field;
-    protected final String path;
-    protected final Types type;
+    final Field field;
+    final String path;
+    final Types type;
+
+    final String comment;
+    final String afterComment;
 
     private final boolean isPrimitive;
 
 
     private SchemaField parentFieldRack;
-    protected final Class<?> fieldType;
+    final Class<?> fieldType;
 
 
-    public static SchemaField of(TypeElement typeElement, Field field) {
+    static SchemaField of(TypeElement typeElement, Field field) {
         CSONValue csonValue = field.getAnnotation(CSONValue.class);
         if(csonValue == null) return null;
         String key = csonValue.key();
         if(key == null || key.isEmpty()) key = csonValue.value();
         if(key == null || key.isEmpty()) key = field.getName();
 
-
         if(Collection.class.isAssignableFrom(field.getType())) {
             return new SchemaFieldArray(typeElement, field, key);
         } else {
             return new SchemaFieldNormal(typeElement, field, key);
         }
+
     }
 
 
-    protected SchemaField(TypeElement parentsTypeElement, Field field, String path) {
+    SchemaField(TypeElement parentsTypeElement, Field field, String path) {
         this.field = field;
         field.setAccessible(true);
         this.path = path;
         this.fieldType = field.getType();
         this.parentsTypeElement = parentsTypeElement;
         this.type = Types.of(field.getType());
+
+        CSONValue csonValue = field.getAnnotation(CSONValue.class);
+        String comment = csonValue.comment();
+        String afterComment = csonValue.afterComment();
+        this.comment = comment.isEmpty() ? null : comment;
+        this.afterComment = afterComment.isEmpty() ? null : afterComment;
+
 
         if(this.type == Types.Object) {
             this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
@@ -56,7 +65,7 @@ public abstract class SchemaField implements SchemaNode {
         }
 
 
-        if(this.field.getType().isArray()) {
+        if(this.field.getType().isArray() &&  this.type != Types.BYTEArray && this.type == Types.ByteArray) {
             throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
         }
         if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
@@ -66,48 +75,57 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
-    protected Object newInstance() {
+    Object newInstance() {
         if(objectTypeElement == null) return null;
         return objectTypeElement.newInstance();
     }
 
 
-    protected boolean isPrimitive() {
+    boolean isPrimitive() {
         return isPrimitive;
     }
 
-    protected Types getType() {
+
+    String getComment() {
+        return comment;
+    }
+
+    String getAfterComment() {
+        return afterComment;
+    }
+
+    Types getType() {
         return type;
     }
 
-    protected int getId() {
+    int getId() {
         return id;
     }
 
-    protected String getPath() {
+    String getPath() {
         return path;
     }
 
-    protected Class<?> getFieldType() {
+    Class<?> getFieldType() {
         return fieldType;
     }
 
-    protected SchemaField getParentField() {
+    SchemaField getParentField() {
         return parentFieldRack;
     }
 
 
-    protected Field getField() {
+    Field getField() {
         return field;
     }
 
 
-    protected void setParentFiled(SchemaField parent) {
+    void setParentFiled(SchemaField parent) {
         this.parentFieldRack = parent;
     }
 
 
-    protected Object getValue(Object parent) {
+    Object getValue(Object parent) {
         try {
             return field.get(parent);
         } catch (IllegalAccessException e) {
@@ -116,7 +134,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, Object value) {
+    Object setValue(Object parent, Object value) {
         try {
             field.set(parent, value);
             return value;
@@ -127,7 +145,7 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
-    protected Object setValue(Object parent, short value) {
+    Object setValue(Object parent, short value) {
         try {
             field.setShort(parent, value);
             return value;
@@ -137,7 +155,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, int value) {
+    Object setValue(Object parent, int value) {
         try {
             field.setInt(parent, value);
             return value;
@@ -147,7 +165,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, long value) {
+    Object setValue(Object parent, long value) {
         try {
             field.setLong(parent, value);
             return value;
@@ -157,7 +175,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, float value) {
+    Object setValue(Object parent, float value) {
         try {
             field.setFloat(parent, value);
             return value;
@@ -167,7 +185,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, double value) {
+    Object setValue(Object parent, double value) {
         try {
             field.setDouble(parent, value);
             return value;
@@ -177,7 +195,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, boolean value) {
+    Object setValue(Object parent, boolean value) {
         try {
             field.setBoolean(parent, value);
             return value;
@@ -187,7 +205,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, char value) {
+    Object setValue(Object parent, char value) {
         try {
             field.setChar(parent, value);
             return value;
@@ -197,7 +215,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-    protected Object setValue(Object parent, byte value) {
+    Object setValue(Object parent, byte value) {
         try {
             field.setByte(parent, value);
             return value;

@@ -287,6 +287,10 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return keyValueCommentMap.get(key);
 	}
 
+	public void setComment(String key, String comment) {
+		getOrCreateCommentObject(key).setComment(comment);
+	}
+
 	protected void setCommentObjects(String key, CommentObject keyCommentObject, CommentObject valueCommentObject) {
 		KeyValueCommentObject keyValueCommentObject = getOrCreateCommentObject(key);
 		keyValueCommentObject.keyCommentObject = keyCommentObject;

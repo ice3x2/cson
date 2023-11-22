@@ -37,6 +37,10 @@ public abstract  class CSONElement {
 	}
 
 
+	public void setComment(String comment) {
+		setHeadComment(comment);
+	}
+
 	public void setHeadComment(String comment) {
 		if(comment== null) {
 			return;
