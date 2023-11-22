@@ -16,7 +16,6 @@ public abstract class SchemaField implements SchemaNode {
 
     protected final Field field;
     protected final String path;
-    protected final boolean isByteArray;
     protected final Types type;
 
     private final boolean isPrimitive;
@@ -32,22 +31,21 @@ public abstract class SchemaField implements SchemaNode {
         String key = csonValue.key();
         if(key == null || key.isEmpty()) key = csonValue.value();
         if(key == null || key.isEmpty()) key = field.getName();
-        boolean isByteArrayToCSONArray = csonValue.byteArrayToCSONArray();
+
 
         if(Collection.class.isAssignableFrom(field.getType())) {
-            return new SchemaFieldArray(typeElement, field, key, isByteArrayToCSONArray);
+            return new SchemaFieldArray(typeElement, field, key);
         } else {
-            return new SchemaFieldNormal(typeElement, field, key, isByteArrayToCSONArray);
+            return new SchemaFieldNormal(typeElement, field, key);
         }
     }
 
 
-    protected SchemaField(TypeElement parentsTypeElement, Field field, String path, boolean isByteArray) {
+    protected SchemaField(TypeElement parentsTypeElement, Field field, String path) {
         this.field = field;
         field.setAccessible(true);
         this.path = path;
         this.fieldType = field.getType();
-        this.isByteArray = isByteArray;
         this.parentsTypeElement = parentsTypeElement;
         this.type = Types.of(field.getType());
 

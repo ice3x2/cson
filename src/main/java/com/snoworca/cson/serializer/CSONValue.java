@@ -9,10 +9,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CSONValue {
 
-
     String value() default "";
 
     String key() default "";
-    boolean byteArrayToCSONArray() default false;
+    String comment() default "";
+    String afterComment() default "";
+
 
 }

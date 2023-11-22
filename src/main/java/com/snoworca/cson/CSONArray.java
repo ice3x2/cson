@@ -93,6 +93,11 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return commentObject.getComment();
 	}
 
+	public boolean isNull(int index) {
+		Object obj = list.get(index);
+		return obj == null || obj instanceof NullValue;
+	}
+
 
 	public CommentObject getCommentObject(int index) {
 		if(commentObjectList == null) return null;
