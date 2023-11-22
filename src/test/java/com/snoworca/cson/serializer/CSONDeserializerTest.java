@@ -328,6 +328,15 @@ public class CSONDeserializerTest {
     public static class SimpleObjectInArray {
         @CSONValue
         ArrayList<HouseType> transportationFacilities = new ArrayList<>();
+
+        @CSONValue
+        HashSet<Home> homesNull = null;
+
+        @CSONValue
+        HashSet<ArrayDeque<Home>> homes = new HashSet<>();
+
+
+
     }
 
     @Test

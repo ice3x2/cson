@@ -125,13 +125,13 @@ public class CSONSerializer {
                 Object parent = obtainParentObjects(parentObjMap, schemaFieldArray, rootObject);
                 if(parent != null) {
                     Object value = schemaFieldArray.getValue(parent);
-                    CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
-
-                    if(key instanceof String)
-                        ((CSONObject)csonElement).put((String) key, csonArray);
-                    else
-                        ((CSONArray)csonElement).set((int)key, csonArray);
-
+                    if(value != null) {
+                        CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
+                        if(key instanceof String)
+                            ((CSONObject)csonElement).put((String) key, csonArray);
+                        else
+                            ((CSONArray)csonElement).set((int)key, csonArray);
+                    }
                     //csonElement.put((String) key, csonArray);
                 }
             }
@@ -313,10 +313,17 @@ public class CSONSerializer {
 
     }
 
-    private static void setValueTargetFromCSONObject(Object parents,SchemaField schemaField, CSONObject csonObject, String key) {
+    private static boolean setValueTargetFromCSONObject(Object parents,SchemaField schemaField, CSONObject csonObject, String key) {
         Object value = csonObject.opt(key);
         //todo null 값에 대하여 어떻게 할 것인지 고민해봐야함.
-        if(value == null) return;
+        if(value == null) {
+            if(csonObject.isNull(key) && !schemaField.isPrimitive()) {
+                try {
+                    schemaField.setValue(parents, null);
+                } catch (Exception ignored) {}
+            }
+            return false;
+        }
         Types valueType = schemaField.getType();
         if(Types.Boolean == valueType) {
              schemaField.setValue(parents, csonObject.optBoolean(key));
@@ -336,21 +343,36 @@ public class CSONSerializer {
             schemaField.setValue(parents, csonObject.optString(key));
         } else if(Types.Collection == valueType) {
             CSONArray csonArray = csonObject.optArray(key);
-            if(csonArray == null || !(schemaField instanceof SchemaFieldArray)) return;
-            csonArrayToCollectionObject(csonArray, (SchemaFieldArray)schemaField, parents);
-            // todo
+            if(csonArray != null) {
+                csonArrayToCollectionObject(csonArray, (SchemaFieldArray)schemaField, parents);
+            } else if(csonObject.isNull(key)) {
+                try {
+                    schemaField.setValue(parents, null);
+                } catch (Exception ignored) {}
+            }
+        } else if(Types.Object == valueType) {
+            CSONObject csonObject1 = csonObject.optObject(key);
+            if(csonObject1 != null) {
+                Object target = schemaField.newInstance();
+                fromCSONObject(csonObject1, target);
+                schemaField.setValue(parents, target);
+            }
         }
-
         else {
             try {
                 schemaField.setValue(parents, null);
             } catch (Exception ignored) {}
+            return false;
         }
+        return true;
 
     }
 
 
     private static Object optValueInCSONArray(CSONArray csonArray, int index, SchemaFieldArray schemaFieldArray) {
+
+
+
         switch (schemaFieldArray.ValueType) {
             case Byte:
                 return csonArray.optByte(index);
@@ -371,9 +393,11 @@ public class CSONSerializer {
             case String:
                 return csonArray.optString(index);
             case Object:
-                Object object = csonArray.optObject(index);
-                if(object != null) {
-                    schemaFieldArray.getObjectValueTypeElement().newInstance();
+                CSONObject csonObject = csonArray.optObject(index);
+                if(csonObject != null) {
+                    Object target = schemaFieldArray.getObjectValueTypeElement().newInstance();
+                    fromCSONObject(csonObject, target);
+                    return target;
                 }
         }
         return null;
