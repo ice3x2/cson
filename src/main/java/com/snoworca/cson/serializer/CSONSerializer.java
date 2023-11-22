@@ -211,6 +211,17 @@ public class CSONSerializer {
     }
 
 
+    private static CSONElement getChildElement(SchemaElementNode schemaElementNode,CSONElement csonElement, Object key) {
+        if(key instanceof String) {
+            CSONObject csonObject = (CSONObject)csonElement;
+            return schemaElementNode instanceof  SchemaArrayNode ? csonObject.optArray((String) key) :  csonObject.optObject((String) key) ;
+        } else {
+            CSONArray csonArray = (CSONArray) csonElement;
+            return schemaElementNode instanceof SchemaArrayNode ?  csonArray.optArray((int) key) :  csonArray.optObject((int) key);
+        }
+
+    }
+
     public static<T> T fromCSONObject(final CSONObject csonObject, T targetObject) {
         TypeElement typeElement = TypeElements.getInstance().getTypeInfo(targetObject.getClass());
         SchemaObjectNode schemaRoot = typeElement.getSchema();
@@ -224,42 +235,45 @@ public class CSONSerializer {
         while(iter.hasNext()) {
             Object key = iter.next();
             SchemaNode node = schemaNode.get(key);
-            if(node instanceof SchemaObjectNode) {
+            if(node instanceof SchemaElementNode) {
+                boolean nullValue = false;
+                CSONElement childElement = getChildElement((SchemaElementNode) node, csonElement, key);
                 if(key instanceof String) {
-                    //noinspection DataFlowIssue
                     CSONObject parentObject = (CSONObject) csonElement;
-                    csonElement = parentObject.optObject((String) key);
-                    boolean nullValue = false;
-                    if(csonElement == null) {
+                    if(childElement == null) {
                         if(parentObject.isNull((String) key)) {
                             nullValue = true;
                         } else {
                             continue;
                         }
                     }
-                    schemaNode = (SchemaObjectNode)node;
-                    List<SchemaField> parentSchemaFieldList = schemaNode.getParentSchemaFieldList();
-                    for(SchemaField parentSchemaField : parentSchemaFieldList) {
-                        getOrCreateParentObject(parentSchemaField, parentObjMap, targetObject, nullValue);
-                    }
-                    iter = schemaNode.keySet().iterator();
-                    currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonElement);
-                    objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
                 } else {
-
+                    CSONArray parentArray = (CSONArray)csonElement;
+                    int index = (Integer)key;
+                    if(childElement == null) {
+                        if(parentArray.size() <= index || parentArray.isNull(index)) {
+                            nullValue = true;
+                        } else {
+                            continue;
+                        }
+                    }
                 }
+                csonElement = childElement;
+                schemaNode = (SchemaObjectNode)node;
+                List<SchemaField> parentSchemaFieldList = schemaNode.getParentSchemaFieldList();
+                for(SchemaField parentSchemaField : parentSchemaFieldList) {
+                    getOrCreateParentObject(parentSchemaField, parentObjMap, targetObject, nullValue);
+                }
+                iter = schemaNode.keySet().iterator();
+                currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonElement);
+                objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
             }
             else if(node instanceof SchemaField && ((SchemaField)node).type != Types.Object) {
                 SchemaField schemaField = (SchemaField) node;
                 SchemaField parentField = schemaField.getParentField();
-                if(key instanceof String) {
-                    if(csonElement == null) {
-                        System.out.println(key);
-                    } else {
-                        Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
-                        setValueTargetFromCSONObject(obj, schemaField, (CSONObject) csonElement, (String) key);
-                    }
-                } else if(key instanceof Integer) {
+                if(csonElement != null) {
+                    Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
+                    setValueTargetFromCSONObject(obj, schemaField, csonElement, key);
                 }
             }
 
@@ -313,11 +327,14 @@ public class CSONSerializer {
 
     }
 
-    private static boolean setValueTargetFromCSONObject(Object parents,SchemaField schemaField, CSONObject csonObject, String key) {
-        Object value = csonObject.opt(key);
+    private static boolean setValueTargetFromCSONObject(Object parents,SchemaField schemaField, CSONElement cson, Object key) {
+        boolean isArrayType = cson instanceof CSONArray;
+
+        Object value = isArrayType ? ((CSONArray) cson).opt((int)key) : ((CSONObject)cson).opt((String)key);
         //todo null 값에 대하여 어떻게 할 것인지 고민해봐야함.
         if(value == null) {
-            if(csonObject.isNull(key) && !schemaField.isPrimitive()) {
+            boolean isNull = isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key);
+            if(isNull && !schemaField.isPrimitive()) {
                 try {
                     schemaField.setValue(parents, null);
                 } catch (Exception ignored) {}
@@ -326,35 +343,35 @@ public class CSONSerializer {
         }
         Types valueType = schemaField.getType();
         if(Types.Boolean == valueType) {
-             schemaField.setValue(parents, csonObject.optBoolean(key));
+             schemaField.setValue(parents,isArrayType ? ((CSONArray) cson).optBoolean((int)key) : ((CSONObject)cson).optBoolean((String)key));
         } else if(Types.Byte == valueType) {
-            schemaField.setValue(parents, csonObject.optByte(key));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optByte((int)key) : ((CSONObject)cson).optByte((String)key));
         } else if(Types.Character == valueType) {
-            schemaField.setValue(parents, csonObject.optChar(key, '\0'));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optChar((int)key, '\0') : ((CSONObject)cson).optChar((String)key, '\0'));
         } else if(Types.Short == valueType) {
-            schemaField.setValue(parents, csonObject.optShort(key));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optShort((int)key) : ((CSONObject)cson).optShort((String)key));
         } else if(Types.Integer == valueType) {
-            schemaField.setValue(parents, csonObject.optInt(key));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optInt((int)key) : ((CSONObject)cson).optInt((String)key));
         } else if(Types.Float == valueType) {
-            schemaField.setValue(parents, csonObject.optFloat(key));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optFloat((int)key) : ((CSONObject)cson).optFloat((String)key));
         } else if(Types.Double == valueType) {
-            schemaField.setValue(parents, csonObject.optDouble(key));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optDouble((int)key) : ((CSONObject)cson).optDouble((String)key));
         } else if(Types.String == valueType) {
-            schemaField.setValue(parents, csonObject.optString(key));
+            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optString((int)key) : ((CSONObject)cson).optString((String)key));
         } else if(Types.Collection == valueType) {
-            CSONArray csonArray = csonObject.optArray(key);
+            CSONArray csonArray = isArrayType ? ((CSONArray) cson).optArray((int)key) : ((CSONObject)cson).optArray((String)key);
             if(csonArray != null) {
                 csonArrayToCollectionObject(csonArray, (SchemaFieldArray)schemaField, parents);
-            } else if(csonObject.isNull(key)) {
+            } else if(isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key)) {
                 try {
                     schemaField.setValue(parents, null);
                 } catch (Exception ignored) {}
             }
         } else if(Types.Object == valueType) {
-            CSONObject csonObject1 = csonObject.optObject(key);
-            if(csonObject1 != null) {
+            CSONObject csonObj = isArrayType ? ((CSONArray) cson).optObject((int)key) : ((CSONObject)cson).optObject((String)key);
+            if(csonObj != null) {
                 Object target = schemaField.newInstance();
-                fromCSONObject(csonObject1, target);
+                fromCSONObject(csonObj, target);
                 schemaField.setValue(parents, target);
             }
         }

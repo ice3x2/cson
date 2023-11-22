@@ -355,14 +355,35 @@ public class CSONDeserializerTest {
         }
         CSONObject cson = CSONSerializer.toCSONObject(simpleObjectInArray);
         System.out.println(cson.toString(JSONOptions.json5()));
-
         System.out.println(CSONSerializer.toCSONObject(CSONSerializer.fromCSONObject(cson, new SimpleObjectInArray())).toString(JSONOptions.json5()));
+
 
         assertEquals(cson.toString(JSONOptions.json5()), CSONSerializer.toCSONObject(CSONSerializer.fromCSONObject(cson, new SimpleObjectInArray())).toString(JSONOptions.json5()));
 
 
+    }
 
 
+    @CSON
+    public static class ArrayItemKey {
+        @CSONValue("key.list[10][10].ok")
+        public String key;
+
+        @CSONValue("key.list[10][10].nullValue")
+        public String nullValue;
+    }
+
+    @Test
+    public void arrayItemKeyTest() {
+        ArrayItemKey arrayItemKey = new ArrayItemKey();
+        arrayItemKey.key = "test";
+
+        CSONObject cson = CSONSerializer.toCSONObject(arrayItemKey);
+        System.out.println(cson);
+
+        ArrayItemKey result =  CSONSerializer.fromCSONObject(cson, new ArrayItemKey());
+        assertEquals(arrayItemKey.key, result.key);
+        assertNull(result.nullValue);
 
 
 

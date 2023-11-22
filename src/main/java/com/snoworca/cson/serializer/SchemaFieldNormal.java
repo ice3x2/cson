@@ -10,8 +10,8 @@ public class SchemaFieldNormal extends SchemaField {
 
 
 
-    protected SchemaFieldNormal(TypeElement typeElement, Field field, String path, boolean isByteArray) {
-        super(typeElement, field, path, isByteArray);
+    protected SchemaFieldNormal(TypeElement typeElement, Field field, String path) {
+        super(typeElement, field, path);
         this.isPrimitive =  this.getFieldType().isPrimitive();
         if(this.type == Types.Object && getField().getType().getAnnotation(CSON.class) == null)  {
             throw new CSONObjectException("Object type " + this.field.getType().getName() + " is not annotated with @CSON");
@@ -20,7 +20,7 @@ public class SchemaFieldNormal extends SchemaField {
 
 
     public SchemaFieldNormal copy() {
-        SchemaFieldNormal fieldRack = new SchemaFieldNormal(parentsTypeElement, field, path, isByteArray);
+        SchemaFieldNormal fieldRack = new SchemaFieldNormal(parentsTypeElement, field, path);
         fieldRack.setParentFiled(getParentField());
         return fieldRack;
     }

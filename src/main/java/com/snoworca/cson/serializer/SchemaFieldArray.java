@@ -14,8 +14,8 @@ public class SchemaFieldArray extends SchemaField {
     protected final Types ValueType;
     private final TypeElement objectValueTypeElement;
 
-    protected SchemaFieldArray(TypeElement typeElement, Field field, String path, boolean isByteArray) {
-        super(typeElement, field, path, isByteArray);
+    protected SchemaFieldArray(TypeElement typeElement, Field field, String path) {
+        super(typeElement, field, path);
         this.collectionBundles = getGenericType(field.getType());
         Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
         ValueType = Types.of(valueClass);
@@ -90,7 +90,7 @@ public class SchemaFieldArray extends SchemaField {
 
     @Override
     public SchemaNode copyNode() {
-        SchemaFieldArray fieldRack = new SchemaFieldArray(parentsTypeElement, field, path, isByteArray);
+        SchemaFieldArray fieldRack = new SchemaFieldArray(parentsTypeElement, field, path);
 
         return fieldRack;
     }
