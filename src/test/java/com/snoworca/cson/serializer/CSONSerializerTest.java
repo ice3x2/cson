@@ -231,8 +231,6 @@ public class CSONSerializerTest {
 
     @Test
     public void nullObjectSerializeTest() {
-        //JSONObject jsonObject = new JSONObject("{\"ok\": null}");
-        //Object op = jsonObject.getJSONObject("ok");
 
         TestClassNull testClassNull = new TestClassNull();
 
@@ -319,6 +317,21 @@ public class CSONSerializerTest {
 
     }
 
+
+    @CSON
+    public static class SimpleComment {
+        @CSONValue(key = "key1", comment = "comment1")
+        String key1 = "value1";
+    }
+
+
+    @Test
+    public void simpleCommentTest() {
+        SimpleComment simpleComment = new SimpleComment();
+        CSONObject csonObject = CSONSerializer.toCSONObject(simpleComment);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        assertEquals("comment1", csonObject.getComment("key1"));
+    }
 
 
 

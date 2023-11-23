@@ -96,8 +96,6 @@ public class CSONSerializer {
                             csonElement = childElement;
                         }
                     }
-
-
                     objectSerializeDequeueItems.add(new ObjectSerializeDequeueItem(iter, schemaNode, csonElement));
                 }
             }
@@ -107,17 +105,14 @@ public class CSONSerializer {
                 if(parent != null) {
                     Object value = schemaField.getValue(parent);
                     if(key instanceof String) {
-                        //if(csonElement instanceof CSONArray) {
-                        //    ((CSONArray) csonElement).set((int) key, value);
-                        //} else {
-                            ((CSONObject) csonElement).put((String) key, value);
-                        //}
-
-
+                        ((CSONObject) csonElement).put((String) key, value);
+                        ((CSONObject) csonElement).getComment()
                     }
                     else {
+                        assert csonElement instanceof CSONArray;
                         ((CSONArray) csonElement).set((int) key, value);
                     }
+
 
                 }
             } else if(node instanceof SchemaFieldArray) {
@@ -129,10 +124,13 @@ public class CSONSerializer {
                         CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
                         if(key instanceof String)
                             ((CSONObject)csonElement).put((String) key, csonArray);
-                        else
+                        else {
+                            assert csonElement instanceof CSONArray;
                             ((CSONArray)csonElement).set((int)key, csonArray);
+                        }
+                        csonElement.setComment(schemaFieldArray.getComment());
+                        csonElement.setTailComment(schemaFieldArray.getAfterComment());
                     }
-                    //csonElement.put((String) key, csonArray);
                 }
             }
             while(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
