@@ -5,16 +5,17 @@ import java.util.regex.Pattern;
 
 public abstract  class CSONElement {
 
-	protected static final String HEAD_COMMENT_KEY  = "";
-	protected static final String TAIL_COMMENT_KEY  = " ";
 
+
+	private static JSONOptions DefaultJSONOptions = JSONOptions.json();
 	private final static Pattern BASE64_PREFIX_REPLACE_PATTERN = Pattern.compile("(?i)^base64,");
 	private final static Pattern BASE64_PREFIX_PATTERN = Pattern.compile("^((?i)base64,)([a-zA-Z0-9+/]*={0,2})$");
-	private CommentObject tailCommentObject = null;
-	private CommentObject headCommentObject = null;
+	private CommentObject commentAfterElement = null;
+	private CommentObject commentBeforeElement = null;
 	private CSONPath csonPath = null;
 
 
+	JSONOptions defaultJSONOptions = DefaultJSONOptions;
 
 	private boolean allowRawValue = false;
 	private boolean unknownObjectToString = false;
@@ -23,10 +24,10 @@ public abstract  class CSONElement {
 		return this;
 	}
 
-	public CSONElement setUnknownObjectToString(boolean unknownObjectToString) {
+	public void setUnknownObjectToString(boolean unknownObjectToString) {
 		this.unknownObjectToString = unknownObjectToString;
-		return this;
 	}
+
 
 	protected boolean isUnknownObjectToString() {
 		return unknownObjectToString;
@@ -37,63 +38,62 @@ public abstract  class CSONElement {
 	}
 
 
-	public void setComment(String comment) {
-		setHeadComment(comment);
+	public static JSONOptions getDefaultJSONOptions() {
+		return DefaultJSONOptions;
 	}
 
-	public void setHeadComment(String comment) {
-		if(comment== null) {
-			return;
+	public static void setDefaultJSONOptions(JSONOptions defaultJSONOptions) {
+		DefaultJSONOptions = defaultJSONOptions;
+	}
+
+
+
+
+	public void setCommentBeforeThis(String comment) {
+		if(commentBeforeElement == null) {
+			commentBeforeElement = new CommentObject();
 		}
-		if(headCommentObject == null) {
-			headCommentObject = new CommentObject();
+		commentBeforeElement.setBeforeComment(comment);
+	}
+
+	public void setCommentAfterThis(String comment) {
+		if(commentAfterElement == null) {
+			commentAfterElement = new CommentObject();
 		}
-		headCommentObject.setBeforeComment(comment);
-	}
-
-	public void setTailComment(String comment) {
-		if(comment== null) {
-			return;
-		}
-		if(tailCommentObject == null) {
-			tailCommentObject = new CommentObject();
-		}
-		tailCommentObject.setAfterComment(comment);
-
+		commentAfterElement.setAfterComment(comment);
 	}
 
 
-	public CommentObject getHeadCommentObject() {
-		return headCommentObject;
+	CommentObject getCommentBeforeElement() {
+		return commentBeforeElement;
 	}
 
-	public CommentObject getTailCommentObject() {
-		return tailCommentObject;
+	CommentObject getCommentAfterElement() {
+		return commentAfterElement;
 	}
 
-	public CommentObject getOrCreateHeadCommentObject() {
-		return headCommentObject == null ? headCommentObject = new CommentObject() : headCommentObject;
+
+	protected CommentObject getOrCreateTailCommentObject() {
+		return commentAfterElement == null ? commentAfterElement = new CommentObject() : commentAfterElement;
 	}
 
-	public CommentObject getOrCreateTailCommentObject() {
-		return tailCommentObject == null ? tailCommentObject = new CommentObject() : tailCommentObject;
+	protected void setCommentBeforeElement(CommentObject commentObject) {
+		this.commentBeforeElement = commentObject;
 	}
 
-	protected void setHeadCommentObject(CommentObject commentObject) {
-		this.headCommentObject = commentObject;
+	protected void setCommentAfterElement(CommentObject commentObject) {
+		this.commentAfterElement = commentObject;
 	}
 
-	protected void setTailCommentObject(CommentObject commentObject) {
-		this.tailCommentObject = commentObject;
+	public String getCommentAfterThis() {
+		return commentAfterElement == null ? null : commentAfterElement.getComment();
 	}
 
-	public String getTailComment() {
-		return tailCommentObject == null ? null : tailCommentObject.getComment();
+	public String getCommentBeforeThis() {
+		return commentBeforeElement == null ? null : commentBeforeElement.getComment();
 	}
 
-	public String getHeadComment() {
-		return headCommentObject == null ? null : headCommentObject.getComment();
-	}
+
 
 
 	public final CSONPath getCsonPath() {
@@ -133,6 +133,7 @@ public abstract  class CSONElement {
 		return mType;
 	}
 
+	@SuppressWarnings("unused")
 	public String getVersion() {
 		return Short.toString(ByteBuffer.wrap(versionRaw).getShort());
 	}

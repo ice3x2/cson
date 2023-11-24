@@ -72,6 +72,7 @@ public class CSONSerializer {
                     if(key instanceof String) {
                         ((CSONObject)csonElement).put((String) key,null);
                     } else {
+                        assert csonElement instanceof CSONArray;
                         ((CSONArray)csonElement).set((Integer) key,null);
                     }
                     while (iter.hasNext())  {
@@ -87,6 +88,7 @@ public class CSONSerializer {
                             csonElement = childElement;
                         }
                     } else {
+                        assert csonElement instanceof CSONArray;
                         CSONArray currentObject = ((CSONArray)csonElement);
                         CSONArray currentArray = ((CSONArray)csonElement);
                         CSONElement childElement = (CSONElement) currentArray.opt((Integer) key);
@@ -106,11 +108,14 @@ public class CSONSerializer {
                     Object value = schemaField.getValue(parent);
                     if(key instanceof String) {
                         ((CSONObject) csonElement).put((String) key, value);
-                        ((CSONObject) csonElement).getComment()
+                        ((CSONObject) csonElement).setCommentBeforeKey((String) key, schemaField.getComment());
+                        ((CSONObject) csonElement).setCommentAfterKey((String) key, schemaField.getAfterComment());
                     }
                     else {
                         assert csonElement instanceof CSONArray;
                         ((CSONArray) csonElement).set((int) key, value);
+                        ((CSONArray) csonElement).setCommentBeforeValue((int)key, schemaField.getComment());
+                        ((CSONArray) csonElement).setCommentAfterValue((int) key, schemaField.getAfterComment());
                     }
 
 
@@ -122,14 +127,20 @@ public class CSONSerializer {
                     Object value = schemaFieldArray.getValue(parent);
                     if(value != null) {
                         CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
-                        if(key instanceof String)
-                            ((CSONObject)csonElement).put((String) key, csonArray);
+                        if(key instanceof String) {
+                            ((CSONObject) csonElement).put((String) key, csonArray);
+                            ((CSONObject)csonElement).setCommentBeforeValue((String)key, schemaFieldArray.getComment());
+                            ((CSONObject)csonElement).setCommentAfterValue((String)key, schemaFieldArray.getAfterComment());
+                        }
                         else {
                             assert csonElement instanceof CSONArray;
                             ((CSONArray)csonElement).set((int)key, csonArray);
+                            ((CSONArray)csonElement).setCommentBeforeValue((int)key, schemaFieldArray.getComment()) ;
+                            ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaFieldArray.getAfterComment());
                         }
-                        csonElement.setComment(schemaFieldArray.getComment());
-                        csonElement.setTailComment(schemaFieldArray.getAfterComment());
+
+
+                        //csonArray.setCommentAfterThis(schemaFieldArray.getAfterComment());
                     }
                 }
             }
