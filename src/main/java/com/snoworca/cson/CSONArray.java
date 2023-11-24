@@ -3,6 +3,7 @@ package com.snoworca.cson;
 
 
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -12,7 +13,6 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	private ArrayList<Object> list = new ArrayList<>();
 	private ArrayList<CommentObject> commentObjectList = null;
 
-	private JSONOptions jsonOptions = JSONOptions.json();
 
 
 	public CSONArray() {
@@ -87,11 +87,42 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
+	@SuppressWarnings("unused")
 	public String getComment(int index) {
 		CommentObject commentObject = getCommentObject(index);
 		if(commentObject == null) return null;
 		return commentObject.getComment();
 	}
+
+	@SuppressWarnings("unused")
+	public String getCommentBeforeValue(int index) {
+		CommentObject commentObject = getCommentObject(index);
+		if(commentObject == null) return null;
+		return commentObject.getBeforeComment();
+	}
+
+	@SuppressWarnings("unused")
+	public String getCommentAfterValue(int index) {
+		CommentObject commentObject = getCommentObject(index);
+		if(commentObject == null) return null;
+		return commentObject.getAfterComment();
+	}
+
+	@SuppressWarnings("unused")
+	public CSONArray setCommentBeforeValue(int index, String comment) {
+		CommentObject commentObject = getCommentObject(index, true);
+		commentObject.setBeforeComment(comment);
+		return this;
+	}
+
+	@SuppressWarnings("unused")
+	public CSONArray setCommentAfterValue(int index, String comment) {
+		CommentObject commentObject = getCommentObject(index, true);
+		commentObject.setAfterComment(comment);
+		return this;
+	}
+
+
 
 	public boolean isNull(int index) {
 		Object obj = list.get(index);
@@ -114,10 +145,18 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			if(!createIfNotExists) return null;
 			ensureCapacityOfCommentObjects();
 		}
-		return commentObjectList.get(index);
+		CommentObject commentObject = commentObjectList.get(index);
+		if(commentObject == null && createIfNotExists) {
+			commentObject = new CommentObject();
+			commentObjectList.set(index, commentObject);
+		}
+
+
+		return commentObject;
 	}
 
 
+	@SuppressWarnings("unused")
 	public void setCommentObject(int index, CommentObject commentObject) {
 		if(commentObjectList.size() <= list.size()) {
 			ensureCapacityOfCommentObjects();
@@ -140,7 +179,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	protected CSONArray(JSONTokener x) throws CSONException {
 		super(ElementType.Array);
-		this.jsonOptions = x.getJsonOption();
+		this.defaultJSONOptions = x.getJsonOption();
 		new JSONParser(x).parseArray(this);
 	}
 
@@ -188,6 +227,26 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return this;
 	}
 
+	@SuppressWarnings("unused")
+	public CSONArray putAll(Object e) {
+		if(e instanceof  Collection) {
+			for(Object obj : (Collection<?>)e) {
+				if(!add(obj)) {
+					// TODO 넣을 수 없는 타입 에러.
+				}
+			}
+		} else if(e.getClass().isArray()) {
+			for(int i = 0, n = Array.getLength(e); i < n; ++i) {
+				if(!add(Array.get(e, i))) {
+					// TODO 넣을 수 없는 타입 에러.
+				}
+			}
+		} else {
+			//TODO 넣을 수 없는 타입 에러.
+		}
+		return this;
+	}
+
 
 
 	public CSONArray set(int index, Object e) {
@@ -209,8 +268,10 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 
 	private Object convert(Object e) {
-		if(e == null || e instanceof  NullValue) list.add(new NullValue());
-		if(e instanceof Number) {
+		if(e == null) {
+			return NullValue.Instance;
+		}
+		else if(e instanceof Number) {
 			return e;
 		} else if(e instanceof CharSequence) {
 			return e.toString();
@@ -219,7 +280,14 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			return e;
 		} else if(e instanceof Character || e instanceof Boolean || e instanceof CSONObject || e instanceof byte[] ) {
 			return e;
-		} else if(isAllowRawValue()) {
+		} else if(e.getClass().isArray()) {
+			CSONArray array = new CSONArray();
+			for(int i = 0, n = Array.getLength(e); i < n; ++i) {
+				array.add(Array.get(e, i));
+			}
+			return array;
+		}
+		else if(isAllowRawValue()) {
 			return e;
 		}
 		return isUnknownObjectToString() ? e + "" : null;
@@ -234,6 +302,24 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		Object value = convert(e);
 		if(value == null) return false;
 		list.add(value);
+		return true;
+	}
+
+
+	public boolean addAll(Object e) {
+		if(e instanceof  Collection) {
+			for(Object obj : (Collection<?>)e) {
+				if(!add(obj)) {
+					return false;
+				}
+			}
+		} else if(e.getClass().isArray()) {
+			for(int i = 0, n = Array.getLength(e); i < n; ++i) {
+				if(!add(Array.get(e, i))) {
+					return false;
+				}
+			}
+		}
 		return true;
 	}
 
@@ -309,6 +395,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 
 
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	@Deprecated
 	public int getInteger(int index) {
 		return getInt(index);
@@ -322,6 +409,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		}
 	}
 
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	@Deprecated
 	public int optInteger(int index) {
 		return optInt(index);
@@ -687,25 +775,29 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	protected void write(JSONWriter writer) {
 		writer.openArray();
+
+		int commentListEndIndex = commentObjectList == null ? -1 : commentObjectList.size() - 1;
+
 		for(int i = 0, n = list.size(); i < n; ++i) {
 			Object obj = list.get(i);
-		 	CommentObject commentObject = commentObjectList == null ? null : commentObjectList.get(i);
+			boolean isListSizeOverCommentObjectListSize = i > commentListEndIndex;
+		 	CommentObject commentObject = isListSizeOverCommentObjectListSize ? null : commentObjectList.get(i);
 			 if(commentObject != null && !(obj instanceof CSONElement)) {
 				 writer.nextCommentObject(commentObject);
 			 }
 			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONElement)  {
-				CommentObject objectElementHeadCache = ((CSONElement) obj).getHeadCommentObject();
-				CommentObject objectElementTailCache = ((CSONElement) obj).getTailCommentObject();
+				CommentObject objectElementHeadCache = ((CSONElement) obj).getCommentBeforeElement();
+				CommentObject objectElementTailCache = ((CSONElement) obj).getCommentAfterElement();
 				try {
 					if (null != commentObject) {
-						((CSONElement) obj).setHeadComment(commentObject.getBeforeComment());
-						((CSONElement) obj).setTailCommentObject(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),commentObject.getAfterComment()));
+						((CSONElement) obj).setCommentBeforeThis(commentObject.getBeforeComment());
+						((CSONElement) obj).setCommentAfterElement(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),commentObject.getAfterComment()));
 					}
 					((CSONElement)obj).write(writer);
 				} finally {
-					((CSONElement)obj).setHeadCommentObject(objectElementHeadCache);
-					((CSONElement)obj).setTailCommentObject(objectElementTailCache);
+					((CSONElement)obj).setCommentBeforeElement(objectElementHeadCache);
+					((CSONElement)obj).setCommentAfterElement(objectElementTailCache);
 				}
 			}
 			else if(obj instanceof Byte)	writer.add((byte)obj);
@@ -719,34 +811,15 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			else if(obj instanceof byte[]) writer.add((byte[])obj);
 			else if(obj instanceof Boolean) writer.add((boolean)obj);
 		}
-		writer.nextCommentObject(getTailCommentObject());
+		writer.nextCommentObject(getCommentAfterElement());
 		writer.closeArray();
 
 	}
 
-	/*
-	protected void writeJSONString(StringBuilder strBuilder) {
-		strBuilder.append("[");
-		for(int i = 0, n = list.size(), np = n - 1; i < n; ++i) {
-			Object obj = list.get(i);
-			if(obj == null) strBuilder.append("null");
-			else if(obj instanceof Number || obj instanceof Boolean) strBuilder.append(obj);
-			else if(obj instanceof Character) strBuilder.append('"').append(obj).append('"');
-			else if(obj instanceof String) strBuilder.append('"').append(DataConverter.escapeJSONString((String)obj)).append('"');
-			else if(obj instanceof byte[]) strBuilder.append('"').append(DataConverter.toString(obj)).append('"');
-			else if(obj instanceof CSONArray) ((CSONArray)obj).writeJSONString(strBuilder);
-			else if(obj instanceof CSONObject) ((CSONObject)obj).writeJSONString(strBuilder);
-			
-			if(i != np) strBuilder.append(',');
-		}
-		strBuilder.append("]");
-	}*/
-
-
 	
 	@Override
 	public String toString() {
-		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
+		JSONWriter jsonWriter  = new JSONWriter(defaultJSONOptions);
 		write(jsonWriter);
 		return jsonWriter.toString();
 	}

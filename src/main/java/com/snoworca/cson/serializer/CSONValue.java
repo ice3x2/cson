@@ -13,7 +13,7 @@ public @interface CSONValue {
 
     String key() default "";
     String comment() default "";
-    String afterComment() default "";
+    String commentAfterKey() default "";
 
 
 }

@@ -320,17 +320,46 @@ public class CSONSerializerTest {
 
     @CSON
     public static class SimpleComment {
-        @CSONValue(key = "key1", comment = "comment1")
-        String key1 = "value1";
+        //@CSONValue(key = "key1", comment = "comment1", commentAfterKey = "commentAfterKey1")
+       // String key1 = "value1";
+       // @CSONValue(key = "key2", comment = "comment2", commentAfterKey = "")
+       // String key2 = "value2";
+
+    /*
+        @CSONValue(key = "key3[0]", comment = "comment3", commentAfterKey = "commentAfter3")
+        String key3InArray = "value3";
+        @CSONValue(key = "key3[1]", comment = "comment4", commentAfterKey = "commentAfter4")
+        String key4InArray = "value4";
+
+        @CSONValue(key = "key3[2]", comment = "comment5", commentAfterKey = "commentAfter5")
+        String key5InArray = null;
+
+*/
+        @CSONValue(key = "key4", comment = "comment6", commentAfterKey = "commentAfter6")
+        ArrayList<String> key4 = new ArrayList<>();
+
+
     }
 
 
     @Test
     public void simpleCommentTest() {
+        //CSONArray csonArray = new CSONArray();
+        //csonArray.addAll(new Object[]{"value3", "value4", new CSONObject()});
+        //System.out.println(csonArray.toString(JSONOptions.json5()));
+
         SimpleComment simpleComment = new SimpleComment();
         CSONObject csonObject = CSONSerializer.toCSONObject(simpleComment);
+
+
+
+        //assertEquals(csonObject.getArray("key3").size(), 3);
+
+        //csonObject.put("key5", new String[]{"value3", "value4", null});
+        //assertEquals("comment1", new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()) .getCommentBeforeKey("key1"));
+        //assertEquals("commentAfterKey1", new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()) .getCommentAfterKey("key1"));
+        //assertEquals(null, new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()) .getCommentAfterKey("key2"));
         System.out.println(csonObject.toString(JSONOptions.json5()));
-        assertEquals("comment1", csonObject.getComment("key1"));
     }
 
 

@@ -117,7 +117,7 @@ class JSONParser {
 
         char nextChar = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
-            csonArray.setHeadComment(commentBuilder.toString().trim());
+            csonArray.setCommentBeforeThis(commentBuilder.toString().trim());
         }
 
         if (nextChar != '[') {
@@ -163,10 +163,10 @@ class JSONParser {
                     Object value = tokener.nextValue();
                     if(value instanceof CSONElement) {
                         CSONElement valueObject = (CSONElement) value;
-                        valueObject.setHeadComment(lastCommentObject.getBeforeComment());
-                        CommentObject commentObject = valueObject.getTailCommentObject();
+                        valueObject.setCommentBeforeThis(lastCommentObject.getBeforeComment());
+                        CommentObject commentObject = valueObject.getCommentAfterElement();
                         if(commentObject != null && commentObject.isCommented()) {
-                            lastCommentObject.setAfterComment(valueObject.getTailCommentObject().getAfterComment());
+                            lastCommentObject.setAfterComment(valueObject.getCommentAfterElement().getAfterComment());
                         }
                         nextChar = tokener.nextClean();
                         csonArray.addAtJSONParsing(value);
@@ -299,7 +299,7 @@ class JSONParser {
         char lastPrev = 0;
         char nextClean = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
-            csonObject.setHeadComment(commentBuilder.toString().trim());
+            csonObject.setCommentBeforeThis(commentBuilder.toString().trim());
         }
         if (nextClean != '{') {
             throw tokener.syntaxError("A JSONObject text must begin with '{'");
@@ -371,7 +371,7 @@ class JSONParser {
                 putAtJSONParsing(csonObject, key, value);
                 if(value instanceof CSONElement) {
                     CSONElement objectValue = (CSONElement)value;
-                    CommentObject tailCommentObject = objectValue.getTailCommentObject();
+                    CommentObject tailCommentObject = objectValue.getCommentAfterElement();
                     if(tailCommentObject != null) {
                         String valueAfterComment = tailCommentObject.getAfterComment();
                         if(valueAfterComment != null) {
@@ -380,7 +380,7 @@ class JSONParser {
                     }
                     String commentHead = valueCommentObject.getBeforeComment();
                     if(commentHead != null) {
-                        objectValue.setHeadComment(commentHead);
+                        objectValue.setCommentBeforeThis(commentHead);
                     }
                     commentBuilder.setLength(0);
                 }

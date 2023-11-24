@@ -53,7 +53,7 @@ public abstract class SchemaField implements SchemaNode {
 
         CSONValue csonValue = field.getAnnotation(CSONValue.class);
         String comment = csonValue.comment();
-        String afterComment = csonValue.afterComment();
+        String afterComment = csonValue.commentAfterKey();
         this.comment = comment.isEmpty() ? null : comment;
         this.afterComment = afterComment.isEmpty() ? null : afterComment;
 
