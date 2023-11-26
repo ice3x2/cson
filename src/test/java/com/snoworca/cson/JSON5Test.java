@@ -209,14 +209,16 @@ public class JSON5Test {
         csonObject.put("arrayKey",csonArray);
         csonArray.setCommentBeforeThis("배열 앞 코멘트");
         csonArray.setCommentAfterThis("배열 뒤 코멘트");
-        csonObject.setCommentBeforeKey("arrayKey","키 앞 코멘트\nok");
+        /*csonObject.setCommentBeforeKey("arrayKey","키 앞 코멘트\nok");
         csonObject.setCommentAfterKey("arrayKey","키 뒤 코멘트");
         csonObject.setCommentBeforeValue("arrayKey","값 앞 코멘트");
-        csonObject.setCommentAfterValue("arrayKey","값 뒤 코멘트");
-
-
-
+        csonObject.setCommentAfterValue("arrayKey","값 뒤 코멘트");*/
         System.out.println(csonObject.toString());
+
+        CSONObject result = new CSONObject(csonObject.toString(), JSONOptions.json5());
+        System.out.println(result.toString());
+
+
     }
 
 

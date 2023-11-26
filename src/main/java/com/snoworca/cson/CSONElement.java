@@ -105,7 +105,7 @@ public abstract  class CSONElement {
 
 
 
-	protected abstract void write(JSONWriter writer);
+	protected abstract void write(JSONWriter writer, boolean root);
 
 
 
