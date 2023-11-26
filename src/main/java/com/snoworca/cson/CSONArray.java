@@ -746,7 +746,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return writer.toByteArray();
 	}
 	
-	protected void write(CSONWriter writer) { 
+	protected void write(CSONWriter writer) {
 		writer.openArray();
 		for(int i = 0, n = list.size(); i < n; ++i) {
 			Object obj = list.get(i);
@@ -773,7 +773,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	protected void write(JSONWriter writer) {
+	@Override
+	protected void write(JSONWriter writer, boolean root) {
 		writer.openArray();
 
 		int commentListEndIndex = commentObjectList == null ? -1 : commentObjectList.size() - 1;
@@ -794,7 +795,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 						((CSONElement) obj).setCommentBeforeThis(commentObject.getBeforeComment());
 						((CSONElement) obj).setCommentAfterElement(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),commentObject.getAfterComment()));
 					}
-					((CSONElement)obj).write(writer);
+					((CSONElement)obj).write(writer, false);
 				} finally {
 					((CSONElement)obj).setCommentBeforeElement(objectElementHeadCache);
 					((CSONElement)obj).setCommentAfterElement(objectElementTailCache);
@@ -820,13 +821,13 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	@Override
 	public String toString() {
 		JSONWriter jsonWriter  = new JSONWriter(defaultJSONOptions);
-		write(jsonWriter);
+		write(jsonWriter, true);
 		return jsonWriter.toString();
 	}
 
 	public String toString(JSONOptions jsonOptions) {
 		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
-		write(jsonWriter);
+		write(jsonWriter, true);
 		return jsonWriter.toString();
 	}
 
