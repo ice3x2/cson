@@ -625,8 +625,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 		Iterator<Entry<String, Object>> iter = dataMap.entrySet().iterator();
 		boolean isComment = writer.isComment() && keyValueCommentMap != null;
 
+		// root 오브젝트가 아닌 경우에는 주석을 무시한다.
 		if(root) {
-			writer.nextCommentObject(getCommentBeforeElement());
+			writer.writeComment(getCommentBeforeThis(), false,"","\n" );
 		}
 		writer.openObject();
 		while(iter.hasNext()) {
@@ -634,75 +635,31 @@ public class CSONObject extends CSONElement implements Cloneable {
 			String key = entry.getKey();
 			Object obj = entry.getValue();
 			KeyValueCommentObject keyValueCommentObject = isComment ? keyValueCommentMap.get(key) : null;
-			CommentObject commentObjectBeforeElementCache = null;
-			CommentObject commentObjectAfterElementCache = null;
-			if(keyValueCommentObject != null) {
-				writer.nextCommentObject(keyValueCommentObject.keyCommentObject);
-			}
-			if(obj instanceof CSONElement) {
-				StringBuilder beforeBuilder = new StringBuilder();
-				StringBuilder afterBuilder = new StringBuilder();
-				if(keyValueCommentObject != null && keyValueCommentObject.valueCommentObject != null) {
-					CommentObject commentObject = keyValueCommentObject.valueCommentObject;
-					if(commentObject.getBeforeComment() != null) {
-						beforeBuilder.append(commentObject.getBeforeComment());
-					}
-					if(commentObject.getAfterComment() != null) {
-						afterBuilder.append(commentObject.getAfterComment());
-					}
-				}
-				String beforeObj = ((CSONElement)obj).getCommentBeforeThis();
-				String afterObj = ((CSONElement)obj).getCommentAfterThis();
-				if(beforeObj != null) {
-					beforeBuilder.append("\n").append(beforeObj);
-				}
-				if(afterObj != null) {
-					afterBuilder.append("\n").append(afterObj);
-				}
-				writer.nextCommentObject(new CommentObject(beforeBuilder.length() == 0 ? null : beforeBuilder.toString(),
-						afterBuilder.length() == 0 ? null : afterBuilder.toString()));
-			}
-			else if(keyValueCommentObject != null) {
-				writer.nextCommentObject(keyValueCommentObject.valueCommentObject);
-			}
-			if(obj == null || obj instanceof NullValue) writer.key(key).nullValue();
-			else if(obj instanceof CSONElement)  {
+			writer.nextCommentObject(keyValueCommentObject == null ? null : keyValueCommentObject.valueCommentObject);
+			if (obj == null || obj instanceof NullValue) writer.key(key).nullValue();
+			else if (obj instanceof CSONElement) {
 				writer.key(key);
-				try {
-					((CSONElement) obj).write(writer, false);
-				} finally {
-					if(commentObjectBeforeElementCache != null) {
-						((CSONElement)obj).setCommentBeforeElement(commentObjectBeforeElementCache);
-						commentObjectBeforeElementCache = null;
-					}
-					if(commentObjectAfterElementCache != null) {
-						((CSONElement)obj).setCommentAfterElement(commentObjectAfterElementCache);
-						commentObjectAfterElementCache = null;
-					}
-				}
-
-			}
-			else if(obj instanceof Byte)	{
-				writer.key(key).value((byte)obj);
-			}
-			else if(obj instanceof Short)	writer.key(key).value((short)obj);
-			else if(obj instanceof Character) writer.key(key).value((char)obj);
-			else if(obj instanceof Integer) writer.key(key).value((int)obj);
-			else if(obj instanceof Float) writer.key(key).value((float)obj);
-			else if(obj instanceof Long) writer.key(key).value((long)obj);
-			else if(obj instanceof Double) writer.key(key).value((double)obj);
-			else if(obj instanceof String) writer.key(key).value((String)obj);
-			else if(obj instanceof Boolean) writer.key(key).value((boolean)obj);
-			else if(obj instanceof BigDecimal) writer.key(key).value(obj);
-			else if(obj instanceof byte[]) writer.key(key).value((byte[])obj);
-			else if(isAllowRawValue()) {
+				((CSONElement) obj).write(writer, false);
+			} else if (obj instanceof Byte) {
+				writer.key(key).value((byte) obj);
+			} else if (obj instanceof Short) writer.key(key).value((short) obj);
+			else if (obj instanceof Character) writer.key(key).value((char) obj);
+			else if (obj instanceof Integer) writer.key(key).value((int) obj);
+			else if (obj instanceof Float) writer.key(key).value((float) obj);
+			else if (obj instanceof Long) writer.key(key).value((long) obj);
+			else if (obj instanceof Double) writer.key(key).value((double) obj);
+			else if (obj instanceof String) writer.key(key).value((String) obj);
+			else if (obj instanceof Boolean) writer.key(key).value((boolean) obj);
+			else if (obj instanceof BigDecimal) writer.key(key).value(obj);
+			else if (obj instanceof byte[]) writer.key(key).value((byte[]) obj);
+			else if (isAllowRawValue()) {
 				writer.key(key).value(obj.toString());
 			}
 		}
-		if(root) {
-			writer.nextCommentObject(getCommentAfterElement());
-		}
 		writer.closeObject();
+		if(root) {
+			writer.writeComment(getCommentAfterThis(), false,"\n","" );
+		}
 
 	}
 

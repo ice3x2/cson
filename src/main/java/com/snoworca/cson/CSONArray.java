@@ -19,6 +19,11 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		super(ElementType.Array);
 	}
 
+	public CSONArray(JSONOptions jsonOptions) {
+		super(ElementType.Array);
+		this.defaultJSONOptions = jsonOptions;
+	}
+
 	public CSONArray(int size) {
 		super(ElementType.Array);
 		this.list.ensureCapacity(size);
@@ -143,7 +148,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		}
 		if(index >= commentObjectList.size()) {
 			if(!createIfNotExists) return null;
-			ensureCapacityOfCommentObjects();
+			ensureCapacityOfCommentObjects(index);
 		}
 		CommentObject commentObject = commentObjectList.get(index);
 		if(commentObject == null && createIfNotExists) {
@@ -158,8 +163,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	@SuppressWarnings("unused")
 	public void setCommentObject(int index, CommentObject commentObject) {
-		if(commentObjectList.size() <= list.size()) {
-			ensureCapacityOfCommentObjects();
+		if(commentObjectList.size() <= index) {
+			ensureCapacityOfCommentObjects(index);
 		}
 		if(index >= list.size()) {
 			throw new IndexOutOfBoundsException("index: " + index + ", size: " + list.size());
@@ -168,9 +173,9 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 
 
-	private void ensureCapacityOfCommentObjects() {
-		commentObjectList.ensureCapacity(list.size());
-		for (int i = commentObjectList.size(), n = list.size(); i < n; i++) {
+	private void ensureCapacityOfCommentObjects(int index) {
+		//commentObjectList.ensureCapacity(list.size());
+		for (int i = commentObjectList.size(), n = index + 1; i < n; i++) {
 			commentObjectList.add(null);
 		}
 	}
@@ -775,31 +780,20 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	@Override
 	protected void write(JSONWriter writer, boolean root) {
+		if(root) {
+			writer.writeComment(getCommentBeforeThis(), false,"","\n" );
+		}
 		writer.openArray();
-
 		int commentListEndIndex = commentObjectList == null ? -1 : commentObjectList.size() - 1;
 
 		for(int i = 0, n = list.size(); i < n; ++i) {
 			Object obj = list.get(i);
 			boolean isListSizeOverCommentObjectListSize = i > commentListEndIndex;
 		 	CommentObject commentObject = isListSizeOverCommentObjectListSize ? null : commentObjectList.get(i);
-			 if(commentObject != null && !(obj instanceof CSONElement)) {
-				 writer.nextCommentObject(commentObject);
-			 }
+			writer.nextCommentObject(commentObject);
 			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONElement)  {
-				CommentObject objectElementHeadCache = ((CSONElement) obj).getCommentBeforeElement();
-				CommentObject objectElementTailCache = ((CSONElement) obj).getCommentAfterElement();
-				try {
-					if (null != commentObject) {
-						((CSONElement) obj).setCommentBeforeThis(commentObject.getBeforeComment());
-						((CSONElement) obj).setCommentAfterElement(new CommentObject((objectElementTailCache == null ? null : objectElementTailCache.getBeforeComment()),commentObject.getAfterComment()));
-					}
-					((CSONElement)obj).write(writer, false);
-				} finally {
-					((CSONElement)obj).setCommentBeforeElement(objectElementHeadCache);
-					((CSONElement)obj).setCommentAfterElement(objectElementTailCache);
-				}
+				((CSONElement)obj).write(writer, false);
 			}
 			else if(obj instanceof Byte)	writer.add((byte)obj);
 			else if(obj instanceof Short)	writer.add((short)obj);
@@ -812,8 +806,12 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			else if(obj instanceof byte[]) writer.add((byte[])obj);
 			else if(obj instanceof Boolean) writer.add((boolean)obj);
 		}
-		writer.nextCommentObject(getCommentAfterElement());
+
 		writer.closeArray();
+		if(root) {
+
+			writer.writeComment(getCommentAfterThis(), false, "\n", "");
+		}
 
 	}
 
