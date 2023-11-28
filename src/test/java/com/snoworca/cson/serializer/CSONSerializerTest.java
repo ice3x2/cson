@@ -364,12 +364,55 @@ public class CSONSerializerTest {
         assertEquals("commentAfterKey1", new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()) .getCommentAfterKey("key1"));
         assertEquals(null, new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()) .getCommentAfterKey("key2"));
         System.out.println(csonObject.toString(JSONOptions.json5()));
-
         assertEquals(csonObject.toString(JSONOptions.json5()), new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()).toString(JSONOptions.json5()));
-
 
     }
 
+
+    @CSON
+    public static class ByteArray {
+        @CSONValue
+        byte[] bytes = new byte[]{1,2,3,4,5,6,7,8,9,10};
+    }
+
+    @Test
+    public void byteArrayTest() {
+        ByteArray byteArray = new ByteArray();
+        CSONObject csonObject = CSONSerializer.toCSONObject(byteArray);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        byte[] buffer = csonObject.getByteArray("bytes");
+        assertEquals(10, buffer.length);
+        for(int i = 0; i < 10; i++) {
+            assertEquals(i + 1, buffer[i]);
+        }
+        byteArray.bytes = new byte[]{5,4,3,2,1,0};
+        csonObject = CSONSerializer.toCSONObject(byteArray);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        buffer = csonObject.getByteArray("bytes");
+        for(int i = 0; i < 6; i++) {
+            assertEquals(byteArray.bytes[i], buffer[i]);
+        }
+
+        ByteArray bu = CSONSerializer.fromCSONObject(csonObject, ByteArray.class);
+    }
+
+
+
+    @CSON
+    public static class MapClassTest {
+        @CSONValue
+        private HashMap<String, String> map = new HashMap<>();
+    }
+
+    @Test
+    public void mapClassTest() {
+        MapClassTest mapClassTest = new MapClassTest();
+        mapClassTest.map.put("key1", "value1");
+        mapClassTest.map.put("key2", "value2");
+        CSONObject csonObject = CSONSerializer.toCSONObject(mapClassTest);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+
+    }
 
 
 

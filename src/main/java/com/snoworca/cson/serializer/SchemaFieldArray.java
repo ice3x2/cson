@@ -6,6 +6,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
+@SuppressWarnings("ClassEscapesDefinedScope")
 public class SchemaFieldArray extends SchemaField {
 
     //private final Types valueType;
@@ -16,7 +17,7 @@ public class SchemaFieldArray extends SchemaField {
 
     protected SchemaFieldArray(TypeElement typeElement, Field field, String path) {
         super(typeElement, field, path);
-        this.collectionBundles = getGenericType(field.getType());
+        this.collectionBundles = getGenericType();
         Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
         ValueType = Types.of(valueClass);
         if(ValueType == Types.Object) {
@@ -34,7 +35,7 @@ public class SchemaFieldArray extends SchemaField {
         return collectionBundles;
     }
 
-    private List<CollectionItems> getGenericType(Class<?> clazz) {
+    private List<CollectionItems> getGenericType() {
         Type genericFieldType = field.getGenericType();
         ArrayList<CollectionItems> result = new ArrayList<>();
         if (genericFieldType instanceof ParameterizedType) {
@@ -90,9 +91,8 @@ public class SchemaFieldArray extends SchemaField {
 
     @Override
     public SchemaNode copyNode() {
-        SchemaFieldArray fieldRack = new SchemaFieldArray(parentsTypeElement, field, path);
 
-        return fieldRack;
+        return new SchemaFieldArray(parentsTypeElement, field, path);
     }
 
     @Override
