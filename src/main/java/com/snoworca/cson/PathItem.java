@@ -65,11 +65,12 @@ public class PathItem {
         return isInArray;
     }
 
+    @SuppressWarnings("ForLoopReplaceableByForEach")
     public static List<PathItem> parseMultiPath2(String path) {
         ArrayList<PathItem> itemList = new ArrayList<>();
         char[] chars = path.toCharArray();
         StringBuilder builder = new StringBuilder(path.length());
-        PathItem lastItem = null;
+        PathItem lastItem;
         int readMode = READ_MODE_UNDEFINED;
         int lastIndex = -1;
         for(int i = 0, n = chars.length; i < n; i++) {
@@ -89,7 +90,7 @@ public class PathItem {
                 String key = builder.toString();
                 key = key.trim();
                 builder.setLength(0);
-                if(key.length() > 0 || lastIndex > -1) {
+                if(!key.isEmpty() || lastIndex > -1) {
                     PathItem item = new PathItem(key, lastIndex);
                     lastIndex = -1;
                     item.isArrayItem = true;
@@ -99,11 +100,7 @@ public class PathItem {
             } else if(c == ']' && readMode == READ_MODE_INDEX) {
                 String indexString = builder.toString().trim();
                 builder.setLength(0);
-                int index = Integer.parseInt(indexString);
-                lastIndex = index;
-                //lastItem = new PathItem(index);
-                //itemList.add(lastItem);
-                //readMode = READ_MODE_UNDEFINED;
+                lastIndex = Integer.parseInt(indexString);
             } else {
                 builder.append(c);
             }
@@ -117,7 +114,7 @@ public class PathItem {
             PathItem item = new PathItem(lastIndex);
             itemList.add(item);
         }
-        if(itemList.size() > 0) {
+        if(!itemList.isEmpty()) {
             lastItem = itemList.get(itemList.size() - 1);
             lastItem.isEndPoint = true;
         }

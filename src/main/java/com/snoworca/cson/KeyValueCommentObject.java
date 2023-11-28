@@ -16,7 +16,7 @@ class KeyValueCommentObject {
             return keyCommentObject.toString();
         }
         else {
-            return  keyCommentObject.toString() + "\n" + valueCommentObject.toString();
+            return  keyCommentObject + "\n" + valueCommentObject;
         }
     }
 }
