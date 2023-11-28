@@ -116,13 +116,13 @@ public class CSONSerializer {
                     Object value = schemaField.getValue(parent);
                     if(key instanceof String) {
                         ((CSONObject) csonElement).put((String) key, value);
-                        ((CSONObject) csonElement).setCommentBeforeKey((String) key, schemaField.getComment());
+                        ((CSONObject) csonElement).setCommentForKey((String) key, schemaField.getComment());
                         ((CSONObject) csonElement).setCommentAfterKey((String) key, schemaField.getAfterComment());
                     }
                     else {
                         assert csonElement instanceof CSONArray;
                         ((CSONArray) csonElement).set((int) key, value);
-                        ((CSONArray) csonElement).setCommentBeforeValue((int)key, schemaField.getComment());
+                        ((CSONArray) csonElement).setCommentForValue((int)key, schemaField.getComment());
                         ((CSONArray) csonElement).setCommentAfterValue((int) key, schemaField.getAfterComment());
                     }
 
@@ -137,13 +137,13 @@ public class CSONSerializer {
                         CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
                         if(key instanceof String) {
                             ((CSONObject) csonElement).put((String) key, csonArray);
-                            ((CSONObject)csonElement).setCommentBeforeValue((String)key, schemaFieldArray.getComment());
+                            ((CSONObject)csonElement).setCommentForValue((String)key, schemaFieldArray.getComment());
                             ((CSONObject)csonElement).setCommentAfterValue((String)key, schemaFieldArray.getAfterComment());
                         }
                         else {
                             assert csonElement instanceof CSONArray;
                             ((CSONArray)csonElement).set((int)key, csonArray);
-                            ((CSONArray)csonElement).setCommentBeforeValue((int)key, schemaFieldArray.getComment()) ;
+                            ((CSONArray)csonElement).setCommentForValue((int)key, schemaFieldArray.getComment()) ;
                             ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaFieldArray.getAfterComment());
                         }
                     }

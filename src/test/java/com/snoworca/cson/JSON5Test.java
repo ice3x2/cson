@@ -205,28 +205,28 @@ public class JSON5Test {
     public void commentTest() {
         CSONObject csonObject = new CSONObject(JSONOptions.json5());
         csonObject.put("key","value");
-        csonObject.setCommentBeforeKey("key","키 앞 코멘트1");
+        csonObject.setCommentForKey("key","키 앞 코멘트1");
         csonObject.setCommentAfterKey("key","키 뒤 코멘트1");
 
-        csonObject.setCommentBeforeValue("key","값 앞 코멘트1");
+        csonObject.setCommentForValue("key","값 앞 코멘트1");
         csonObject.setCommentAfterValue("key","값 뒤 코멘트1");
 
         CSONArray csonArray = new CSONArray(JSONOptions.json5());
         csonObject.put("arrayKey",csonArray);
         CSONObject objinObj = new CSONObject(JSONOptions.json5());
         objinObj.put("key","value");
-        objinObj.setCommentBeforeKey("key","키 앞 코멘트");
+        objinObj.setCommentForKey("key","키 앞 코멘트");
         objinObj.setCommentAfterKey("key","키 뒤 코멘트");
-        objinObj.setCommentBeforeValue("key","값 앞 코멘트");
+        objinObj.setCommentForValue("key","값 앞 코멘트");
         objinObj.setCommentAfterValue("key","값 뒤 코멘트");
         assertEquals(objinObj.toString(), new CSONObject(objinObj.toString(), JSONOptions.json5()).toString());
 
-        csonArray.setCommentBeforeValue(0,"배열값 앞 코멘트");
+        csonArray.setCommentForValue(0,"배열값 앞 코멘트");
         csonArray.setCommentAfterValue(0,"배열값 뒤 코멘트");
-        csonArray.setCommentBeforeValue(2,"배열값 앞 코멘트2");
+        csonArray.setCommentForValue(2,"배열값 앞 코멘트2");
         csonArray.setCommentAfterValue(2,"배열값 뒤 코멘트2");
 
-        csonArray.setCommentBeforeValue(3,"배열값 앞 코멘트3");
+        csonArray.setCommentForValue(3,"배열값 앞 코멘트3");
         csonArray.setCommentAfterValue(3,"배열값 뒤 코멘트3");
 
         csonArray.put(objinObj);
@@ -245,14 +245,14 @@ public class JSON5Test {
 
 
 
-        csonObject.setCommentBeforeKey("arrayKey","키 앞 코멘트");
+        csonObject.setCommentForKey("arrayKey","키 앞 코멘트");
         csonObject.setCommentAfterKey("arrayKey","키 뒤 코멘트");
-        csonObject.setCommentBeforeValue("arrayKey","값 앞 코멘트");
+        csonObject.setCommentForValue("arrayKey","값 앞 코멘트");
         csonObject.setCommentAfterValue("arrayKey","값 뒤 코멘트");
 
-        csonObject.setCommentBeforeKey("arrayKey","키 앞 코멘트\nok");
+        csonObject.setCommentForKey("arrayKey","키 앞 코멘트\nok");
         csonObject.setCommentAfterKey("arrayKey","키 뒤 코멘트");
-        csonObject.setCommentBeforeValue("arrayKey","값 앞 코멘트");
+        csonObject.setCommentForValue("arrayKey","값 앞 코멘트");
         csonObject.setCommentAfterValue("arrayKey","값 뒤 코멘트");
         System.out.println(csonObject.toString());
 
