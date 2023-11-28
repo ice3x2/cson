@@ -3,20 +3,20 @@ package com.snoworca.cson.serializer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TypeElements {
+class TypeElements {
 
-    private static TypeElements instance = new TypeElements();
+    private static final TypeElements instance = new TypeElements();
 
-    private Map<Class<?>, TypeElement> typeInfoMap = new ConcurrentHashMap<>();
+    private final Map<Class<?>, TypeElement> typeInfoMap = new ConcurrentHashMap<>();
 
     private TypeElements() {
     }
 
-    public static TypeElements getInstance() {
+    static TypeElements getInstance() {
         return instance;
     }
 
-    protected TypeElement getTypeInfo(Class<?> type) {
+    TypeElement getTypeInfo(Class<?> type) {
         TypeElement typeInfo = typeInfoMap.get(type);
         if(typeInfo == null) {
             typeInfo = TypeElement.create(type);
