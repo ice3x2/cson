@@ -781,7 +781,7 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	@Override
 	protected void write(JSONWriter writer, boolean root) {
 		if(root) {
-			writer.writeComment(getCommentBeforeThis(), false,"","\n" );
+			writer.writeComment(getCommentThis(), false,"","\n" );
 		}
 		writer.openArray();
 		int commentListEndIndex = commentObjectList == null ? -1 : commentObjectList.size() - 1;
@@ -793,7 +793,8 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 			writer.nextCommentObject(commentObject);
 			if(obj == null || obj instanceof NullValue) writer.addNull();
 			else if(obj instanceof CSONElement)  {
-				((CSONElement)obj).write(writer, false);
+				//((CSONElement)obj).write(writer, false);
+				writer.add((CSONElement) obj);
 			}
 			else if(obj instanceof Byte)	writer.add((byte)obj);
 			else if(obj instanceof Short)	writer.add((short)obj);

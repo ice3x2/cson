@@ -28,22 +28,6 @@ public class CommentObject implements  Cloneable {
         this.afterComment = afterComment;
     }
 
-    public void addBeforeComment(String comment) {
-        if (beforeComment == null) {
-            beforeComment = comment;
-        } else {
-            beforeComment += comment;
-        }
-    }
-
-    public void addAfterComment(String comment) {
-        if (afterComment == null) {
-            afterComment = comment;
-        } else {
-            afterComment += comment;
-        }
-    }
-
 
     public String getComment() {
         if(beforeComment == null && afterComment == null) {
@@ -67,6 +51,7 @@ public class CommentObject implements  Cloneable {
     }
 
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public CommentObject clone() {
         CommentObject commentObject = new CommentObject();

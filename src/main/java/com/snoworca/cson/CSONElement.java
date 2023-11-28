@@ -38,58 +38,50 @@ public abstract  class CSONElement {
 	}
 
 
+	@SuppressWarnings("unused")
 	public static JSONOptions getDefaultJSONOptions() {
 		return DefaultJSONOptions;
 	}
 
+	@SuppressWarnings("unused")
 	public static void setDefaultJSONOptions(JSONOptions defaultJSONOptions) {
 		DefaultJSONOptions = defaultJSONOptions;
 	}
 
-
-
-
-	public void setCommentBeforeThis(String comment) {
-		if(commentBeforeElement == null) {
-			commentBeforeElement = new CommentObject();
-		}
-		commentBeforeElement.setBeforeComment(comment);
-	}
-
-	public void setCommentAfterThis(String comment) {
-		if(commentAfterElement == null) {
-			commentAfterElement = new CommentObject();
-		}
-		commentAfterElement.setAfterComment(comment);
-	}
-
-
-	CommentObject getCommentBeforeElement() {
-		return commentBeforeElement;
-	}
 
 	CommentObject getCommentAfterElement() {
 		return commentAfterElement;
 	}
 
 
+	@SuppressWarnings("unchecked")
+	public <T extends CSONElement> T setCommentThis(String comment) {
+		if(commentBeforeElement == null) {
+			commentBeforeElement = new CommentObject();
+		}
+		commentBeforeElement.setBeforeComment(comment);
+		return (T) this;
+	}
+
+	@SuppressWarnings("unchecked")
+	public  <T extends CSONElement> T setCommentAfterThis(String comment) {
+		if(commentAfterElement == null) {
+			commentAfterElement = new CommentObject();
+		}
+		commentAfterElement.setAfterComment(comment);
+		return (T) this;
+	}
+
 	protected CommentObject getOrCreateTailCommentObject() {
 		return commentAfterElement == null ? commentAfterElement = new CommentObject() : commentAfterElement;
 	}
 
-	protected void setCommentBeforeElement(CommentObject commentObject) {
-		this.commentBeforeElement = commentObject;
-	}
-
-	protected void setCommentAfterElement(CommentObject commentObject) {
-		this.commentAfterElement = commentObject;
-	}
 
 	public String getCommentAfterThis() {
 		return commentAfterElement == null ? null : commentAfterElement.getComment();
 	}
 
-	public String getCommentBeforeThis() {
+	public String getCommentThis() {
 		return commentBeforeElement == null ? null : commentBeforeElement.getComment();
 	}
 
@@ -114,7 +106,7 @@ public abstract  class CSONElement {
 
 	private CSONElement mParents = null;
 	private byte[] versionRaw = CSONDataType.VER_RAW;
-	private ElementType mType = ElementType.Object;
+	private final ElementType mType;
 
 
 	protected void setParents(CSONElement parents) {
@@ -144,12 +136,13 @@ public abstract  class CSONElement {
 
 
 
-	public static CSONElement clone(CSONElement element) {
+	@SuppressWarnings("unchecked")
+	public static <T extends CSONElement> T clone(T element) {
 		if(element == null) return null;
 		if(element instanceof CSONObject) {
-			return ((CSONObject)element).clone();
+			return (T) ((CSONObject)element).clone();
 		}
-		return ((CSONArray)element).clone();
+		return (T) ((CSONArray)element).clone();
 	}
 
 

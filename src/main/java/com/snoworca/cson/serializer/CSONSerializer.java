@@ -28,6 +28,14 @@ public class CSONSerializer {
 
         HashMap<Integer, Object> parentObjMap = new HashMap<>();
         CSONElement csonElement = new CSONObject();
+        String comment = typeElement.getComment();
+        String commentAfter = typeElement.getCommentAfter();
+        if(comment != null) {
+            csonElement.setCommentThis(comment);
+        }
+        if(commentAfter != null) {
+            csonElement.setCommentAfterThis(commentAfter);
+        }
         CSONObject root = (CSONObject) csonElement;
         ArrayDeque<ObjectSerializeDequeueItem> objectSerializeDequeueItems = new ArrayDeque<>();
         Iterator<Object> iter = schemaRoot.keySet().iterator();
@@ -138,9 +146,6 @@ public class CSONSerializer {
                             ((CSONArray)csonElement).setCommentBeforeValue((int)key, schemaFieldArray.getComment()) ;
                             ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaFieldArray.getAfterComment());
                         }
-
-
-                        //csonArray.setCommentAfterThis(schemaFieldArray.getAfterComment());
                     }
                 }
             }
@@ -257,6 +262,7 @@ public class CSONSerializer {
                         }
                     }
                 } else {
+                    assert csonElement instanceof CSONArray;
                     CSONArray parentArray = (CSONArray)csonElement;
                     int index = (Integer)key;
                     if(childElement == null) {
@@ -336,7 +342,7 @@ public class CSONSerializer {
 
     }
 
-    private static boolean setValueTargetFromCSONObject(Object parents,SchemaField schemaField, CSONElement cson, Object key) {
+    private static void setValueTargetFromCSONObject(Object parents, SchemaField schemaField, CSONElement cson, Object key) {
         boolean isArrayType = cson instanceof CSONArray;
 
         Object value = isArrayType ? ((CSONArray) cson).opt((int)key) : ((CSONObject)cson).opt((String)key);
@@ -348,7 +354,7 @@ public class CSONSerializer {
                     schemaField.setValue(parents, null);
                 } catch (Exception ignored) {}
             }
-            return false;
+            return;
         }
         Types valueType = schemaField.getType();
         if(Types.Boolean == valueType) {
@@ -388,9 +394,7 @@ public class CSONSerializer {
             try {
                 schemaField.setValue(parents, null);
             } catch (Exception ignored) {}
-            return false;
         }
-        return true;
 
     }
 
@@ -447,9 +451,6 @@ public class CSONSerializer {
         arraySerializeDequeueItems.add(objectItem);
         schemaFieldArray.setValue(parent, objectItem.collectionObject);
 
-        if(objectItem.collectionObject instanceof LinkedList) {
-            System.out.println("테스트 시작");
-        }
 
         for(int index = 0; index <= end; ++index) {
             objectItem.setArrayIndex(index);
@@ -488,14 +489,6 @@ public class CSONSerializer {
 
 
 
-    private static void burnIterator(Iterator<?> iterator) {
-        while(iterator.hasNext()) {
-            iterator.next();
-        }
-    }
-
-
-
 
 
     @SuppressWarnings("rawtypes")
@@ -522,37 +515,14 @@ public class CSONSerializer {
         }
 
 
-        private ArraySerializeDequeueItem setCollectionObject(Collection<?> collectionObject) {
-            this.collectionObject = collectionObject;
-            return this;
-        }
 
         /**
          * 역직렬화에서 사용됨.
-         * @param index
-         * @return
+         *
          */
-        private ArraySerializeDequeueItem setArrayIndex(int index) {
+        private void setArrayIndex(int index) {
             this.index = index;
-            return this;
         }
-
-        /**
-         * 역직렬화에서 사용됨.
-         * @param maxIndex
-         * @return
-         */
-
-    }
-
-    private static class ArrayDeserializeDequeueItem {
-        Iterator<?> iterator;
-        Collection<?> resultCollection;
-        private ArrayDeserializeDequeueItem(Iterator<?> iterator) {
-            this.iterator = iterator;
-            this.resultCollection = resultCollection;
-        }
-
 
 
     }

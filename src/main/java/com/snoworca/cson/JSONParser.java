@@ -117,7 +117,7 @@ class JSONParser {
 
         char nextChar = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
-            csonArray.setCommentBeforeThis(commentBuilder.toString().trim());
+            csonArray.setCommentThis(commentBuilder.toString().trim());
         }
 
         if (nextChar != '[') {
@@ -163,7 +163,7 @@ class JSONParser {
                     Object value = tokener.nextValue();
                     if(value instanceof CSONElement) {
                         CSONElement valueObject = (CSONElement) value;
-                        valueObject.setCommentBeforeThis(lastCommentObject.getBeforeComment());
+                        valueObject.setCommentThis(lastCommentObject.getBeforeComment());
                         CommentObject commentObject = valueObject.getCommentAfterElement();
                         if(commentObject != null && commentObject.isCommented()) {
                             lastCommentObject.setAfterComment(valueObject.getCommentAfterElement().getAfterComment());
@@ -299,7 +299,7 @@ class JSONParser {
         char lastPrev = 0;
         char nextClean = readOrSkipComment( commentBuilder);
         if(commentBuilder.length() > 0) {
-            csonObject.setCommentBeforeThis(commentBuilder.toString().trim());
+            csonObject.setCommentThis(commentBuilder.toString().trim());
         }
         if (nextClean != '{') {
             throw tokener.syntaxError("A JSONObject text must begin with '{'");
@@ -380,7 +380,7 @@ class JSONParser {
                     }
                     String commentHead = valueCommentObject.getBeforeComment();
                     if(commentHead != null) {
-                        objectValue.setCommentBeforeThis(commentHead);
+                        objectValue.setCommentThis(commentHead);
                     }
                     commentBuilder.setLength(0);
                 }

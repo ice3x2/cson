@@ -379,13 +379,13 @@ public class CSONObject extends CSONElement implements Cloneable {
 	}
 
 
-	public CommentObject getCommentObjectOfKey(String key) {
+	protected CommentObject getCommentObjectOfKey(String key) {
 		KeyValueCommentObject keyValueCommentObject = getKeyCommentObject(key);
 		if(keyValueCommentObject == null) return null;
 		return keyValueCommentObject.keyCommentObject;
 	}
 
-	public CommentObject getCommentObjectOfValue(String key) {
+	protected CommentObject getCommentObjectOfValue(String key) {
 		KeyValueCommentObject keyValueCommentObject = getKeyCommentObject(key);
 		if(keyValueCommentObject == null) return null;
 		return keyValueCommentObject.valueCommentObject;
@@ -627,7 +627,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 		// root 오브젝트가 아닌 경우에는 주석을 무시한다.
 		if(root) {
-			writer.writeComment(getCommentBeforeThis(), false,"","\n" );
+			writer.writeComment(getCommentThis(), false,"","\n" );
 		}
 		writer.openObject();
 		while(iter.hasNext()) {
@@ -635,11 +635,14 @@ public class CSONObject extends CSONElement implements Cloneable {
 			String key = entry.getKey();
 			Object obj = entry.getValue();
 			KeyValueCommentObject keyValueCommentObject = isComment ? keyValueCommentMap.get(key) : null;
+			writer.nextCommentObject(keyValueCommentObject == null ? null : keyValueCommentObject.keyCommentObject);
 			writer.nextCommentObject(keyValueCommentObject == null ? null : keyValueCommentObject.valueCommentObject);
+
 			if (obj == null || obj instanceof NullValue) writer.key(key).nullValue();
 			else if (obj instanceof CSONElement) {
-				writer.key(key);
-				((CSONElement) obj).write(writer, false);
+				//writer.key(key);
+				//((CSONElement) obj).write(writer, false);
+				writer.key(key).value((CSONElement)obj);
 			} else if (obj instanceof Byte) {
 				writer.key(key).value((byte) obj);
 			} else if (obj instanceof Short) writer.key(key).value((short) obj);
@@ -655,6 +658,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 			else if (isAllowRawValue()) {
 				writer.key(key).value(obj.toString());
 			}
+
 		}
 		writer.closeObject();
 		if(root) {
