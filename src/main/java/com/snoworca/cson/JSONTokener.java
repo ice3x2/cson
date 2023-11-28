@@ -18,7 +18,8 @@ https://github.com/stleary/JSON-java/blob/master/src/main/java/org/json/JSONToke
  * @author JSON.org
  * @version 2014-05-03
  */
-public class JSONTokener {
+@SuppressWarnings("UnusedReturnValue")
+class JSONTokener {
     /** current read character position on the current line. */
     private long character;
     /** flag to indicate if the end of the input has been found. */
@@ -36,17 +37,10 @@ public class JSONTokener {
     /** the number of characters read in the previous line. */
     private long characterPreviousLine;
 
-    private JSONOptions jsonOption;
+    private final JSONOptions jsonOption;
 
 
-
-
-    /**
-     * Construct a JSONTokener from a Reader. The caller must close the Reader.
-     *
-     * @param reader     A reader.
-     */
-    public JSONTokener(Reader reader, JSONOptions jsonOptions) {
+    JSONTokener(Reader reader, JSONOptions jsonOptions) {
         this.reader = reader.markSupported()
                 ? reader
                 : new BufferedReader(reader);
@@ -60,37 +54,20 @@ public class JSONTokener {
         this.jsonOption = jsonOptions;
     }
 
-    public JSONOptions getJsonOption() {
+    JSONOptions getJsonOption() {
         return jsonOption;
     }
 
-    /**
-     * Construct a JSONTokener from an InputStream. The caller must close the input stream.
-     * @param inputStream The source.
-     */
-    public JSONTokener(InputStream inputStream, JSONOptions jsonOptions) {
-        this(new InputStreamReader(inputStream),jsonOptions);
-    }
 
 
-    /**
-     * Construct a JSONTokener from a string.
-     *
-     * @param s     A source string.
-     */
-    public JSONTokener(String s,JSONOptions jsonOptions) {
+
+    JSONTokener(String s,JSONOptions jsonOptions) {
         this(new StringReader(s), jsonOptions);
     }
 
 
-    /**
-     * Back up one character. This provides a sort of lookahead capability,
-     * so that you can test for a digit or letter before attempting to parse
-     * the next number or identifier.
-     * @throws CSONException Thrown if trying to step back more than 1 step
-     *  or if already at the start of the string
-     */
-    public void back() throws CSONException {
+
+    void back() throws CSONException {
         if (this.usePrevious || this.index <= 0) {
             throw new CSONException("Stepping back two steps is not supported");
         }
@@ -99,13 +76,11 @@ public class JSONTokener {
         this.eof = false;
     }
 
-    public boolean canGoBack() {
+    @SuppressWarnings("unused")
+    boolean canGoBack() {
         return !this.usePrevious && this.index > 0;
     }
 
-    /**
-     * Decrements the indexes for the {@link #back()} method based on the previous character read.
-     */
     private void decrementIndexes() {
         this.index--;
         if(this.previous=='\r' || this.previous == '\n') {
@@ -116,13 +91,8 @@ public class JSONTokener {
         }
     }
 
-    /**
-     * Get the hex value of a character (base16).
-     * @param c A character between '0' and '9' or between 'A' and 'F' or
-     * between 'a' and 'f'.
-     * @return  An int between 0 and 15, or -1 if c was not a hex digit.
-     */
-    public static int dehexchar(char c) {
+    @SuppressWarnings("unused")
+    static int dehexchar(char c) {
         if (c >= '0' && c <= '9') {
             return c - '0';
         }
@@ -140,19 +110,13 @@ public class JSONTokener {
      *
      * @return true if at the end of the file and we didn't step back
      */
-    public boolean end() {
+    boolean end() {
         return this.eof && !this.usePrevious;
     }
 
 
-    /**
-     * Determine if the source string still contains characters that next()
-     * can consume.
-     * @return true if not yet at the end of the source.
-     * @throws CSONException thrown if there is an error stepping forward
-     *  or backward while checking for more data.
-     */
-    public boolean more() throws CSONException {
+    @SuppressWarnings("unused")
+    boolean more() throws CSONException {
         if(this.usePrevious) {
             return true;
         }
@@ -181,7 +145,7 @@ public class JSONTokener {
      * @return The next character, or 0 if past the end of the source string.
      * @throws CSONException Thrown if there is an error reading the source string.
      */
-    public char next() throws CSONException {
+    char next() throws CSONException {
         int c;
         if (this.usePrevious) {
             this.usePrevious = false;
@@ -232,14 +196,9 @@ public class JSONTokener {
         }
     }
 
-    /**
-     * Consume the next character, and check that it matches a specified
-     * character.
-     * @param c The character to match.
-     * @return The character.
-     * @throws CSONException if the character does not match.
-     */
-    public char next(char c) throws CSONException {
+
+    @SuppressWarnings("unused")
+    char next(char c) throws CSONException {
         char n = this.next();
         if (n != c) {
             if(n > 0) {
@@ -252,16 +211,8 @@ public class JSONTokener {
     }
 
 
-    /**
-     * Get the next n characters.
-     *
-     * @param n     The number of characters to take.
-     * @return      A string of n characters.
-     * @throws CSONException
-     *   Substring bounds error if there are not
-     *   n characters remaining in the source string.
-     */
-    public String next(int n) throws CSONException {
+    @SuppressWarnings("SameParameterValue")
+    String next(int n) throws CSONException {
         if (n == 0) {
             return "";
         }
@@ -285,7 +236,7 @@ public class JSONTokener {
      * @throws CSONException Thrown if there is an error reading the source string.
      * @return  A character, or 0 if there are no more characters.
      */
-    public char nextClean() throws CSONException {
+    char nextClean() throws CSONException {
         for (;;) {
             char c = this.next();
             if (c == 0 || c > ' ') {
@@ -294,19 +245,7 @@ public class JSONTokener {
         }
     }
 
-
-    /**
-     * Return the characters up to the next close quote character.
-     * Backslash processing is done. The formal JSON format does not
-     * allow strings in single quotes, but an implementation is allowed to
-     * accept them.
-     * @param quote The quoting character, either
-     *      <code>"</code>&nbsp;<small>(double quote)</small> or
-     *      <code>'</code>&nbsp;<small>(single quote)</small>.
-     * @return      A String.
-     * @throws CSONException Unterminated string.
-     */
-    public String nextString(char quote) throws CSONException {
+    String nextString(char quote) throws CSONException {
         char c;
         StringBuilder sb = new StringBuilder();
 
@@ -375,15 +314,8 @@ public class JSONTokener {
     }
 
 
-    /**
-     * Get the text up but not including the specified character or the
-     * end of line, whichever comes first.
-     * @param  delimiter A delimiter character.
-     * @return   A string.
-     * @throws CSONException Thrown if there is an error while searching
-     *  for the delimiter
-     */
-    public String nextTo(char delimiter) throws CSONException {
+    @SuppressWarnings("SameParameterValue")
+    String nextTo(char delimiter) throws CSONException {
         StringBuilder sb = new StringBuilder();
         for (;;) {
             char c = this.next();
@@ -398,15 +330,8 @@ public class JSONTokener {
     }
 
 
-    /**
-     * Get the text up but not including one of the specified delimiter
-     * characters or the end of line, whichever comes first.
-     * @param delimiters A set of delimiter characters.
-     * @return A string, trimmed.
-     * @throws CSONException Thrown if there is an error while searching
-     *  for the delimiter
-     */
-    public String nextTo(String delimiters) throws CSONException {
+    @SuppressWarnings("unused")
+    String nextTo(String delimiters) throws CSONException {
         char c;
         StringBuilder sb = new StringBuilder();
         for (;;) {
@@ -422,7 +347,8 @@ public class JSONTokener {
         }
     }
 
-    public String nextToFromString(String strDelimiters,boolean eofToError) throws CSONException {
+    @SuppressWarnings("SameParameterValue")
+    String nextToFromString(String strDelimiters, boolean eofToError) throws CSONException {
         char c;
         char[] delimiters = strDelimiters.toCharArray();
         StringBuilder sb = new StringBuilder();
@@ -453,7 +379,8 @@ public class JSONTokener {
     }
 
 
-    public void skipTo(String strDelimiters) throws CSONException {
+    @SuppressWarnings("SameParameterValue")
+    void skipTo(String strDelimiters) throws CSONException {
         char c;
         char[] delimiters = strDelimiters.toCharArray();
         int equalCount = 0;
@@ -488,7 +415,7 @@ public class JSONTokener {
      *
      * @return An object.
      */
-    public Object nextValue() throws CSONException {
+    Object nextValue() throws CSONException {
         char c = this.nextClean();
         String string;
 
@@ -533,6 +460,7 @@ public class JSONTokener {
         }
 
         string = sb.toString().trim();
+        //noinspection StringEqualsEmptyString
         if ("".equals(string)) {
             throw this.syntaxError("Missing value");
         }
@@ -544,12 +472,12 @@ public class JSONTokener {
     }
 
 
-    public Object nextPureKey(JSONOptions... options) throws CSONException {
+    @SuppressWarnings("unused")
+    Object nextPureKey(JSONOptions... options) throws CSONException {
         char c = this.nextClean();
         String string;
-        switch (c) {
-            case '"':
-                return this.nextString(c);
+        if (c == '"') {
+            return this.nextString(c);
         }
 
         if (!this.eof) {
@@ -562,10 +490,11 @@ public class JSONTokener {
     }
 
 
-    public Object stringToCharValue(String string) {
+    Object stringToCharValue(String string) {
 
         int length = string.length();
 
+        //noinspection StringEqualsEmptyString
         if ("".equals(string)) {
             return 0;
         }
@@ -612,7 +541,7 @@ public class JSONTokener {
     }
 
 
-    public Object stringToValue(String string) {
+    Object stringToValue(String string) {
         if ("".equals(string)) {
             return string;
         }
@@ -654,9 +583,9 @@ public class JSONTokener {
             if(second == 'x' || second == 'X') {
                 try {
                     return Integer.parseInt(string.substring(2), 16);
-                } catch (NumberFormatException ignore) {
+                } catch (NumberFormatException e) {
                     if(!jsonOption.isIgnoreNumberFormatError()) {
-                        throw this.syntaxError("Invalid number format: " + string, ignore);
+                        throw this.syntaxError("Invalid number format: " + string, e);
                     }
                 }
             }
@@ -678,9 +607,9 @@ public class JSONTokener {
 
             try {
                 return stringToNumber(string);
-            } catch (NumberFormatException ignore) {
+            } catch (NumberFormatException e) {
                 if(!jsonOption.isIgnoreNumberFormatError()) {
-                    throw this.syntaxError("Invalid number format: " + string, ignore);
+                    throw this.syntaxError("Invalid number format: " + string, e);
                 }
                 if(originalString != null) {
                     return originalString;
@@ -703,6 +632,7 @@ public class JSONTokener {
                 try {
                     BigDecimal bd = new BigDecimal(val);
                     if(initial == '-' && BigDecimal.ZERO.compareTo(bd)==0) {
+                        //noinspection UnnecessaryBoxing
                         return Double.valueOf(-0.0);
                     }
                     return bd;
@@ -732,20 +662,13 @@ public class JSONTokener {
                     throw new NumberFormatException("val ["+val+"] is not a valid number.");
                 }
             }
-            // integer representation.
-            // This will narrow any values to the smallest reasonable Object representation
-            // (Integer, Long, or BigInteger)
 
-            // BigInteger down conversion: We use a similar bitLength compare as
-            // BigInteger#intValueExact uses. Increases GC, but objects hold
-            // only what they need. i.e. Less runtime overhead if the value is
-            // long lived.
             BigInteger bi = new BigInteger(val);
             if(bi.bitLength() <= 31){
-                return Integer.valueOf(bi.intValue());
+                return bi.intValue();
             }
             if(bi.bitLength() <= 63){
-                return Long.valueOf(bi.longValue());
+                return bi.longValue();
             }
             return bi;
         }
@@ -758,16 +681,8 @@ public class JSONTokener {
     }
 
 
-    /**
-     * Skip characters until the next character is the requested character.
-     * If the requested character is not found, no characters are skipped.
-     * @param to A character to skip to.
-     * @return The requested character, or zero if the requested character
-     * is not found.
-     * @throws CSONException Thrown if there is an error while searching
-     *  for the to character
-     */
-    public char skipTo(char to) throws CSONException {
+    @SuppressWarnings("SameParameterValue")
+    char skipTo(char to) throws CSONException {
         char c;
         try {
             long startIndex = this.index;
@@ -801,7 +716,7 @@ public class JSONTokener {
      * @param message The error message.
      * @return  A CSONException object, suitable for throwing
      */
-    public CSONException syntaxError(String message) {
+    CSONException syntaxError(String message) {
         return new CSONException(message + this.toString());
     }
 
@@ -812,7 +727,7 @@ public class JSONTokener {
      * @param causedBy The throwable that caused the error.
      * @return  A CSONException object, suitable for throwing
      */
-    public CSONException syntaxError(String message, Throwable causedBy) {
+    CSONException syntaxError(String message, Throwable causedBy) {
         return new CSONException(message + this.toString(), causedBy);
     }
 

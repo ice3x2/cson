@@ -1,5 +1,6 @@
 package com.snoworca.cson;
 
+@SuppressWarnings("UnusedReturnValue")
 public class JSONOptions {
 
         private JSONOptions() {
@@ -88,14 +89,16 @@ public class JSONOptions {
             return valueQuote;
         }
 
+        @SuppressWarnings("unused")
         public JSONOptions setValueQuote(String valueQuote) {
-            if(valueQuote == null || valueQuote.length() == 0)
+            if(valueQuote == null || valueQuote.isEmpty())
                 throw new IllegalArgumentException("valueQuote can not be null or empty");
             this.valueQuote = valueQuote;
             return this;
         }
 
 
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         public boolean isAllowTrailingComma() {
             return allowTrailingComma;
         }
@@ -151,6 +154,7 @@ public class JSONOptions {
             return this;
         }
 
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         public boolean isSkipComments() {
             return skipComments;
         }
@@ -160,6 +164,7 @@ public class JSONOptions {
             return this;
         }
 
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         public boolean isIgnoreNumberFormatError() {
             return ignoreNumberFormatError;
         }

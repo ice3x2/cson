@@ -2,8 +2,6 @@ package com.snoworca.cson;
 
 public class CSONIndexNotFoundException extends RuntimeException {
 
-	String message;
-
 	CSONIndexNotFoundException() {
 		super();
 	}

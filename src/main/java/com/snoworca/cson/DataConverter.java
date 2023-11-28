@@ -1,32 +1,32 @@
 package com.snoworca.cson;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 class DataConverter {
 	
-	private final static Charset UTF8 = Charset.forName("UTF-8");
 
-	final static CSONArray toArray(Object value) {
+
+	static CSONArray toArray(Object value) {
 		if(value instanceof CSONArray) {
 			return (CSONArray)value;
 		}
 		return null; 
 	}
 	
-	final static CSONObject toObject(Object value) {
+	static CSONObject toObject(Object value) {
 		if(value instanceof CSONObject) {
 			return (CSONObject)value;
 		}
 		return null; 
 	}
 
-	final static int toInteger(Object value) {
+	static int toInteger(Object value) {
 		return toInteger(value, 0);
 	}
 	
-	final static int toInteger(Object value, int def) {
+	@SuppressWarnings("UnnecessaryUnboxing")
+	static int toInteger(Object value, int def) {
 		try {
 			if (value instanceof Number) {
 				return ((Number) value).intValue();
@@ -59,11 +59,11 @@ class DataConverter {
 		return null;
 	}
 
-	final static short toShort(Object value) {
+	static short toShort(Object value) {
 		return toShort(value, (short) 0);
 	}
 
-	final static short toShort(Object value, short def) {
+	static short toShort(Object value, short def) {
 		try {
 			if (value instanceof Number) {
 				return ((Number) value).shortValue();
@@ -83,11 +83,11 @@ class DataConverter {
 		return def;
 	}
 
-	final static byte toByte(Object value) {
+	static byte toByte(Object value) {
 		return toByte(value, (byte) 0);
 	}
 
-	final static byte toByte(Object value, byte def) {
+	static byte toByte(Object value, byte def) {
 		try {
 			if (value instanceof Number) {
 				return ((Number) value).byteValue();
@@ -108,11 +108,12 @@ class DataConverter {
 	}
 
 
-	final static float toFloat(Object value) {
+	static float toFloat(Object value) {
 		return toFloat(value, 0);
 	}
 	
-	final static float toFloat(Object value, float def) {
+	@SuppressWarnings({"SameParameterValue", "UnnecessaryUnboxing"})
+	static float toFloat(Object value, float def) {
 		try {
 			if (value instanceof Number) {
 				return ((Number) value).floatValue();
@@ -134,15 +135,17 @@ class DataConverter {
 		return def;
 	}
 
-	final static double toDouble(Object value) {
+	static double toDouble(Object value) {
 		return toDouble(value, 0);
 	}
 	
-	final static double toDouble(Object value, double def) {
+	@SuppressWarnings("SameParameterValue")
+	static double toDouble(Object value, double def) {
 		try {
 			if (value instanceof Number) {
 				return ((Number) value).doubleValue();
 			} else if (value instanceof Character) {
+				//noinspection UnnecessaryUnboxing
 				return ((Character) value).charValue();
 			} else if (value instanceof String) {
 				return Double.parseDouble((String) value);
@@ -158,12 +161,13 @@ class DataConverter {
 		return def;
 	}
 
-	final static long toLong(Object value) {
+	static long toLong(Object value) {
 		return toLong(value, 0L);
 	}
 	
 	
-	final static long toLong(Object value, long def) {
+	@SuppressWarnings("UnnecessaryUnboxing")
+	static long toLong(Object value, long def) {
 
 		try {
 			if (value instanceof Number) {
@@ -186,11 +190,11 @@ class DataConverter {
 		return def;
 	}
 
-	final static char toChar(Object value) {
+	static char toChar(Object value) {
 		return toChar(value, '\0');
 	}
-	
-	final static char toChar(Object value, char def) {
+	@SuppressWarnings("UnnecessaryUnboxing")
+	static char toChar(Object value, char def) {
 		if(value instanceof Number) {
 			return (char)((Number)value).shortValue();
 		}
@@ -214,7 +218,7 @@ class DataConverter {
 	
 	
 	
-	final static  String toString(Object value) {
+	static  String toString(Object value) {
 		if(value == null  || value instanceof NullValue) return null;
 		if(value instanceof String) { 
 			return (String) value;
@@ -230,12 +234,12 @@ class DataConverter {
 		return value + "";
 	}
 
-	final static  boolean toBoolean(Object value) {
+	static  boolean toBoolean(Object value) {
 		return toBoolean(value, false);
 
 	}
 	
-	final static  boolean toBoolean(Object value, boolean def) {
+	static  boolean toBoolean(Object value, boolean def) {
 		try {
 			if (value instanceof Boolean) {
 				return ((Boolean) value);
@@ -245,7 +249,7 @@ class DataConverter {
 				String strValue = ((String) value).trim();
 				return ("true".equalsIgnoreCase(strValue) || "1".equals(strValue));
 			}
-		}catch (Throwable e) {}
+		}catch (Throwable ignored) {}
 		return def;
 	}
 
@@ -287,7 +291,8 @@ class DataConverter {
 
 	}
 	
-	final static String escapeJSONString(String str, boolean allowLineBreak) {
+	@SuppressWarnings("ForLoopReplaceableByForEach")
+	static String escapeJSONString(String str, boolean allowLineBreak) {
 		if(str == null) return  null;
 		char[] charArray = str.toCharArray();
 		StringBuilder builder = new StringBuilder();

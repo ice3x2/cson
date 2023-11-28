@@ -13,7 +13,7 @@ public class Base64
             'g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v',
             'w','x','y','z','0','1','2','3','4','5','6','7','8','9','+','/' };
 
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         int pad = 0;
         for (int i = 0; i < data.length; i += 3) {
 
@@ -42,6 +42,7 @@ public class Base64
         return buffer.toString();
     }
 
+    @SuppressWarnings("ExtractMethodRecommender")
     public static byte[] decode(String data)
     {
         int[] tbl = {
@@ -61,7 +62,7 @@ public class Base64
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
         byte[] bytes = data.getBytes();
-		
+
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         for (int i = 0; i < bytes.length; ) {
             int b = 0;

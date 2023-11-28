@@ -2,8 +2,8 @@ package com.snoworca.cson;
 
 class JSONParser {
 
-    private JSONTokener tokener;
-    private JSONOptions options;
+    private final JSONTokener tokener;
+    private final JSONOptions options;
 
 
     protected JSONParser(JSONTokener tokener) {
@@ -47,14 +47,14 @@ class JSONParser {
     private char skipComment() throws CSONException {
         tokener.back();
         char next = tokener.next();
-        boolean isMultiLine = false;
+
         while(next == '/') {
             char nextC = tokener.next();
             if(nextC == '/') {
                 tokener.skipTo('\n');
                 next = tokener.nextClean();
             } else if(nextC == '*') {
-                String strComment = null;
+
                 try {
                     tokener.skipTo("*/");
                 } catch (CSONException e) {

@@ -54,7 +54,7 @@ public abstract  class CSONElement {
 	}
 
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "UnusedReturnValue"})
 	public <T extends CSONElement> T setCommentThis(String comment) {
 		if(commentBeforeElement == null) {
 			commentBeforeElement = new CommentObject();

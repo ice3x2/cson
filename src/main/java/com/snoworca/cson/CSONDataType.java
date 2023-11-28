@@ -1,19 +1,16 @@
 package com.snoworca.cson;
 
-import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 
 class CSONDataType {
-	//protected final static byte[] TYPE_HEADER_OLD = {'C', 's','o', 'n' };
-	//protected final static byte[] VER_OLD = {0, 9, 0};
+
 	protected final static byte PREFIX = 'C';
 
 	protected final static byte[] VER_RAW;
 	protected final static short VER = 901;
 
 	static {
-		short version = VER;
-		VER_RAW = ByteBuffer.wrap(new byte[2]).putShort(version).array();
+        VER_RAW = ByteBuffer.wrap(new byte[2]).putShort(VER).array();
 	}
 
 

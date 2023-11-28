@@ -7,17 +7,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 
 
-public class CSONWriter {
+@SuppressWarnings("UnusedReturnValue")
+class CSONWriter {
 	
 	private final static int DEFAULT_BUFFER_SIZE = 4096;
 	
 	
-	private ArrayDeque<ObjectType> mTypeStack = new ArrayDeque<>();
-	private ByteArrayOutputStream mBufferStream = new ByteArrayOutputStream(DEFAULT_BUFFER_SIZE);
+	private final ArrayDeque<ObjectType> mTypeStack = new ArrayDeque<>();
+	private final ByteArrayOutputStream mBufferStream = new ByteArrayOutputStream(DEFAULT_BUFFER_SIZE);
 	
 	
 
-	public CSONWriter() {
+	CSONWriter() {
 		mTypeStack.addLast(ObjectType.None);
 		try {
 			mBufferStream.write(CSONDataType.PREFIX);
@@ -141,7 +142,9 @@ public class CSONWriter {
 		
 	}
 	
-	public CSONWriter key(char key) {
+
+	@SuppressWarnings("unused")
+	CSONWriter key(char key) {
 		if(mTypeStack.getLast() != ObjectType.Object) {
 			throw new CSONWriteException();
 		}
@@ -150,7 +153,7 @@ public class CSONWriter {
 		return this;
 	 }
 	
-	 public CSONWriter key(String key) {
+	 CSONWriter key(String key) {
 		 if(mTypeStack.getLast() != ObjectType.Object) {
 			 throw new CSONWriteException();
 		 }
@@ -159,7 +162,8 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter nullValue() {
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter nullValue() {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -168,7 +172,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(String value) {
+	 CSONWriter value(String value) {
 		 if(value== null) {
 			 nullValue();
 			 return this;
@@ -182,7 +186,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(byte[] value) {
+	 CSONWriter value(byte[] value) {
 		 if(value== null) {
 			 nullValue();
 			 return this;
@@ -195,7 +199,7 @@ public class CSONWriter {
 		 return this;
 	 }
 
-	public CSONWriter value(BigDecimal value) {
+	CSONWriter value(BigDecimal value) {
 		if(value== null) {
 			nullValue();
 			return this;
@@ -209,7 +213,7 @@ public class CSONWriter {
 		return this;
 	}
 	 
-	 public CSONWriter value(byte value) {
+	 CSONWriter value(byte value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -219,7 +223,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(int value) {
+	 CSONWriter value(int value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -230,7 +234,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(long value) {
+	 CSONWriter value(long value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -240,7 +244,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(short value) {
+	 CSONWriter value(short value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -250,17 +254,17 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(boolean value) {
+	 CSONWriter value(boolean value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
 		 mBufferStream.write(CSONDataType.TYPE_BOOLEAN);
-		 mBufferStream.write(value == true ? 1 : 0);
+		 mBufferStream.write(value ? 1 : 0);
 		 return this;
 	 }
 	 
-	 public CSONWriter value(char value) {
+	 CSONWriter value(char value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -270,7 +274,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(float value) {
+	 CSONWriter value(float value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -280,7 +284,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter value(double value) {
+	 CSONWriter value(double value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
@@ -289,9 +293,10 @@ public class CSONWriter {
 		 writeDouble(value);
 		 return this;
 	 }
-	 
-	 ///
-	 public CSONWriter addNull() {
+
+
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter addNull() {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -299,7 +304,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(String value) {
+	 CSONWriter add(String value) {
 		 if(value== null) {
 			 addNull();
 			 return this;
@@ -311,7 +316,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(byte[] value) {
+	 CSONWriter add(byte[] value) {
 		 if(value== null) {
 			 addNull();
 			 return this;
@@ -323,7 +328,8 @@ public class CSONWriter {
 		 return this;
 	 }
 
-	public CSONWriter add(BigDecimal value) {
+	@SuppressWarnings("unused")
+	CSONWriter add(BigDecimal value) {
 		if(value== null) {
 			addNull();
 			return this;
@@ -337,7 +343,7 @@ public class CSONWriter {
 	}
 	 
 	 
-	 public CSONWriter add(byte value) {
+	 CSONWriter add(byte value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -346,7 +352,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(int value) {
+	 CSONWriter add(int value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -355,7 +361,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(long value) {
+	 CSONWriter add(long value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -364,7 +370,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(short value) {
+	 CSONWriter add(short value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -373,7 +379,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(boolean value) {
+	 CSONWriter add(boolean value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -382,7 +388,8 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(CSONWriter writer) {
+	 @SuppressWarnings("unused")
+	 CSONWriter add(CSONWriter writer) {
 		 if(mTypeStack.getLast() != ObjectType.Array && writer.mTypeStack.getLast() != ObjectType.None) {
 			 throw new CSONWriteException();
 		 }
@@ -392,7 +399,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(char value) {
+	 CSONWriter add(char value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -401,7 +408,8 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter add(float value) {
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter add(float value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -409,8 +417,9 @@ public class CSONWriter {
 		 writeFloat(value);
 		 return this;
 	 }
-	 
-	 public CSONWriter add(double value) {
+
+	@SuppressWarnings("UnusedReturnValue")
+	 CSONWriter add(double value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -421,7 +430,8 @@ public class CSONWriter {
 	 
 	 
 	 
-	 public CSONWriter openArray() {
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter openArray() {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey && mTypeStack.getLast() != ObjectType.Array && mTypeStack.getLast() != ObjectType.None) {
 			 throw new CSONWriteException();
 		 }
@@ -430,7 +440,8 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter closeArray() {		 
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter closeArray() {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -443,7 +454,8 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter openObject() {
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter openObject() {
 		 if(mTypeStack.getLast() == ObjectType.Object) {
 			 throw new CSONWriteException();
 		 }
@@ -452,7 +464,8 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public CSONWriter closeObject() {
+	 @SuppressWarnings("UnusedReturnValue")
+	 CSONWriter closeObject() {
 		 if(mTypeStack.getLast() != ObjectType.Object) {
 			 throw new CSONWriteException();
 		 }
@@ -464,7 +477,7 @@ public class CSONWriter {
 		 return this;
 	 }
 	 
-	 public byte[] toByteArray() {
+	 byte[] toByteArray() {
 		 if(mTypeStack.getLast() != ObjectType.None) {
 			 throw new CSONWriteException();
 		 }

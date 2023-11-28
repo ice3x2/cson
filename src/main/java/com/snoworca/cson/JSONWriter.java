@@ -4,9 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayDeque;
 
 
+@SuppressWarnings("UnusedReturnValue")
 public class JSONWriter {
-
-	private static final char[] SPACE_CHAR_ARRAY = new char[512];
 
 	private final static int DEFAULT_BUFFER_SIZE = 512;
 
@@ -23,7 +22,7 @@ public class JSONWriter {
 
 	private boolean isComment = false;
 	private boolean isAllowLineBreak = false;
-	private boolean isAllowUnquoted = false;
+
 	private boolean isPretty = false;
 	private boolean isUnprettyArray = false;
 	private String depthSpace = "  ";
@@ -32,13 +31,12 @@ public class JSONWriter {
 	private String valueQuote = "\"";
 
 
-	//private String commentStringAfterObjectValue = null;
-	private ArrayDeque<CommentObject> keyValueCommentObjects = new ArrayDeque<>();
-	//private ArrayDeque<CommentObject> objectCommentObjects = new ArrayDeque<>();
+
+	private final ArrayDeque<CommentObject> keyValueCommentObjects = new ArrayDeque<>();
 
 
-	private ArrayDeque<ObjectType> typeStack_ = new ArrayDeque<>();
-	private StringBuilder stringBuilder = new StringBuilder(DEFAULT_BUFFER_SIZE);
+	private final ArrayDeque<ObjectType> typeStack_ = new ArrayDeque<>();
+	private final StringBuilder stringBuilder = new StringBuilder(DEFAULT_BUFFER_SIZE);
 
 
 
@@ -99,17 +97,6 @@ public class JSONWriter {
 		}
 	}
 
-	private void writeBeforeAndRemoveComment(int type) {
-		if(!keyValueCommentObjects.isEmpty()) {
-			CommentObject commentObject = keyValueCommentObjects.removeFirst();
-			String beforeComment  = commentObject.getBeforeComment();
-			if(beforeComment == null) {
-				return;
-			}
-			writeComment(beforeComment, type);
-			commentObject.setBeforeComment(null);
-		}
-	}
 
 
 	public JSONWriter(JSONOptions jsonOptions) {
@@ -123,7 +110,7 @@ public class JSONWriter {
 		if(jsonOptions.getDepthSpace() != null) {
 			depthSpace = jsonOptions.getDepthSpace();
 		}
-		isAllowUnquoted = jsonOptions.isAllowUnquoted();
+
 		keyQuote = jsonOptions.getKeyQuote();
 		valueQuote = jsonOptions.getValueQuote();
 		if(!jsonOptions.isAllowUnquoted() && keyQuote.isEmpty()) {
