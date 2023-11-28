@@ -273,13 +273,10 @@ public class CSONPath {
                 return childCsonArray;
             }
 
-            // TODO 에러를 뿜어야함..
-            //throw new RuntimeException("Invalid path");
-            throw new IllegalArgumentException("Invalid path");
+
+            throw new IllegalArgumentException("Invalid path. " + pathItem);
         } else {
-            //TODO 에러를 뿜어야함..
-            //throw new RuntimeException("Invalid path");
-            throw new IllegalArgumentException("Invalid path");
+            throw new IllegalArgumentException("Invalid path. " + pathItem);
         }
     }
 
