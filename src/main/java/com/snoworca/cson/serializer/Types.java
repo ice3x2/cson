@@ -11,9 +11,10 @@ enum Types {
     Character,
     String,
     ByteArray,
-    BYTEArray,
     Object,
+    Map,
     Collection;
+
 
 
 
@@ -33,14 +34,15 @@ enum Types {
             return Double;
         } else if(type == boolean.class || type == Boolean.class) {
             return Boolean;
-        } else if(type == char.class || type == Character.class) {
+        } else if(java.util.Map.class.isAssignableFrom(type)) {
+            return Map;
+        }
+        else if(type == char.class || type == Character.class) {
             return Character;
         } else if(type == String.class) {
             return String;
         } else if(type == byte[].class ) {
             return ByteArray;
-        } else if(type == Byte[].class ) {
-            return BYTEArray;
         } else if(java.util.Collection.class.isAssignableFrom(type)) {
             return Collection;
         } else {

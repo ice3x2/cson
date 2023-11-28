@@ -2,6 +2,7 @@ package com.snoworca.cson.serializer;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class SchemaField implements SchemaNode {
@@ -36,7 +37,10 @@ public abstract class SchemaField implements SchemaNode {
 
         if(Collection.class.isAssignableFrom(field.getType())) {
             return new SchemaFieldArray(typeElement, field, key);
-        } else {
+        } else if(java.util.Map.class.isAssignableFrom(field.getType())) {
+            return new SchemaFieldMap(typeElement, field, key);
+        }
+        else {
             return new SchemaFieldNormal(typeElement, field, key);
         }
 
@@ -57,15 +61,14 @@ public abstract class SchemaField implements SchemaNode {
         this.comment = comment.isEmpty() ? null : comment;
         this.afterComment = afterComment.isEmpty() ? null : afterComment;
 
-
-        if(this.type == Types.Object) {
+      if(this.type == Types.Object) {
             this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
         } else {
             this.objectTypeElement = null;
         }
 
 
-        if(this.field.getType().isArray() &&  this.type != Types.BYTEArray && this.type == Types.ByteArray) {
+        if(this.field.getType().isArray() && this.type != Types.ByteArray) {
             throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
         }
         if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
