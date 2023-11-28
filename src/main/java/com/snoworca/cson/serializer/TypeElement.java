@@ -9,27 +9,27 @@ class TypeElement {
     private final Class<?> type;
     private final Constructor<?> constructor;
 
+
     private SchemaObjectNode schema;
+
+    private final String comment;
+    private final String commentAfter;
 
 
     protected SchemaObjectNode getSchema() {
         if(schema == null) {
             schema = NodePath.makeSchema(this,null);
-            System.out.println(schema);
         }
         return schema;
     }
 
     protected static TypeElement create(Class<?> type) {
         checkCSONAnnotation(type);
-        //checkConstructor(type);
         Constructor<?> constructor = null;
         try {
             constructor = type.getDeclaredConstructor();
             constructor.setAccessible(true);
         } catch (NoSuchMethodException ignored) {}
-        //noinspection DataFlowIssue
-
         return new TypeElement(type, constructor);
     }
 
@@ -49,14 +49,26 @@ class TypeElement {
     private TypeElement(Class<?> type, Constructor<?> constructor) {
         this.type = type;
         this.constructor = constructor;
-        //this.schema = NodePath.makeSchema(this,null);
-        //System.out.println(this.schema.toString());
+        CSON cson = type.getAnnotation(CSON.class);
+        String commentBefore = cson.comment();
+        String commentAfter = cson.commentAfter();
+        this.comment = commentBefore.isEmpty() ? null : commentBefore;
+        this.commentAfter = commentAfter.isEmpty() ? null : commentAfter;
+
     }
 
-    protected Class<?> getType() {
+    Class<?> getType() {
         return type;
     }
 
+
+    String getComment() {
+        return comment;
+    }
+
+    String getCommentAfter() {
+        return commentAfter;
+    }
 
 
 
@@ -65,6 +77,7 @@ class TypeElement {
          if(a == null) {
              throw new CSONObjectException("Type " + type.getName() + " is not annotated with @CSON");
          }
+
     }
 
     private static void checkConstructor(Class<?> type) {
