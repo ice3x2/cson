@@ -47,8 +47,8 @@ public class CSONObjectTest {
         csonObject.put("array2", new CSONArray().put(new CSONArray().put(1).put(2)).put(new CSONArray().put(3).put(4)).put(new CSONArray()).put(new CSONObject()));
         csonObject.put("array3", new CSONArray().put("").put(new CSONArray().put(3).put(4)).put(new CSONArray()).put(new CSONObject()));
         csonObject.put("array4", new CSONArray().put(new CSONObject()).put(new CSONObject()).put(new CSONArray()).put(new CSONObject().put("inArray",new CSONArray())));
-        csonObject.put("key111", new CSONObject().put("1", new JSONObject()));
-        csonObject.put("key112", new CSONArray().put(new JSONObject()));
+        csonObject.put("key111", new CSONObject().put("1", new CSONObject()));
+        csonObject.put("key112", new CSONArray().put(new CSONObject()));
 
 
 
