@@ -24,6 +24,8 @@ public abstract class SchemaField implements SchemaNode {
     private final boolean isPrimitive;
 
 
+
+
     private SchemaField parentFieldRack;
     final Class<?> fieldType;
 
@@ -61,12 +63,11 @@ public abstract class SchemaField implements SchemaNode {
         this.comment = comment.isEmpty() ? null : comment;
         this.afterComment = afterComment.isEmpty() ? null : afterComment;
 
-      if(this.type == Types.Object) {
+        if(this.type == Types.Object) {
             this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
         } else {
             this.objectTypeElement = null;
         }
-
 
         if(this.field.getType().isArray() && this.type != Types.ByteArray) {
             throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
