@@ -15,16 +15,28 @@ public class SchemaFieldArray extends SchemaField {
     protected final Types ValueType;
     private final TypeElement objectValueTypeElement;
 
+    private boolean isSchemaless = false;
+
     protected SchemaFieldArray(TypeElement typeElement, Field field, String path) {
         super(typeElement, field, path);
         this.collectionBundles = getGenericType();
-        Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
-        ValueType = Types.of(valueClass);
-        if(ValueType == Types.Object) {
-            objectValueTypeElement = TypeElements.getInstance().getTypeInfo(valueClass);
-        } else {
+        if(this.collectionBundles == null) {
+            isSchemaless = true;
             objectValueTypeElement = null;
+            ValueType = Types.Object;
+        } else {
+            Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
+            ValueType = Types.of(valueClass);
+            if (ValueType == Types.Object) {
+                objectValueTypeElement = TypeElements.getInstance().getTypeInfo(valueClass);
+            } else {
+                objectValueTypeElement = null;
+            }
         }
+    }
+
+    boolean isSchemaless() {
+        return isSchemaless;
     }
 
     protected TypeElement getObjectValueTypeElement() {
@@ -42,7 +54,6 @@ public class SchemaFieldArray extends SchemaField {
             CollectionItems collectionBundle = new CollectionItems((ParameterizedType) genericFieldType);
             result.add(collectionBundle);
             return getGenericType(result,(ParameterizedType)genericFieldType);
-
         } else  {
             throw new CSONObjectException("Collection field '" + field.getName() + "' is Raw type. Please use generic type.");
         }
@@ -58,12 +69,22 @@ public class SchemaFieldArray extends SchemaField {
         }
         else if (fieldArgTypes[0] instanceof ParameterizedType) {
             parameterizedType = (ParameterizedType) fieldArgTypes[0];
+            Type rawType = parameterizedType.getRawType();
+            if(!(rawType instanceof Class<?>) || !Collection.class.isAssignableFrom((Class<?>)rawType)) {
+                if(Map.class.isAssignableFrom((Class<?>) rawType)) {
+                    throw new CSONObjectException("java.util.Map type cannot be directly used as an element of Collection. Please create a class that wraps Map and use it as an element of the Collection. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
+                }
+                assertValueType((Class<?>)rawType, field.getDeclaringClass().getName() + "." + field.getName());
+                collectionBundles.get(collectionBundles.size() - 1).valueClass = (Class<?>)rawType;
+                return collectionBundles;
+            }
             CollectionItems collectionBundle = new CollectionItems(parameterizedType);
             collectionBundles.add(collectionBundle);
             return getGenericType(collectionBundles,parameterizedType);
         }
         else {
-            throw new CSONObjectException("Collection field '" + field.getName() + "' is Raw type. Please use generic type.");
+            //fieldArgTypes[0]
+            throw new CSONObjectException("Collection field '" + field.getDeclaringClass().getName() + "." + field.getName() + "' is unknown or RAW type. Please use generic type.");
         }
 
     }
@@ -116,7 +137,7 @@ public class SchemaFieldArray extends SchemaField {
         }
         protected final Constructor<? extends Collection<?>> collectionConstructor;
         protected final Class<?> collectionType;
-        protected final Class<?> valueClass;
+        protected Class<?> valueClass;
 
 
 

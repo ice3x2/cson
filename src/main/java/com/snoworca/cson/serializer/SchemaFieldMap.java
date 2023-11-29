@@ -2,6 +2,7 @@ package com.snoworca.cson.serializer;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,21 +13,36 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class SchemaFieldMap extends SchemaField {
 
     private final Constructor<?> constructorMap;
+    private final Class<?> valueClass;
     SchemaFieldMap(TypeElement parentsTypeElement, Field field, String path) {
         super(parentsTypeElement, field, path);
 
         Map.Entry<Class<?>, Class<?>> entry = readKeyValueGenericType(field);
         Class<?> keyClass = entry.getKey();
-        Class<?> valueClass = entry.getValue();
+        this.valueClass = entry.getValue();
+        if(valueClass != null) {
+            assertValueType(valueClass, field.getDeclaringClass().getName() + "." + field.getName());
+        }
+
 
         if(!String.class.isAssignableFrom(keyClass)) {
             throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is not String key. Please use String key.");
         }
-
-
-
-
         constructorMap = constructorOfMap(field.getType());
+    }
+
+
+    Class<?> getValueType() {
+        return valueClass;
+    }
+
+    @Override
+    Object newInstance() {
+        try {
+            return constructorMap.newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new CSONObjectException("Map type " + field.getDeclaringClass().getName() + "." + field.getType().getName() + " has no default constructor.", e);
+        }
     }
 
     Map.Entry<Class<?>, Class<?>> readKeyValueGenericType(Field field) {
@@ -39,6 +55,8 @@ public class SchemaFieldMap extends SchemaField {
             }
             if(fieldArgTypes[0] instanceof Class<?> && fieldArgTypes[1] instanceof Class<?>) {
                 return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], (Class<?>)fieldArgTypes[1]);
+            } else if(fieldArgTypes[1] instanceof  java.lang.reflect.ParameterizedType) {
+                return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], null);
             }
             else {
                 throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is Raw type. Please use generic type.");
@@ -67,14 +85,11 @@ public class SchemaFieldMap extends SchemaField {
         } catch (NoSuchMethodException e) {
             throw new CSONObjectException("Map type " + type.getName() + " has no default constructor.");
         }
-
-
-
     }
 
 
     @Override
     public SchemaNode copyNode() {
-        return null;
+        return new SchemaFieldMap(parentsTypeElement, field, path);
     }
 }

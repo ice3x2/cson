@@ -75,7 +75,6 @@ public class CSONSerializer {
                         }
                     }
                 }
-
                 if(!schemaNode.isBranchNode() && nullCount > 0) {
                     if(key instanceof String) {
                         ((CSONObject)csonElement).put((String) key,null);
@@ -114,28 +113,32 @@ public class CSONSerializer {
                 Object parent = obtainParentObjects(parentObjMap, schemaField, rootObject);
                 if(parent != null) {
                     Object value = schemaField.getValue(parent);
-                    if(key instanceof String) {
-                        ((CSONObject) csonElement).put((String) key, value);
-                        ((CSONObject) csonElement).setCommentForKey((String) key, schemaField.getComment());
-                        ((CSONObject) csonElement).setCommentAfterKey((String) key, schemaField.getAfterComment());
-                    }
-                    else {
-                        assert csonElement instanceof CSONArray;
-                        ((CSONArray) csonElement).set((int) key, value);
-                        ((CSONArray) csonElement).setCommentForValue((int)key, schemaField.getComment());
-                        ((CSONArray) csonElement).setCommentAfterValue((int) key, schemaField.getAfterComment());
-                    }
-
-
+                    putValueInCSONElement(csonElement, schemaField, key, value);
                 }
-            } else if(node instanceof SchemaFieldArray) {
+            } else if(node instanceof SchemaFieldMap) {
+                SchemaFieldMap schemaFieldMap = (SchemaFieldMap)node;
+                Object parent = obtainParentObjects(parentObjMap, schemaFieldMap, rootObject);
+                if(parent != null) {
+                    Object value = schemaFieldMap.getValue(parent);
+                    if(value != null) {
+                        @SuppressWarnings("unchecked")
+                        CSONObject csonObject = mapObjectToCSONObject((Map<String, ?>) value, schemaFieldMap.getValueType());
+                        putValueInCSONElement(csonElement, schemaFieldMap, key, csonObject);
+                    }
+                }
+
+            }
+            else if(node instanceof SchemaFieldArray) {
                 SchemaFieldArray schemaFieldArray = (SchemaFieldArray)node;
                 Object parent = obtainParentObjects(parentObjMap, schemaFieldArray, rootObject);
                 if(parent != null) {
                     Object value = schemaFieldArray.getValue(parent);
                     if(value != null) {
-                        CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, schemaFieldArray);
-                        if(key instanceof String) {
+                        CSONArray csonArray = schemaFieldArray.isSchemaless() ?
+                                collectionObjectToCSONArray((Collection<?>) value, null) :
+                                collectionObjectToSONArrayKnownSchema((Collection<?>)value, schemaFieldArray);
+                        putValueInCSONElement(csonElement, schemaFieldArray, key, csonArray);
+                        /*if(key instanceof String) {
                             ((CSONObject) csonElement).put((String) key, csonArray);
                             ((CSONObject)csonElement).setCommentForValue((String)key, schemaFieldArray.getComment());
                             ((CSONObject)csonElement).setCommentAfterValue((String)key, schemaFieldArray.getAfterComment());
@@ -145,7 +148,7 @@ public class CSONSerializer {
                             ((CSONArray)csonElement).set((int)key, csonArray);
                             ((CSONArray)csonElement).setCommentForValue((int)key, schemaFieldArray.getComment()) ;
                             ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaFieldArray.getAfterComment());
-                        }
+                        }*/
                     }
                 }
             }
@@ -162,9 +165,93 @@ public class CSONSerializer {
         return root;
     }
 
+    private static void putValueInCSONElement(CSONElement csonElement,SchemaField schemaField, Object key,Object value) {
+        if(key instanceof String) {
+            ((CSONObject) csonElement).put((String) key, value);
+
+            ((CSONObject) csonElement).setCommentForKey((String) key, schemaField.getComment());
+            ((CSONObject) csonElement).setCommentAfterKey((String) key, schemaField.getAfterComment());
+
+        }
+        else {
+            assert csonElement instanceof CSONArray;
+            ((CSONArray)csonElement).set((int)key, value);
+            ((CSONArray)csonElement).setCommentForValue((int)key, schemaField.getComment()) ;
+            ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaField.getAfterComment());
+        }
+    }
+
+    public static CSONObject mapToCSONObject(Map<String, ?> map) {
+        return mapObjectToCSONObject(map, null);
+    }
+
+    public static CSONArray collectionToCSONArray(Collection<?> collection) {
+        return collectionObjectToCSONArray(collection, null);
+    }
 
 
-    private static CSONArray collectionObjectToCSONArray(Collection<?> collection, SchemaFieldArray schemaFieldArray) {
+    private static CSONObject mapObjectToCSONObject(Map<String, ?> map, Class<?> valueType) {
+        CSONObject csonObject = new CSONObject();
+        Set<? extends Map.Entry<String, ?>> entries = map.entrySet();
+        Types types = valueType == null ? null : Types.of(valueType);
+        for(Map.Entry<String, ?> entry : entries) {
+            Object value = entry.getValue();
+            String key = entry.getKey();
+            if(value != null && valueType == null) {
+                valueType = value.getClass();
+                SchemaField.assertValueType(valueType, null);
+                types = Types.of(valueType);
+                //noinspection DataFlowIssue
+                if(!(key instanceof String)) {
+                    throw new CSONObjectException("Map key type is not String. Please use String key.");
+                }
+            }
+            if(value instanceof Collection<?>) {
+                CSONArray csonArray = collectionObjectToCSONArray((Collection<?>)value, null);
+                csonObject.put(key, csonArray);
+            } else if(value instanceof Map<?, ?>) {
+                @SuppressWarnings("unchecked")
+                CSONObject childObject = mapObjectToCSONObject((Map<String, ?>)value, null);
+                csonObject.put(key, childObject);
+            } else if(types == Types.Object) {
+                CSONObject childObject = toCSONObject(value);
+                csonObject.put(entry.getKey(), childObject);
+            }
+            else {
+                csonObject.put(entry.getKey(), value);
+            }
+        }
+        return csonObject;
+    }
+
+
+
+    private static CSONArray collectionObjectToCSONArray(Collection<?> collection, Class<?> valueType) {
+        CSONArray csonArray = new CSONArray();
+        Types types = valueType == null ? null : Types.of(valueType);
+        for(Object object : collection) {
+            if(object instanceof Collection<?>) {
+                CSONArray childArray = collectionObjectToCSONArray((Collection<?>)object, null);
+                csonArray.add(childArray);
+            } else if(object instanceof Map<?, ?>) {
+                @SuppressWarnings("unchecked")
+                CSONObject childObject = mapObjectToCSONObject((Map<String, ?>)object, null);
+                csonArray.add(childObject);
+            } else if(types == Types.Object) {
+                CSONObject childObject = toCSONObject(object);
+                csonArray.add(childObject);
+            }
+            else {
+                csonArray.add(object);
+            }
+        }
+        return csonArray;
+
+    }
+
+
+
+    private static CSONArray collectionObjectToSONArrayKnownSchema(Collection<?> collection, SchemaFieldArray schemaFieldArray) {
         CSONArray resultCsonArray  = new CSONArray();
         CSONArray csonArray = resultCsonArray;
         Iterator<?> iter = collection.iterator();
@@ -216,12 +303,12 @@ public class CSONSerializer {
     }
 
 
+
     @SuppressWarnings("unchecked")
     public static<T> T fromCSONObject(CSONObject csonObject, Class<T> clazz) {
         TypeElement typeElement = TypeElements.getInstance().getTypeInfo(clazz);
         Object object = typeElement.newInstance();
         return (T) fromCSONObject(csonObject, object);
-
     }
 
 
