@@ -384,6 +384,15 @@ public class CSONDeserializerTest {
         ArrayItemKey result =  CSONSerializer.fromCSONObject(cson, new ArrayItemKey());
         assertEquals(arrayItemKey.key, result.key);
         assertNull(result.nullValue);
+    }
+
+    @Test
+    public void mapObjectDeserialize() {
+        CSONObject csonObject = new CSONObject();
+        ArrayItemKey arrayItemKey = new ArrayItemKey();
+        arrayItemKey.key = "test";
+        csonObject.put("key", arrayItemKey);
+
 
 
 

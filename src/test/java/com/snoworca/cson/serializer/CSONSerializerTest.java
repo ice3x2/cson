@@ -6,6 +6,7 @@ import com.snoworca.cson.JSONOptions;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static junit.framework.TestCase.*;
@@ -402,14 +403,88 @@ public class CSONSerializerTest {
     public static class MapClassTest {
         @CSONValue
         private HashMap<String, String> map = new HashMap<>();
+        @CSONValue(comment = "comment", commentAfterKey = "commentAfter")
+        private HashMap<String, Map<String, ByteArray>> byteArrayMap = new HashMap<>();
+
+        @CSONValue
+        private ConcurrentHashMap<String, LinkedList<ArrayDeque<Map<String, ByteArray>>>> concurrentHashMap = new ConcurrentHashMap<>();
+
+        @CSONValue
+        private ArrayList<Map<String, Integer>> mapInArray = new ArrayList<>();
+
+        // 랜덤한 ByteArray 객체를 생성하는 메서드
+        private static ByteArray createRandomByteArray() {
+            ByteArray byteArray = new ByteArray();
+            Random random = new Random();
+            byte[] randomBytes = new byte[10]; // 배열의 크기에 맞게 수정 필요
+            random.nextBytes(randomBytes);
+            byteArray.bytes = randomBytes;
+            return byteArray;
+        }
+
+        // 랜덤한 ByteArray 객체를 concurrentHashMap에 추가하는 메서드
+        public void addRandomByteArray(String key) {
+            LinkedList<ArrayDeque<Map<String, ByteArray>>> linkedList = concurrentHashMap.computeIfAbsent(key, k -> new LinkedList<>());
+            ArrayDeque<Map<String, ByteArray>> arrayDeque = new ArrayDeque<>();
+            Map<String, ByteArray> map = new HashMap<>();
+            map.put("randomByteArray", createRandomByteArray());
+            arrayDeque.add(map);
+            linkedList.add(arrayDeque);
+            concurrentHashMap.put(key, linkedList);
+        }
     }
+
+
 
     @Test
     public void mapClassTest() {
         MapClassTest mapClassTest = new MapClassTest();
         mapClassTest.map.put("key1", "value1");
         mapClassTest.map.put("key2", "value2");
+        mapClassTest.map.put("keyNull", null);
+        HashMap subMap = new HashMap<>();
+        subMap.put("key1", new ByteArray());
+        subMap.put("key2", new ByteArray());
+        mapClassTest.byteArrayMap.put("key1",subMap);
+        mapClassTest.byteArrayMap.put("key2", subMap);
+
+        mapClassTest.addRandomByteArray("key1");
+        mapClassTest.addRandomByteArray("key2");
+
+        Map<String, Integer> maps = new HashMap<>();
+        mapClassTest.mapInArray.add(maps);
+        maps.put("key1", 1);
+        maps.put("key2", 2);
+        maps.put("key3", 3);
         CSONObject csonObject = CSONSerializer.toCSONObject(mapClassTest);
+
+
+
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+
+
+
+
+    }
+
+    @CSON
+    public static class GenericClass<T> {
+        @CSONValue
+        private String value = "value";
+
+    }
+
+    @CSON
+    public static class Sim {
+        @CSONValue
+        Collection<GenericClass<String>> collection = new ArrayList<>();
+    }
+
+    @Test
+    public void genericClassTest() {
+        Sim genericClass = new Sim();
+        genericClass.collection.add(new GenericClass<>());
+        CSONObject csonObject = CSONSerializer.toCSONObject(genericClass);
         System.out.println(csonObject.toString(JSONOptions.json5()));
 
     }

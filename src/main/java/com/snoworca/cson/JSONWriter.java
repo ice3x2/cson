@@ -725,8 +725,9 @@ public class JSONWriter {
 			commentStringAfterObjectValue = null;
 		}*/
 
-		if(typeStack_.isEmpty() && isPretty) {
+		if(isPretty) {
 			stringBuilder.append('\n');
+			writeDepthTab(stringBuilder);
 		}
 
 		stringBuilder.append('}');
