@@ -15,16 +15,11 @@ public class SchemaFieldArray extends SchemaField {
     protected final Types ValueType;
     private final TypeElement objectValueTypeElement;
 
-    private boolean isSchemaless = false;
 
     protected SchemaFieldArray(TypeElement typeElement, Field field, String path) {
         super(typeElement, field, path);
         this.collectionBundles = getGenericType();
-        if(this.collectionBundles == null) {
-            isSchemaless = true;
-            objectValueTypeElement = null;
-            ValueType = Types.Object;
-        } else {
+
             Class<?> valueClass = this.collectionBundles.get(collectionBundles.size() - 1).valueClass;
             ValueType = Types.of(valueClass);
             if (ValueType == Types.Object) {
@@ -32,11 +27,7 @@ public class SchemaFieldArray extends SchemaField {
             } else {
                 objectValueTypeElement = null;
             }
-        }
-    }
 
-    boolean isSchemaless() {
-        return isSchemaless;
     }
 
     protected TypeElement getObjectValueTypeElement() {
@@ -72,7 +63,7 @@ public class SchemaFieldArray extends SchemaField {
             Type rawType = parameterizedType.getRawType();
             if(!(rawType instanceof Class<?>) || !Collection.class.isAssignableFrom((Class<?>)rawType)) {
                 if(Map.class.isAssignableFrom((Class<?>) rawType)) {
-                    throw new CSONObjectException("java.util.Map type cannot be directly used as an element of Collection. Please create a class that wraps Map and use it as an element of the Collection. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
+                    throw new CSONObjectException("java.util.Map type cannot be directly used as an element of Collection. Please create a class that wraps your Map and use it as an element of the Collection of field. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
                 }
                 assertValueType((Class<?>)rawType, field.getDeclaringClass().getName() + "." + field.getName());
                 collectionBundles.get(collectionBundles.size() - 1).valueClass = (Class<?>)rawType;

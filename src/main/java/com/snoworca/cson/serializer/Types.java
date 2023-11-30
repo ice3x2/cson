@@ -17,9 +17,18 @@ enum Types {
 
 
 
+    static boolean isPrimitivableType(Types type) {
+        return type == Byte || type == Short || type == Integer || type == Long || type == Float || type == Double || type == Boolean || type == Character;
+    }
+
+    static boolean isSingleType(Types type) {
+        return type == Byte || type == Short || type == Integer || type == Long || type == Float || type == Double || type == Boolean || type == Character || type == String || type == ByteArray;
+    }
 
 
-    public static Types of(Class<?> type) {
+
+
+    static Types of(Class<?> type) {
         if(type == byte.class || type == Byte.class) {
             return Byte;
         } else if(type == short.class || type == Short.class) {
