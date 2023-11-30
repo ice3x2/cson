@@ -7,15 +7,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class SchemaObjectNode extends SchemaElementNode {
+class SchemaObjectNode extends SchemaElementNode {
 
     private final Map<Object, SchemaNode> map = new LinkedHashMap<>();
 
     private SchemaFieldNormal fieldRack;
 
+    private String comment;
+    private String afterComment;
 
-
-    public SchemaObjectNode() {}
+    SchemaObjectNode() {}
 
     @Override
     protected void onBranchNode(boolean branchNode) {
@@ -23,11 +24,11 @@ public class SchemaObjectNode extends SchemaElementNode {
     }
 
 
-    public SchemaFieldNormal getFieldRack() {
+    SchemaFieldNormal getFieldRack() {
         return fieldRack;
     }
 
-    public SchemaObjectNode setFieldRack(SchemaFieldNormal fieldRack) {
+    SchemaObjectNode setFieldRack(SchemaFieldNormal fieldRack) {
         this.fieldRack = fieldRack;
         return this;
     }
@@ -35,12 +36,12 @@ public class SchemaObjectNode extends SchemaElementNode {
 
 
 
-    public SchemaNode get(Object key) {
+    SchemaNode get(Object key) {
         return map.get(key);
     }
 
 
-    public void put(Object key, SchemaNode value) {
+    void put(Object key, SchemaNode value) {
         if(value instanceof SchemaElementNode) {
             ((SchemaElementNode) value).setParent(this);
         }
@@ -48,18 +49,19 @@ public class SchemaObjectNode extends SchemaElementNode {
     }
 
 
-    public Map<Object, SchemaNode> getMap() {
+    Map<Object, SchemaNode> getMap() {
         return map;
     }
 
-    public SchemaArrayNode getArrayNode(Object key) {
+    SchemaArrayNode getArrayNode(Object key) {
         return (SchemaArrayNode) map.get(key);
     }
 
-    public SchemaObjectNode getObjectNode(Object key) {
+    SchemaObjectNode getObjectNode(Object key) {
         return (SchemaObjectNode) map.get(key);
     }
 
+    @Override
     public SchemaObjectNode copyNode() {
         SchemaObjectNode objectNode = new SchemaObjectNode();
         for(Map.Entry<Object, SchemaNode> entry : map.entrySet()) {
@@ -73,8 +75,23 @@ public class SchemaObjectNode extends SchemaElementNode {
     }
 
 
+    void setComment(String comment) {
+        this.comment = comment;
+    }
 
-    public Set<Object> keySet() {
+    void setAfterComment(String afterComment) {
+        this.afterComment = afterComment;
+    }
+
+    String getAfterComment() {
+        return afterComment;
+    }
+
+    String getComment() {
+        return comment;
+    }
+
+    Set<Object> keySet() {
         return map.keySet();
     }
 
@@ -94,10 +111,27 @@ public class SchemaObjectNode extends SchemaElementNode {
                     map.put(key, node);
                 }
             }
+            mergeComment(objectNode);
         }
+
+
+
         addParentFieldRackAll(schemaElementNode.getParentSchemaFieldList());
         setBranchNode(schemaElementNode.isBranchNode() || this.isBranchNode());
 
+    }
+
+    private void mergeComment(SchemaObjectNode schemaObjectNode) {
+        if(schemaObjectNode.comment != null && this.comment == null) {
+            this.comment = schemaObjectNode.comment;
+        } else  if(schemaObjectNode.comment != null && this.comment != null) {
+            this.comment += "\n" + schemaObjectNode.comment;
+        }
+        if(schemaObjectNode.afterComment != null) {
+            this.afterComment = schemaObjectNode.afterComment;
+        } else if(schemaObjectNode.afterComment != null && this.afterComment != null) {
+            this.afterComment += "\n" + schemaObjectNode.afterComment;
+        }
     }
 
     @Override

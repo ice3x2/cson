@@ -423,12 +423,12 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	public String getCommentOfKey(String key) {
 		CommentObject commentObject = getCommentObjectOfKey(key);
-		return commentObject == null ? null : commentObject.getComment();
+		return commentObject == null ? null : commentObject.getBeforeComment();
 	}
 
 	public String getCommentOfValue(String key) {
 		CommentObject commentObject = getCommentObjectOfValue(key);
-		return commentObject == null ? null : commentObject.getComment();
+		return commentObject == null ? null : commentObject.getBeforeComment();
 	}
 
 
