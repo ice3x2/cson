@@ -48,6 +48,7 @@ class TypeElement {
 
     private TypeElement(Class<?> type, Constructor<?> constructor) {
         this.type = type;
+
         this.constructor = constructor;
         CSON cson = type.getAnnotation(CSON.class);
         String commentBefore = cson.comment();

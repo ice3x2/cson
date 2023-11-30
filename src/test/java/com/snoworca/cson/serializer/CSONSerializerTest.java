@@ -472,6 +472,38 @@ public class CSONSerializerTest {
     }
 
 
+
+    public static class TestSuperClass {
+        @CSONValue
+        private String name = "name";
+
+        public String getName() {
+            return name;
+        }
+    }
+    @CSON
+    static class TestChildClass extends TestSuperClass {
+
+    }
+
+    @Test
+    public void extendsTest() {
+        TestChildClass testChildClass = new TestChildClass();
+        CSONObject csonObject = CSONSerializer.toCSONObject(testChildClass);
+        assertEquals("name", csonObject.get("name"));
+        csonObject.put("name", "name2");
+        testChildClass = CSONSerializer.fromCSONObject(csonObject, TestChildClass.class);
+        assertEquals("name2", testChildClass.getName());
+
+
+
+
+    }
+
+
+
+
+
     @CSON
     public static class TestClassY {
         @CSONValue

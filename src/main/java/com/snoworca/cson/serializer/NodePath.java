@@ -52,7 +52,7 @@ public class NodePath {
         List<SchemaField> results = new ArrayList<>();
         Class<?> currentClass = clazz;
         while(currentClass != Object.class) {
-            for(Field field : clazz.getDeclaredFields()) {
+            for(Field field : currentClass.getDeclaredFields()) {
                 SchemaField fieldRack = SchemaField.of(typeElement,field);
                 if(fieldRack != null && !fieldPaths.contains(fieldRack.getPath())) {
                     // 동일한 path 가 있으면 거른다.
