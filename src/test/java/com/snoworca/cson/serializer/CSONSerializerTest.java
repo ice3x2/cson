@@ -524,9 +524,8 @@ public class CSONSerializerTest {
         @CSONValue(value = "nickname", comment = "닉네임 오브젝트.", commentAfterKey = "닉네임 오브젝트 끝.")
         TestClassY testClassY = new TestClassY();
 
-        @CSONValue(key="list", comment = "닉테임을 입력합니다.", commentAfterKey = "닉네임 입력 끝.")
+        @CSONValue(key="list", comment = "닉네임을 입력합니다.", commentAfterKey = "닉네임 입력 끝.")
         ArrayList<List<TestClassY>> testClassYArrayList = new ArrayList<>();
-
 
 
     }
@@ -538,7 +537,14 @@ public class CSONSerializerTest {
         testClassX.testClassYArrayList.add(new ArrayList<>());
         testClassX.testClassYArrayList.get(0).add(new TestClassY());
 
+
+        
         CSONObject csonObject = CSONSerializer.toCSONObject(testClassX);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        assertEquals(csonObject.getCommentOfKey("nickname"), "닉네임 오브젝트.");
+        assertEquals(csonObject.getCommentAfterKey("nickname"), "닉네임 오브젝트 끝.");
+
+
         String json5 = csonObject.toString(JSONOptions.json5());
 
         System.out.println(json5);

@@ -62,24 +62,22 @@ public class CSONSerializer {
                     }
                     // 부모 필드의 부모 필드가 없으면 rootObject 에서 값을 가져온다.
                     SchemaField grandschemaField = parentSchemaField.getParentField();
+                    Object parentObj = null;
                     if (grandschemaField == null) {
-                        Object obj = parentSchemaField.getValue(rootObject);
-                        if(obj != null) {
-                            parentObjMap.put(id, obj);
-                            nullCount--;
-                        }
+                        parentObj = parentSchemaField.getValue(rootObject);
                     }
                     else {
                         Object grandObj = parentObjMap.get(grandschemaField.getId());
                         if(grandObj != null) {
-                            Object obj = parentSchemaField.getValue(grandObj);
-                            if(obj != null) {
-                                parentObjMap.put(id, obj);
-                                nullCount--;
-                            }
+                            parentObj = parentSchemaField.getValue(grandObj);
                         }
                     }
+                    if(parentObj != null) {
+                        parentObjMap.put(id, parentObj);
+                        nullCount--;
+                    }
                 }
+
 
                 if(!schemaNode.isBranchNode() && nullCount > 0) {
                     if(key instanceof String) {
@@ -98,6 +96,9 @@ public class CSONSerializer {
                         if(childElement == null) {
                             childElement =  (schemaNode instanceof SchemaArrayNode) ? new CSONArray() : new CSONObject();
                             currentObject.put((String) key, childElement);
+                            currentObject.setCommentForKey((String) key, schemaNode.getComment());
+                            currentObject.setCommentAfterKey((String) key, schemaNode.getAfterComment());
+
                             csonElement = childElement;
                         }
                     } else {

@@ -28,6 +28,8 @@ public class NodePath {
             if(fieldRack.getType() == Types.Object) {
                 TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
                 SchemaObjectNode childTree = makeSchema(typeElement,fieldRack);
+                childTree.setComment(fieldRack.getComment());
+                childTree.setAfterComment(fieldRack.getAfterComment());
                 childTree.addParentFieldRack(fieldRack);
                 childTree.setBranchNode(false);
                 SchemaElementNode elementNode = makeSubTree(path, childTree);

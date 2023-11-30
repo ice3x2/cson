@@ -14,6 +14,8 @@ public abstract class SchemaElementNode implements SchemaNode {
     protected boolean isBranchNode = true;
 
 
+
+
     protected boolean isBranchNode() {
         return isBranchNode;
     }
@@ -26,9 +28,9 @@ public abstract class SchemaElementNode implements SchemaNode {
     }
 
 
-    public SchemaElementNode() {}
+    SchemaElementNode() {}
 
-    public SchemaNode getParent() {
+    SchemaNode getParent() {
         return parent;
     }
 
