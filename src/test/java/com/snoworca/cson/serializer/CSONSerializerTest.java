@@ -403,35 +403,12 @@ public class CSONSerializerTest {
     public static class MapClassTest {
         @CSONValue
         private HashMap<String, String> map = new HashMap<>();
-        @CSONValue(comment = "comment", commentAfterKey = "commentAfter")
-        private HashMap<String, Map<String, ByteArray>> byteArrayMap = new HashMap<>();
 
         @CSONValue
-        private ConcurrentHashMap<String, LinkedList<ArrayDeque<Map<String, ByteArray>>>> concurrentHashMap = new ConcurrentHashMap<>();
+        private HashMap<String, SimpleComment> commentMap = new HashMap<>();
 
-        @CSONValue
-        private ArrayList<Map<String, Integer>> mapInArray = new ArrayList<>();
 
-        // 랜덤한 ByteArray 객체를 생성하는 메서드
-        private static ByteArray createRandomByteArray() {
-            ByteArray byteArray = new ByteArray();
-            Random random = new Random();
-            byte[] randomBytes = new byte[10]; // 배열의 크기에 맞게 수정 필요
-            random.nextBytes(randomBytes);
-            byteArray.bytes = randomBytes;
-            return byteArray;
-        }
 
-        // 랜덤한 ByteArray 객체를 concurrentHashMap에 추가하는 메서드
-        public void addRandomByteArray(String key) {
-            LinkedList<ArrayDeque<Map<String, ByteArray>>> linkedList = concurrentHashMap.computeIfAbsent(key, k -> new LinkedList<>());
-            ArrayDeque<Map<String, ByteArray>> arrayDeque = new ArrayDeque<>();
-            Map<String, ByteArray> map = new HashMap<>();
-            map.put("randomByteArray", createRandomByteArray());
-            arrayDeque.add(map);
-            linkedList.add(arrayDeque);
-            concurrentHashMap.put(key, linkedList);
-        }
     }
 
 
@@ -445,22 +422,28 @@ public class CSONSerializerTest {
         HashMap subMap = new HashMap<>();
         subMap.put("key1", new ByteArray());
         subMap.put("key2", new ByteArray());
-        mapClassTest.byteArrayMap.put("key1",subMap);
-        mapClassTest.byteArrayMap.put("key2", subMap);
 
-        mapClassTest.addRandomByteArray("key1");
-        mapClassTest.addRandomByteArray("key2");
+
+
 
         Map<String, Integer> maps = new HashMap<>();
-        mapClassTest.mapInArray.add(maps);
         maps.put("key1", 1);
         maps.put("key2", 2);
         maps.put("key3", 3);
+        mapClassTest.commentMap.put("key1", new SimpleComment());
         CSONObject csonObject = CSONSerializer.toCSONObject(mapClassTest);
 
 
-
         System.out.println(csonObject.toString(JSONOptions.json5()));
+
+        MapClassTest mapClassTest1 = CSONSerializer.fromCSONObject(csonObject, MapClassTest.class);
+
+
+
+
+        assertEquals(mapClassTest.map.size(), mapClassTest1.map.size());
+
+        assertEquals(csonObject.toString(JSONOptions.json5()), CSONSerializer.toCSONObject(mapClassTest1).toString(JSONOptions.json5()));
 
 
 
@@ -486,8 +469,52 @@ public class CSONSerializerTest {
         genericClass.collection.add(new GenericClass<>());
         CSONObject csonObject = CSONSerializer.toCSONObject(genericClass);
         System.out.println(csonObject.toString(JSONOptions.json5()));
+    }
+
+
+    @CSON
+    public static class TestClassY {
+        @CSONValue
+        private int age = 29;
+    }
+
+    @CSON
+    public static class TestClassP {
+        @CSONValue("age2")
+        private int age = 29;
+    }
+
+    @CSON
+    public static class TestClassX {
+        @CSONValue("nickname.key[10]")
+        private String name = "name";
+
+        @CSONValue(value = "nickname", comment = "닉네임 오브젝트.", commentAfterKey = "닉네임 오브젝트 끝.")
+        TestClassY testClassY = new TestClassY();
+
+        @CSONValue(key="list", comment = "닉테임을 입력합니다.", commentAfterKey = "닉네임 입력 끝.")
+        ArrayList<List<TestClassY>> testClassYArrayList = new ArrayList<>();
+
+
 
     }
+
+    @Test
+    public void testClassX() {
+        TestClassX testClassX = new TestClassX();
+
+        testClassX.testClassYArrayList.add(new ArrayList<>());
+        testClassX.testClassYArrayList.get(0).add(new TestClassY());
+
+        CSONObject csonObject = CSONSerializer.toCSONObject(testClassX);
+        String json5 = csonObject.toString(JSONOptions.json5());
+
+        System.out.println(json5);
+
+    }
+
+
+
 
 
 

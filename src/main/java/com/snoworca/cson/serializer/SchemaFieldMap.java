@@ -23,6 +23,8 @@ public class SchemaFieldMap extends SchemaField {
         if(valueClass != null) {
             assertValueType(valueClass, field.getDeclaringClass().getName() + "." + field.getName());
         }
+        assertCollectionOrMapValue(valueClass);
+
 
 
         if(!String.class.isAssignableFrom(keyClass)) {
@@ -31,6 +33,17 @@ public class SchemaFieldMap extends SchemaField {
         constructorMap = constructorOfMap(field.getType());
     }
 
+
+
+
+    private void assertCollectionOrMapValue(Class<?> type) {
+        if(type == null) return;
+        if(Map.class.isAssignableFrom(type)) {
+            throw new CSONObjectException("The java.util.Map type cannot be directly used as a value element of a Map. Please create a class that wraps your Map and use it as a value element of the Map of field. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
+        } else if(Collection.class.isAssignableFrom(type)) {
+            throw new CSONObjectException("The java.util.Collection type cannot be directly used as a value element of a Map. Please create a class that wraps your Collection and use it as a value element of the Map  of field. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
+        }
+    }
 
     Class<?> getValueType() {
         return valueClass;
@@ -56,7 +69,7 @@ public class SchemaFieldMap extends SchemaField {
             if(fieldArgTypes[0] instanceof Class<?> && fieldArgTypes[1] instanceof Class<?>) {
                 return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], (Class<?>)fieldArgTypes[1]);
             } else if(fieldArgTypes[1] instanceof  java.lang.reflect.ParameterizedType) {
-                return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], null);
+                return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], (Class<?>)((java.lang.reflect.ParameterizedType)fieldArgTypes[1]).getRawType());
             }
             else {
                 throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is Raw type. Please use generic type.");

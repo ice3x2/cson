@@ -3,6 +3,8 @@ package com.snoworca.cson.serializer;
 import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.CSONObject;
+
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 public class CSONSerializer {
@@ -51,11 +53,14 @@ public class CSONSerializer {
                 iter = schemaNode.keySet().iterator();
                 List<SchemaField> parentschemaField = schemaNode.getParentSchemaFieldList();
                 int nullCount = parentschemaField.size();
+
+                // 부모 필드들의 값을 가져온다.
                 for(SchemaField parentSchemaField : parentschemaField) {
                     int id = parentSchemaField.getId();
                     if(parentObjMap.containsKey(id)) {
                         continue;
                     }
+                    // 부모 필드의 부모 필드가 없으면 rootObject 에서 값을 가져온다.
                     SchemaField grandschemaField = parentSchemaField.getParentField();
                     if (grandschemaField == null) {
                         Object obj = parentSchemaField.getValue(rootObject);
@@ -75,6 +80,7 @@ public class CSONSerializer {
                         }
                     }
                 }
+
                 if(!schemaNode.isBranchNode() && nullCount > 0) {
                     if(key instanceof String) {
                         ((CSONObject)csonElement).put((String) key,null);
@@ -124,6 +130,8 @@ public class CSONSerializer {
                         @SuppressWarnings("unchecked")
                         CSONObject csonObject = mapObjectToCSONObject((Map<String, ?>) value, schemaFieldMap.getValueType());
                         putValueInCSONElement(csonElement, schemaFieldMap, key, csonObject);
+                    } else {
+                        putValueInCSONElement(csonElement, schemaFieldMap, key, null);
                     }
                 }
 
@@ -134,21 +142,10 @@ public class CSONSerializer {
                 if(parent != null) {
                     Object value = schemaFieldArray.getValue(parent);
                     if(value != null) {
-                        CSONArray csonArray = schemaFieldArray.isSchemaless() ?
-                                collectionObjectToCSONArray((Collection<?>) value, null) :
-                                collectionObjectToSONArrayKnownSchema((Collection<?>)value, schemaFieldArray);
+                        CSONArray csonArray = collectionObjectToSONArrayKnownSchema((Collection<?>)value, schemaFieldArray);
                         putValueInCSONElement(csonElement, schemaFieldArray, key, csonArray);
-                        /*if(key instanceof String) {
-                            ((CSONObject) csonElement).put((String) key, csonArray);
-                            ((CSONObject)csonElement).setCommentForValue((String)key, schemaFieldArray.getComment());
-                            ((CSONObject)csonElement).setCommentAfterValue((String)key, schemaFieldArray.getAfterComment());
-                        }
-                        else {
-                            assert csonElement instanceof CSONArray;
-                            ((CSONArray)csonElement).set((int)key, csonArray);
-                            ((CSONArray)csonElement).setCommentForValue((int)key, schemaFieldArray.getComment()) ;
-                            ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaFieldArray.getAfterComment());
-                        }*/
+                    } else {
+                        putValueInCSONElement(csonElement, schemaFieldArray, key, null);
                     }
                 }
             }
@@ -303,6 +300,54 @@ public class CSONSerializer {
     }
 
 
+    @SuppressWarnings({"unchecked", "unused"})
+    public static <T> Map<String, T> fromCSONObjectToMap(CSONObject csonObject, Class<T> valueType) {
+        Types types = Types.of(valueType);
+        if(valueType.isPrimitive()) {
+            throw new CSONObjectException("valueType is primitive type. valueType=" + valueType.getName());
+        } else if(Collection.class.isAssignableFrom(valueType)) {
+            throw new CSONObjectException("valueType is java.util.Collection type. Use a class that wraps your Collection.  valueType=" + valueType.getName());
+        }  else if(Collection.class.isAssignableFrom(valueType)) {
+            throw new CSONObjectException("valueType is java.util.Map type. Use a class that wraps your Map.  valueType=" + valueType.getName());
+        } else if(valueType.isArray() && Types.ByteArray != types) {
+            throw new CSONObjectException("valueType is Array type. ArrayType cannot be used. valueType=" + valueType.getName());
+        }
+        return (Map<String, T>) fromCSONObjectToMap(null, csonObject, valueType);
+
+    }
+
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static  Map<?, ?> fromCSONObjectToMap(Map target, CSONObject csonObject, Class valueType) {
+        Types types = Types.of(valueType);
+        if(target == null) {
+            target = new HashMap<>();
+        }
+
+        Map finalTarget = target;
+        if(Types.isSingleType(types)) {
+            csonObject.keySet().forEach(key -> {
+                Object value = Utils.optFrom(csonObject, key, types);
+                finalTarget.put(key, value);
+            });
+        } else if(types == Types.Object) {
+            csonObject.keySet().forEach(key -> {
+                CSONObject child = csonObject.optObject(key, null);
+                if(child != null) {
+                    Object targetChild = fromCSONObject(child, valueType);
+                    finalTarget.put(key, targetChild);
+                } else {
+                    finalTarget.put(key, null);
+                }
+            });
+        }
+
+        return target;
+
+    }
+
+
+
 
     @SuppressWarnings("unchecked")
     public static<T> T fromCSONObject(CSONObject csonObject, Class<T> clazz) {
@@ -378,7 +423,6 @@ public class CSONSerializer {
                     setValueTargetFromCSONObject(obj, schemaField, csonElement, key);
                 }
             }
-
             while(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
                 ObjectSerializeDequeueItem objectSerializeDequeueItem = objectSerializeDequeueItems.getFirst();
                 iter = objectSerializeDequeueItem.keyIterator;
@@ -432,7 +476,7 @@ public class CSONSerializer {
     private static void setValueTargetFromCSONObject(Object parents, SchemaField schemaField, CSONElement cson, Object key) {
         boolean isArrayType = cson instanceof CSONArray;
 
-        Object value = isArrayType ? ((CSONArray) cson).opt((int)key) : ((CSONObject)cson).opt((String)key);
+        /*Object value = isArrayType ? ((CSONArray) cson).opt((int)key) : ((CSONObject)cson).opt((String)key);
         //todo null 값에 대하여 어떻게 할 것인지 고민해봐야함.
         if(value == null) {
             boolean isNull = isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key);
@@ -442,24 +486,11 @@ public class CSONSerializer {
                 } catch (Exception ignored) {}
             }
             return;
-        }
+        }*/
         Types valueType = schemaField.getType();
-        if(Types.Boolean == valueType) {
-             schemaField.setValue(parents,isArrayType ? ((CSONArray) cson).optBoolean((int)key) : ((CSONObject)cson).optBoolean((String)key));
-        } else if(Types.Byte == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optByte((int)key) : ((CSONObject)cson).optByte((String)key));
-        } else if(Types.Character == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optChar((int)key, '\0') : ((CSONObject)cson).optChar((String)key, '\0'));
-        } else if(Types.Short == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optShort((int)key) : ((CSONObject)cson).optShort((String)key));
-        } else if(Types.Integer == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optInt((int)key) : ((CSONObject)cson).optInt((String)key));
-        } else if(Types.Float == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optFloat((int)key) : ((CSONObject)cson).optFloat((String)key));
-        } else if(Types.Double == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optDouble((int)key) : ((CSONObject)cson).optDouble((String)key));
-        } else if(Types.String == valueType) {
-            schemaField.setValue(parents, isArrayType ? ((CSONArray) cson).optString((int)key) : ((CSONObject)cson).optString((String)key));
+        if(Types.isSingleType(valueType)) {
+            Object valueObj = Utils.optFrom(cson, key, valueType);
+            schemaField.setValue(parents, valueObj);
         } else if(Types.Collection == valueType) {
             CSONArray csonArray = isArrayType ? ((CSONArray) cson).optArray((int)key) : ((CSONObject)cson).optArray((String)key);
             if(csonArray != null) {
@@ -475,6 +506,18 @@ public class CSONSerializer {
                 Object target = schemaField.newInstance();
                 fromCSONObject(csonObj, target);
                 schemaField.setValue(parents, target);
+            } else if(isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key)) {
+                schemaField.setValue(parents, null);
+            }
+        } else if(Types.Map == valueType) {
+            CSONObject csonObj = isArrayType ? ((CSONArray) cson).optObject((int)key) : ((CSONObject)cson).optObject((String)key);
+            if(csonObj != null) {
+                Object target = schemaField.newInstance();
+                Class<?> type = ((SchemaFieldMap)schemaField).getValueType();
+                fromCSONObjectToMap((Map<?,?>)target,csonObj,type);
+                schemaField.setValue(parents, target);
+            } else if(isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key)) {
+                schemaField.setValue(parents, null);
             }
         }
         else {
