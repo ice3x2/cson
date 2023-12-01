@@ -512,8 +512,8 @@ public class CSONSerializerTest {
 
     @CSON
     public static class TestClassP {
-        @CSONValue("age2")
-        private int age = 29;
+        @CSONValue("ageReal")
+        private int age = 27;
     }
 
     @CSON
@@ -523,6 +523,10 @@ public class CSONSerializerTest {
 
         @CSONValue(value = "nickname", comment = "닉네임 오브젝트.", commentAfterKey = "닉네임 오브젝트 끝.")
         TestClassY testClassY = new TestClassY();
+
+        @CSONValue(value = "nickname")
+        TestClassP testClassP = new TestClassP();
+
 
         @CSONValue(key="list", comment = "닉네임을 입력합니다.", commentAfterKey = "닉네임 입력 끝.")
         ArrayList<List<TestClassY>> testClassYArrayList = new ArrayList<>();
@@ -541,6 +545,7 @@ public class CSONSerializerTest {
         
         CSONObject csonObject = CSONSerializer.toCSONObject(testClassX);
         System.out.println(csonObject.toString(JSONOptions.json5()));
+        assertEquals(27, csonObject.getObject("nickname").getString("ageReal"));
         assertEquals(csonObject.getCommentOfKey("nickname"), "닉네임 오브젝트.");
         assertEquals(csonObject.getCommentAfterKey("nickname"), "닉네임 오브젝트 끝.");
 
@@ -553,7 +558,36 @@ public class CSONSerializerTest {
 
 
 
+    @CSON
+    class NestedValueClass {
+        @CSONValue
+        private String name = "name";
 
+        private String name2 = "name2";
+    }
+
+
+
+
+    @CSON
+    class NestedObjectClass {
+        @CSONValue("ages")
+        private TestClassP testClassP = new TestClassP();
+
+        @CSONValue("ages")
+        private TestClassB testClassB = new TestClassB();
+
+        private String name2 = "name2";
+    }
+
+    @Test
+    public void  nestedValuesTest() {
+
+        NestedObjectClass nestedObjectClass = new NestedObjectClass();
+        CSONObject csonObject = CSONSerializer.toCSONObject(nestedObjectClass);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+
+    }
 
 
 

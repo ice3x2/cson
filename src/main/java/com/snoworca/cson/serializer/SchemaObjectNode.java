@@ -113,9 +113,6 @@ class SchemaObjectNode extends SchemaElementNode {
             }
             mergeComment(objectNode);
         }
-
-
-
         addParentFieldRackAll(schemaElementNode.getParentSchemaFieldList());
         setBranchNode(schemaElementNode.isBranchNode() || this.isBranchNode());
 
