@@ -170,15 +170,19 @@ public class JSON5Test {
         csonObject = new CSONObject(csonObject.toString() , JSONOptions.json5());
 
         assertEquals("코멘트입니다.\n222",csonObject.getCommentObjectOfKey("key").getBeforeComment());
-        assertEquals("값 코멘트\n값 코멘트 뒤",csonObject.getCommentOfValue("key"));
+        assertEquals("값 코멘트",csonObject.getCommentOfValue("key"));
+        assertEquals("값 코멘트 뒤",csonObject.getCommentAfterValue("key"));
+
+
 
         assertEquals("array코멘트",csonObject.getCommentObjectOfKey("array").getBeforeComment());
         assertEquals(null,csonObject.getCommentOfKey("key2"));
         assertEquals(null,csonObject.getCommentOfValue("key2"));
         assertEquals("val/* ok */ue2",csonObject.getString("key2"));
-        assertEquals("key3comment\n이상한 코멘트",csonObject.getCommentOfKey("key3"));
+        assertEquals("key3comment",csonObject.getCommentOfKey("key3"));
         assertEquals("이상한 코멘트",csonObject.getCommentObjectOfKey("key3").getAfterComment());
-        assertEquals("값 앞 코멘트\n값 뒤 코멘트\n  123",csonObject.getCommentOfValue("key3"));
+        assertEquals("이상한 코멘트",csonObject.getCommentObjectOfKey("key3").getAfterComment());
+        assertEquals("값 앞 코멘트",csonObject.getCommentOfValue("key3"));
         assertEquals("값 뒤 코멘트\n  123",csonObject.getCommentObjectOfValue("key3").getAfterComment());
         assertEquals("123\n꼬리 다음 코멘트",csonObject.getCommentAfterThis());
 
