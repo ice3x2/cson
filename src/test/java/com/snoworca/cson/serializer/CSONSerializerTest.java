@@ -563,6 +563,8 @@ public class CSONSerializerTest {
     class NestedValueClass {
         @CSONValue
         private String name = "name";
+]
+
 
         private String name2 = "name2";
     }
