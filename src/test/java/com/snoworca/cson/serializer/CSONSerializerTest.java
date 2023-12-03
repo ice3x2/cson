@@ -545,7 +545,8 @@ public class CSONSerializerTest {
         
         CSONObject csonObject = CSONSerializer.toCSONObject(testClassX);
         System.out.println(csonObject.toString(JSONOptions.json5()));
-        assertEquals(27, csonObject.getObject("nickname").getString("ageReal"));
+        assertEquals(27, csonObject.getObject("nickname").getInt("ageReal"));
+        assertEquals(29, csonObject.getObject("nickname").getInt("age"));
         assertEquals(csonObject.getCommentOfKey("nickname"), "닉네임 오브젝트.");
         assertEquals(csonObject.getCommentAfterKey("nickname"), "닉네임 오브젝트 끝.");
 
@@ -570,22 +571,43 @@ public class CSONSerializerTest {
 
 
     @CSON
-    class NestedObjectClass {
+    public static class NestedObjectClass {
         @CSONValue("ages")
         private TestClassP testClassP = new TestClassP();
 
         @CSONValue("ages")
         private TestClassB testClassB = new TestClassB();
 
+        @CSONValue("name3")
         private String name2 = "name2";
+
+        @CSONValue("name3")
+        private String name3 = "name3";
+
+
     }
 
     @Test
     public void  nestedValuesTest() {
 
         NestedObjectClass nestedObjectClass = new NestedObjectClass();
+        nestedObjectClass.testClassB.testC.name = "adsfadsfadsf";
+        nestedObjectClass.testClassB.name = "123123";
         CSONObject csonObject = CSONSerializer.toCSONObject(nestedObjectClass);
         System.out.println(csonObject.toString(JSONOptions.json5()));
+
+
+
+
+        NestedObjectClass nestedObjectClassCopied = CSONSerializer.fromCSONObject(csonObject, NestedObjectClass.class);
+        assertEquals(nestedObjectClass.testClassP.age, nestedObjectClassCopied.testClassP.age);
+        assertEquals(nestedObjectClass.testClassB.name, nestedObjectClassCopied.testClassB.name);
+        assertEquals(nestedObjectClass.testClassB.testC.name , nestedObjectClassCopied.testClassB.testC.name);
+        assertEquals(nestedObjectClass.name2, nestedObjectClassCopied.name2);
+        assertEquals(nestedObjectClass.name3, nestedObjectClassCopied.name3);
+
+
+
 
     }
 
