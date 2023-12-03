@@ -36,6 +36,10 @@ public class SchemaFieldMap extends SchemaField {
 
 
 
+
+
+
+
     private void assertCollectionOrMapValue(Class<?> type) {
         if(type == null) return;
         if(Map.class.isAssignableFrom(type)) {

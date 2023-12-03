@@ -25,8 +25,6 @@ public class NodePath {
         for(SchemaField fieldRack : fieldRacks) {
             fieldRack.setParentFiled(parentFieldRack);
             String path = fieldRack.getPath();
-            System.out.println(path);
-
             if(fieldRack.getType() == Types.Object) {
                 TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
                 SchemaObjectNode childTree = makeSchema(typeElement,fieldRack);

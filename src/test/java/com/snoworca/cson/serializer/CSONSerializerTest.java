@@ -563,8 +563,6 @@ public class CSONSerializerTest {
     class NestedValueClass {
         @CSONValue
         private String name = "name";
-]
-
 
         private String name2 = "name2";
     }
@@ -574,10 +572,10 @@ public class CSONSerializerTest {
 
     @CSON
     public static class NestedObjectClass {
-        @CSONValue("ages")
+        @CSONValue(key =  "ages", comment = "닉네임 오브젝트:testClassP", commentAfterKey = "닉네임 오브젝트 끝:testClassP")
         private TestClassP testClassP = new TestClassP();
 
-        @CSONValue("ages")
+        @CSONValue(key = "ages", comment = "닉네임 오브젝트:testClassB", commentAfterKey = "닉네임 오브젝트 끝:testClassB")
         private TestClassB testClassB = new TestClassB();
 
         @CSONValue("name3")

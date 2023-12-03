@@ -121,12 +121,12 @@ class SchemaObjectNode extends SchemaElementNode {
     private void mergeComment(SchemaObjectNode schemaObjectNode) {
         if(schemaObjectNode.comment != null && this.comment == null) {
             this.comment = schemaObjectNode.comment;
-        } else  if(schemaObjectNode.comment != null && this.comment != null) {
+        } else  if(schemaObjectNode.comment != null) {
             this.comment += "\n" + schemaObjectNode.comment;
         }
-        if(schemaObjectNode.afterComment != null) {
+        if(schemaObjectNode.afterComment != null && this.afterComment == null) {
             this.afterComment = schemaObjectNode.afterComment;
-        } else if(schemaObjectNode.afterComment != null && this.afterComment != null) {
+        } else if(schemaObjectNode.afterComment != null) {
             this.afterComment += "\n" + schemaObjectNode.afterComment;
         }
     }
