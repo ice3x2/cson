@@ -57,7 +57,7 @@ public class NodePath {
         while(currentClass != Object.class) {
             for(Field field : currentClass.getDeclaredFields()) {
                 SchemaField fieldRack = SchemaField.of(typeElement,field);
-                if(fieldRack != null && !fieldPaths.contains(fieldRack.getPath())) {
+                if(fieldRack != null  /* && !fieldPaths.contains(fieldRack.getPath()) */ ) {
                     // 동일한 path 가 있으면 거른다.
                     fieldPaths.add(fieldRack.getPath());
                     results.add(fieldRack);
