@@ -13,17 +13,17 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class SchemaFieldMap extends SchemaField {
 
     private final Constructor<?> constructorMap;
-    private final Class<?> valueClass;
+    private final Class<?> elementClass;
     SchemaFieldMap(TypeElement parentsTypeElement, Field field, String path) {
         super(parentsTypeElement, field, path);
 
         Map.Entry<Class<?>, Class<?>> entry = readKeyValueGenericType(field);
         Class<?> keyClass = entry.getKey();
-        this.valueClass = entry.getValue();
-        if(valueClass != null) {
-            assertValueType(valueClass, field.getDeclaringClass().getName() + "." + field.getName());
+        this.elementClass = entry.getValue();
+        if(elementClass != null) {
+            assertValueType(elementClass, field.getDeclaringClass().getName() + "." + field.getName());
         }
-        assertCollectionOrMapValue(valueClass);
+        assertCollectionOrMapValue(elementClass);
 
 
 
@@ -49,8 +49,8 @@ public class SchemaFieldMap extends SchemaField {
         }
     }
 
-    Class<?> getValueType() {
-        return valueClass;
+    Class<?> getElementType() {
+        return elementClass;
     }
 
     @Override

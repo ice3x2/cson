@@ -1,63 +1,24 @@
 package com.snoworca.cson.serializer;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class SchemaField implements SchemaNode {
-
-    private static final AtomicInteger LAST_ID = new AtomicInteger(1);
-
-    private final int id = LAST_ID.getAndIncrement();
-
-    final TypeElement parentsTypeElement;
-    final TypeElement objectTypeElement;
+public abstract class SchemaField extends SchemaValue {
 
     final Field field;
-    final String path;
-    final Types type;
 
     final String comment;
     final String afterComment;
 
-    private final boolean isPrimitive;
-
     //private final boolean isMapField;
-
-    private SchemaField parentFieldRack;
-    final Class<?> fieldType;
-
-
-    static SchemaField of(TypeElement typeElement, Field field) {
-        CSONValue csonValue = field.getAnnotation(CSONValue.class);
-        if(csonValue == null) return null;
-        String key = csonValue.key();
-        if(key == null || key.isEmpty()) key = csonValue.value();
-        if(key == null || key.isEmpty()) key = field.getName();
-
-        if(Collection.class.isAssignableFrom(field.getType())) {
-            return new SchemaFieldArray(typeElement, field, key);
-        } else if(java.util.Map.class.isAssignableFrom(field.getType())) {
-            return new SchemaFieldMap(typeElement, field, key);
-        }
-        else {
-            return new SchemaFieldNormal(typeElement, field, key);
-        }
-    }
 
 
     SchemaField(TypeElement parentsTypeElement, Field field, String path) {
+        super(parentsTypeElement, path, field.getType());
         this.field = field;
         field.setAccessible(true);
-        this.path = path;
-        this.fieldType = field.getType();
-        this.parentsTypeElement = parentsTypeElement;
-        this.type = Types.of(field.getType());
+
 
         CSONValue csonValue = field.getAnnotation(CSONValue.class);
         String comment = csonValue.comment();
@@ -65,12 +26,6 @@ public abstract class SchemaField implements SchemaNode {
         this.comment = comment.isEmpty() ? null : comment;
         this.afterComment = afterComment.isEmpty() ? null : afterComment;
 
-        if(this.type == Types.Object) {
-            this.objectTypeElement = TypeElements.getInstance().getTypeInfo(field.getType());
-        }
-        else {
-            this.objectTypeElement = null;
-        }
 
         /*if(this.field.getType().isArray() && this.type != Types.ByteArray) {
             throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
@@ -79,7 +34,6 @@ public abstract class SchemaField implements SchemaNode {
             throw new CSONObjectException("Object field '" + this.field.getName() + "' is not annotated with @CSON");
         }*/
         assertValueType(field.getType(), field.getDeclaringClass().getName() + "." + field.getName() );
-        this.isPrimitive = field.getType().isPrimitive();
     }
 
     protected static void assertValueType(Class<?> valueType, String parentPath) {
@@ -101,43 +55,14 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
-    Object newInstance() {
-        if(objectTypeElement == null) return null;
-        return objectTypeElement.newInstance();
-    }
 
-
-    boolean isPrimitive() {
-        return isPrimitive;
-    }
-
-
+    @Override
     String getComment() {
         return comment;
     }
-
+    @Override
     String getAfterComment() {
         return afterComment;
-    }
-
-    Types getType() {
-        return type;
-    }
-
-    int getId() {
-        return id;
-    }
-
-    String getPath() {
-        return path;
-    }
-
-    Class<?> getFieldType() {
-        return fieldType;
-    }
-
-    SchemaField getParentField() {
-        return parentFieldRack;
     }
 
 
@@ -146,11 +71,7 @@ public abstract class SchemaField implements SchemaNode {
     }
 
 
-    void setParentFiled(SchemaField parent) {
-        this.parentFieldRack = parent;
-    }
-
-
+    @Override
     Object getValue(Object parent) {
         try {
             return field.get(parent);
@@ -159,7 +80,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, Object value) {
         try {
             field.set(parent, value);
@@ -170,7 +91,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
-
+    @Override
     Object setValue(Object parent, short value) {
         try {
             field.setShort(parent, value);
@@ -180,7 +101,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, int value) {
         try {
             field.setInt(parent, value);
@@ -190,7 +111,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, long value) {
         try {
             field.setLong(parent, value);
@@ -200,7 +121,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, float value) {
         try {
             field.setFloat(parent, value);
@@ -210,7 +131,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, double value) {
         try {
             field.setDouble(parent, value);
@@ -220,7 +141,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, boolean value) {
         try {
             field.setBoolean(parent, value);
@@ -230,7 +151,7 @@ public abstract class SchemaField implements SchemaNode {
             return null;
         }
     }
-
+    @Override
     Object setValue(Object parent, char value) {
         try {
             field.setChar(parent, value);
@@ -241,6 +162,7 @@ public abstract class SchemaField implements SchemaNode {
         }
     }
 
+    @Override
     Object setValue(Object parent, byte value) {
         try {
             field.setByte(parent, value);
@@ -255,7 +177,7 @@ public abstract class SchemaField implements SchemaNode {
 
     @Override
     public String toString() {
-        return id + ""; /*"FieldRack{" +
+        return getId() + ""; /*"FieldRack{" +
                 "id=" + id +
                 ", field=" + field +
                 ", path='" + path + '\'' +
