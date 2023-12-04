@@ -3,6 +3,7 @@ package com.snoworca.cson.serializer;
 
 import com.snoworca.cson.PathItem;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,15 +19,15 @@ public class NodePath {
     }
 
 
-    protected static SchemaObjectNode makeSchema(TypeElement targetTypeElement,  SchemaField parentFieldRack) {
-        List<SchemaField> fieldRacks = searchAllCSONValueFields(targetTypeElement, targetTypeElement.getType());
+    protected static SchemaObjectNode makeSchema(TypeElement targetTypeElement,  SchemaValue parentFieldRack) {
+        List<SchemaValue> fieldRacks = searchAllCSONValueFields(targetTypeElement, targetTypeElement.getType());
         SchemaObjectNode objectNode = new SchemaObjectNode().setBranchNode(false);
 
-        for(SchemaField fieldRack : fieldRacks) {
+        for(SchemaValue fieldRack : fieldRacks) {
             fieldRack.setParentFiled(parentFieldRack);
             String path = fieldRack.getPath();
             if(fieldRack.getType() == Types.Object) {
-                TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getFieldType());
+                TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getValueType());
                 SchemaObjectNode childTree = makeSchema(typeElement,fieldRack);
                 childTree.setComment(fieldRack.getComment());
                 childTree.setAfterComment(fieldRack.getAfterComment());
@@ -48,17 +49,24 @@ public class NodePath {
     }
 
 
-    private static List<SchemaField> searchAllCSONValueFields(TypeElement typeElement, Class<?> clazz) {
+    private static List<SchemaValue> searchAllCSONValueFields(TypeElement typeElement, Class<?> clazz) {
         Set<String> fieldPaths = new HashSet<>();
-        List<SchemaField> results = new ArrayList<>();
+        List<SchemaValue> results = new ArrayList<>();
         Class<?> currentClass = clazz;
         while(currentClass != Object.class) {
             for(Field field : currentClass.getDeclaredFields()) {
-                SchemaField fieldRack = SchemaField.of(typeElement,field);
+                SchemaValue fieldRack = SchemaValue.of(typeElement,field);
                 if(fieldRack != null  /* && !fieldPaths.contains(fieldRack.getPath()) */ ) {
                     // 동일한 path 가 있으면 거른다.
                     fieldPaths.add(fieldRack.getPath());
                     results.add(fieldRack);
+                }
+            }
+            for(Method method : currentClass.getDeclaredMethods()) {
+                SchemaValue methodRack = SchemaValue.of(typeElement,method);
+                if(methodRack != null) {
+                    fieldPaths.add(methodRack.getPath());
+                    results.add(methodRack);
                 }
             }
             currentClass = currentClass.getSuperclass();
@@ -162,7 +170,7 @@ public class NodePath {
     }
 
 
-
+// TODO
     public static SchemaElementNode makeSubTree(String path, SchemaNode value) {
         List<PathItem> list = PathItem.parseMultiPath2(path);
         SchemaElementNode rootNode = new SchemaObjectNode();

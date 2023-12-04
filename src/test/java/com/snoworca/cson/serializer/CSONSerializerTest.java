@@ -597,8 +597,6 @@ public class CSONSerializerTest {
         System.out.println(csonObject.toString(JSONOptions.json5()));
 
 
-
-
         NestedObjectClass nestedObjectClassCopied = CSONSerializer.fromCSONObject(csonObject, NestedObjectClass.class);
         assertEquals(nestedObjectClass.testClassP.age, nestedObjectClassCopied.testClassP.age);
         assertEquals(nestedObjectClass.testClassB.name, nestedObjectClassCopied.testClassB.name);
@@ -607,11 +605,31 @@ public class CSONSerializerTest {
         assertEquals(nestedObjectClass.name3, nestedObjectClassCopied.name3);
 
 
-
-
     }
 
+   @CSON
+   public static class SetterGetterTestClass {
+        String inputName = "name";
+         @CSONValueGetter
+         public String getName() {
+              return "name";
+         }
+         @CSONValueSetter
+         public void setName(String name) {
+            this.inputName = name;
+         }
+   }
 
+
+   @Test
+    public void setterGetterTest() {
+        SetterGetterTestClass setterGetterTestClass = new SetterGetterTestClass();
+        CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
+        System.out.println(csonObject.toString(JSONOptions.json5()));
+        assertEquals("name", csonObject.get("name"));
+        setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
+        assertEquals("name", setterGetterTestClass.inputName);
+   }
 
 
 }
