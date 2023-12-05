@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static junit.framework.TestCase.*;
+import static org.junit.Assert.assertNotEquals;
 
 public class CSONSerializerTest {
 
@@ -601,8 +602,8 @@ public class CSONSerializerTest {
         assertEquals(nestedObjectClass.testClassP.age, nestedObjectClassCopied.testClassP.age);
         assertEquals(nestedObjectClass.testClassB.name, nestedObjectClassCopied.testClassB.name);
         assertEquals(nestedObjectClass.testClassB.testC.name , nestedObjectClassCopied.testClassB.testC.name);
-        assertEquals(nestedObjectClass.name2, nestedObjectClassCopied.name2);
-        assertEquals(nestedObjectClass.name3, nestedObjectClassCopied.name3);
+        assertNotEquals(nestedObjectClass.name2, nestedObjectClass.name3);
+        assertEquals(nestedObjectClassCopied.name2, nestedObjectClassCopied.name3);
 
 
     }
@@ -620,13 +621,41 @@ public class CSONSerializerTest {
          }*/
 
 
+       Collection<ArrayList<LinkedList<String>>> nameList = null;
+
        @CSONValueGetter
-       public Collection<ArrayList<String>> getNameList() {
-           return "name";
+       public Collection<ArrayList<LinkedList<String>>> getNameList() {
+           int x = 0;
+           ArrayList result = new ArrayList();
+            for(int i = 0; i < 10; i++) {
+               ArrayList<LinkedList<String>> arrayList = new ArrayList<>();
+               for(int j = 0; j < 10; j++) {
+                   LinkedList<String> list = new LinkedList<>();
+                   for(int k = 0; k < 10; k++) {
+                       ++x;
+                       list.add("Value" + x);
+                   }
+                   arrayList.add(list);
+               }
+               result.add(arrayList);
+           }
+            return result;
+
        }
 
+
+
+
        @CSONValueSetter
-       public void setNameList(Collection<ArrayList<String>> names) {
+       public void setNameList(Collection<ArrayList<LinkedList<String>>> names) {
+           nameList = names;
+
+       }
+
+
+       @CSONValueSetter(key = "nameList")
+       public void setNameHashSet(ArrayDeque<LinkedList<HashSet<String>>> names) {
+           ArrayDeque<LinkedList<HashSet<String>>> value = names;
 
        }
 
@@ -639,8 +668,31 @@ public class CSONSerializerTest {
     public void setterGetterTest() {
         SetterGetterTestClass setterGetterTestClass = new SetterGetterTestClass();
 
-        /*CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
+        CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
         System.out.println(csonObject.toString(JSONOptions.json5()));
+
+        setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
+
+        assertEquals(setterGetterTestClass.nameList.size(), 10);
+        Iterator<ArrayList<LinkedList<String>>> iter = setterGetterTestClass.nameList.iterator();
+        int x = 0;
+        for(int i = 0; i < 10; i++) {
+            ArrayList<LinkedList<String>> arrayList = iter.next();
+            assertEquals(arrayList.size(), 10);
+            Iterator<LinkedList<String>> iter2 = arrayList.iterator();
+            for(int j = 0; j < 10; j++) {
+                LinkedList<String> list = iter2.next();
+                assertEquals(list.size(), 10);
+                Iterator<String> iter3 = list.iterator();
+                for(int k = 0; k < 10; k++) {
+                    ++x;
+                    assertEquals("Value" + x, iter3.next());
+                }
+            }
+        }
+
+
+        /*System.out.println(csonObject.toString(JSONOptions.json5()));
         assertEquals("name", csonObject.get("name"));
         csonObject.put("name", "1213123");
 
