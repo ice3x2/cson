@@ -19,11 +19,11 @@ public class NodePath {
     }
 
 
-    protected static SchemaObjectNode makeSchema(TypeElement targetTypeElement,  SchemaValue parentFieldRack) {
-        List<SchemaValue> fieldRacks = searchAllCSONValueFields(targetTypeElement, targetTypeElement.getType());
+    protected static SchemaObjectNode makeSchema(TypeElement targetTypeElement,  SchemaValueAbs parentFieldRack) {
+        List<SchemaValueAbs> fieldRacks = searchAllCSONValueFields(targetTypeElement, targetTypeElement.getType());
         SchemaObjectNode objectNode = new SchemaObjectNode().setBranchNode(false);
 
-        for(SchemaValue fieldRack : fieldRacks) {
+        for(SchemaValueAbs fieldRack : fieldRacks) {
             fieldRack.setParentFiled(parentFieldRack);
             String path = fieldRack.getPath();
             if(fieldRack.getType() == Types.Object) {
@@ -49,13 +49,13 @@ public class NodePath {
     }
 
 
-    private static List<SchemaValue> searchAllCSONValueFields(TypeElement typeElement, Class<?> clazz) {
+    private static List<SchemaValueAbs> searchAllCSONValueFields(TypeElement typeElement, Class<?> clazz) {
         Set<String> fieldPaths = new HashSet<>();
-        List<SchemaValue> results = new ArrayList<>();
+        List<SchemaValueAbs> results = new ArrayList<>();
         Class<?> currentClass = clazz;
         while(currentClass != Object.class) {
             for(Field field : currentClass.getDeclaredFields()) {
-                SchemaValue fieldRack = SchemaValue.of(typeElement,field);
+                SchemaValueAbs fieldRack = SchemaValueAbs.of(typeElement,field);
                 if(fieldRack != null  /* && !fieldPaths.contains(fieldRack.getPath()) */ ) {
                     // 동일한 path 가 있으면 거른다.
                     fieldPaths.add(fieldRack.getPath());
@@ -63,7 +63,7 @@ public class NodePath {
                 }
             }
             for(Method method : currentClass.getDeclaredMethods()) {
-                SchemaValue methodRack = SchemaValue.of(typeElement,method);
+                SchemaValueAbs methodRack = SchemaValueAbs.of(typeElement,method);
                 if(methodRack != null) {
                     fieldPaths.add(methodRack.getPath());
                     results.add(methodRack);

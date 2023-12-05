@@ -4,7 +4,7 @@ package com.snoworca.cson.serializer;
 import java.lang.reflect.Method;
 
 
-class SchemaMethod extends SchemaValue {
+class SchemaMethod extends SchemaValueAbs {
 
 
 
@@ -152,12 +152,13 @@ class SchemaMethod extends SchemaValue {
         } else {
             this.methodType = MethodType.Setter;
         }
-
     }
 
 
+
+
     @Override
-    boolean appendDuplicatedSchemaValue(SchemaValue node) {
+    boolean appendDuplicatedSchemaValue(SchemaValueAbs node) {
         if(this.methodType != MethodType.Both &&
                 node instanceof SchemaMethod && this.parentsTypeElement == node.parentsTypeElement && this.valueTypeClass == node.valueTypeClass) {
             SchemaMethod schemaMethod = (SchemaMethod) node;
@@ -185,12 +186,12 @@ class SchemaMethod extends SchemaValue {
     }
 
     @Override
-    String getComment() {
+    public String getComment() {
         return comment;
     }
 
     @Override
-    String getAfterComment() {
+    public String getAfterComment() {
         return afterComment;
     }
 
@@ -216,8 +217,10 @@ class SchemaMethod extends SchemaValue {
 
 
 
+
+
     static boolean isSchemaMethodGetter(SchemaNode schemaValue) {
-        return schemaValue instanceof SchemaMethod && (((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Getter  || ((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Both);
+        return schemaValue.getClass() == SchemaMethod.class && (((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Getter  || ((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Both);
     }
 
 

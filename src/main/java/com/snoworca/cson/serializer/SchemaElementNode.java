@@ -6,7 +6,7 @@ import java.util.List;
 
 public abstract class SchemaElementNode implements SchemaNode {
     private SchemaNode parent;
-    private List<SchemaValue> parentSchemaFieldList = new ArrayList<>();
+    private List<SchemaValueAbs> parentSchemaFieldList = new ArrayList<>();
 
     /**
      * 브런치 노드. 참조된 필드가 없는 노드.
@@ -43,15 +43,15 @@ public abstract class SchemaElementNode implements SchemaNode {
         return this;
     }
 
-    protected List<SchemaValue> getParentSchemaFieldList() {
+    protected List<SchemaValueAbs> getParentSchemaFieldList() {
         return parentSchemaFieldList;
     }
 
-    protected void setParentSchemaFieldList(List<SchemaValue> parentSchemaFieldList) {
+    protected void setParentSchemaFieldList(List<SchemaValueAbs> parentSchemaFieldList) {
         this.parentSchemaFieldList = parentSchemaFieldList;
     }
 
-    public SchemaElementNode addParentFieldRack(SchemaValue parentFieldRack) {
+    public SchemaElementNode addParentFieldRack(SchemaValueAbs parentFieldRack) {
         if(this.parentSchemaFieldList.contains(parentFieldRack)) {
             return this;
         }
@@ -59,8 +59,8 @@ public abstract class SchemaElementNode implements SchemaNode {
         return this;
     }
 
-    public SchemaElementNode addParentFieldRackAll(Collection<SchemaValue> parentFieldRackCollection) {
-        for(SchemaValue parentFieldRack : parentFieldRackCollection) {
+    public SchemaElementNode addParentFieldRackAll(Collection<SchemaValueAbs> parentFieldRackCollection) {
+        for(SchemaValueAbs parentFieldRack : parentFieldRackCollection) {
             addParentFieldRack(parentFieldRack);
         }
         return this;

@@ -1,10 +1,8 @@
 package com.snoworca.cson.serializer;
 
 import java.lang.reflect.Field;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class SchemaField extends SchemaValue {
+public abstract class SchemaField extends SchemaValueAbs {
 
     final Field field;
 
@@ -57,11 +55,11 @@ public abstract class SchemaField extends SchemaValue {
 
 
     @Override
-    String getComment() {
+    public String getComment() {
         return comment;
     }
     @Override
-    String getAfterComment() {
+    public String getAfterComment() {
         return afterComment;
     }
 

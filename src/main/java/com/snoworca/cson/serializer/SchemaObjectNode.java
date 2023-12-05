@@ -107,8 +107,8 @@ class SchemaObjectNode extends SchemaElementNode {
                 SchemaNode thisNode = map.get(key);
                 if(thisNode instanceof  SchemaObjectNode && node instanceof SchemaObjectNode) {
                     ((SchemaObjectNode) thisNode).merge((SchemaObjectNode) node);
-                } else if(thisNode instanceof SchemaValue && node instanceof SchemaValue) {
-                    if(!((SchemaValue)thisNode).appendDuplicatedSchemaValue((SchemaValue) node)) {
+                } else if(thisNode instanceof SchemaValueAbs && node instanceof SchemaValueAbs) {
+                    if(!((SchemaValueAbs)thisNode).appendDuplicatedSchemaValue((SchemaValueAbs) node)) {
                         map.put(key, node);
                     }
                 }

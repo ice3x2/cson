@@ -4,6 +4,8 @@ import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.CSONObject;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 import java.math.BigDecimal;
 
 public class Utils {
@@ -32,6 +34,51 @@ public class Utils {
         }
     }
 
+
+    @SuppressWarnings({"rawtypes", "ReassignedVariable", "unchecked"})
+    static Object convertCollectionValue(Object origin, List<CollectionItems> resultCollectionItemsList, Types returnType) throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        if(origin == null) {
+            return null;
+        }
+        Collection resultCollectionOfCurrent = resultCollectionItemsList.get(0).collectionConstructor.newInstance();
+        Collection result = resultCollectionOfCurrent;
+        ArrayDeque<Iterator> collectionIterators = new ArrayDeque<>();
+        ArrayDeque<Collection> resultCollections = new ArrayDeque<>();
+        int collectionItemIndex = 0;
+
+        Iterator currentIterator = ((Collection<?>)origin).iterator();
+        resultCollections.add(resultCollectionOfCurrent);
+        collectionIterators.add(currentIterator);
+        while(currentIterator.hasNext()) {
+            Object next = currentIterator.next();
+            if(next instanceof Collection) {
+                ++collectionItemIndex;
+                Collection newCollection = resultCollectionItemsList.get(collectionItemIndex).collectionConstructor.newInstance();
+                resultCollections.add(newCollection);
+                resultCollectionOfCurrent.add(newCollection);
+                resultCollectionOfCurrent = newCollection;
+                currentIterator = ((Collection<?>)next).iterator();
+                collectionIterators.add(currentIterator);
+            } else {
+                resultCollectionOfCurrent.add(convertValue(next,returnType));
+            }
+
+            while(!currentIterator.hasNext()) {
+                collectionIterators.removeLast();
+                if(collectionIterators.isEmpty()) {
+                    return result;
+                }
+                --collectionItemIndex;
+                resultCollections.removeLast();
+                resultCollectionOfCurrent =  resultCollections.getLast();
+                currentIterator = collectionIterators.getLast();
+            }
+
+        }
+
+        return result;
+
+    }
 
     static Object convertValue(Object origin, Types returnType) {
         try {
