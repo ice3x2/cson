@@ -4,6 +4,8 @@ import com.snoworca.cson.CSONArray;
 import com.snoworca.cson.CSONElement;
 import com.snoworca.cson.CSONObject;
 
+import java.math.BigDecimal;
+
 public class Utils {
 
     static Class<?> primitiveTypeToBoxedType(Class<?> primitiveType) {
@@ -28,6 +30,95 @@ public class Utils {
         } else {
             return primitiveType;
         }
+    }
+
+
+    static Object convertValue(Object origin, Types returnType) {
+        try {
+            if(origin instanceof String) {
+                return convertValueFromString((String)origin,returnType);
+            } else if(origin instanceof Number) {
+                return convertValueFromNumber((Number)origin,returnType);
+            }
+
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
+    }
+
+    static Object convertValueFromString(String origin, Types returnType) {
+        if(origin == null) {
+            return null;
+        }
+        if(returnType == Types.String) {
+            return origin;
+        } else if(returnType == Types.Byte) {
+            return Byte.valueOf(origin);
+        } else if(returnType == Types.Short) {
+            return Short.valueOf(origin);
+        } else if(returnType == Types.Integer) {
+            return Integer.valueOf(origin);
+        } else if(returnType == Types.Long) {
+            return Long.valueOf(origin);
+        } else if(returnType == Types.Float) {
+            return Float.valueOf(origin);
+        } else if(returnType == Types.Double) {
+            return Double.valueOf(origin);
+        } else if(returnType == Types.Character) {
+            return origin.charAt(0);
+        } else if(returnType == Types.Boolean) {
+            return Boolean.valueOf(origin);
+        } else if(returnType == Types.BigDecimal) {
+            return new java.math.BigDecimal(origin);
+        }
+        return null;
+
+    }
+
+    static Object convertValueFromNumber(Number origin, Types returnType) {
+        if(origin == null) {
+            return null;
+        }
+        if(origin instanceof BigDecimal && returnType == Types.BigDecimal) {
+            return origin;
+        } else if(origin instanceof Double && returnType == Types.Double) {
+            return origin;
+        } else if(origin instanceof Float && returnType == Types.Float) {
+            return origin;
+        } else if(origin instanceof Long && returnType == Types.Long) {
+            return origin;
+        } else if(origin instanceof Integer && returnType == Types.Integer) {
+            return origin;
+        } else if(origin instanceof Short && returnType == Types.Short) {
+            return origin;
+        } else if(origin instanceof Byte && returnType == Types.Byte) {
+            return origin;
+        }
+
+        if(returnType == Types.Byte) {
+            return origin.byteValue();
+        } else if(returnType == Types.Short) {
+            return origin.shortValue();
+        } else if(returnType == Types.Integer) {
+            return origin.intValue();
+        } else if(returnType == Types.Long) {
+            return origin.longValue();
+        } else if(returnType == Types.Float) {
+            return origin.floatValue();
+        } else if(returnType == Types.Double) {
+            return origin.doubleValue();
+        } else if(returnType == Types.Character) {
+            return (char)origin.intValue();
+        } else if(returnType == Types.Boolean) {
+            return origin.intValue() != 0;
+        } else if(returnType == Types.BigDecimal) {
+            return new java.math.BigDecimal(origin.toString());
+        } else if(returnType == Types.String) {
+            return origin.toString();
+        } else if(returnType == Types.ByteArray) {
+            return new byte[]{origin.byteValue()};
+        }
+        return null;
     }
 
     static Object optFrom(CSONElement cson, Object key, Types valueType) {

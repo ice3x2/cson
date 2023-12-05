@@ -114,7 +114,7 @@ public class CSONSerializer {
                     objectSerializeDequeueItems.add(new ObjectSerializeDequeueItem(iter, schemaNode, csonElement));
                 }
             }
-            else if(node instanceof SchemaFieldNormal || SchemaValue.isSchemaMethodGetter(node)) {
+            else if(node instanceof SchemaFieldNormal || SchemaMethod.isSchemaMethodGetter(node)) {
                 SchemaValue schemaValue = (SchemaValue)node;
                 Object parent = obtainParentObjects(parentObjMap, schemaValue, rootObject);
                 if(parent != null) {
@@ -414,9 +414,9 @@ public class CSONSerializer {
                 currentObjectSerializeDequeueItem = new ObjectSerializeDequeueItem(iter, schemaNode, csonElement);
                 objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
             }
-            else if(node instanceof SchemaField && ((SchemaField)node).type != Types.Object) {
-                SchemaField schemaField = (SchemaField) node;
-                SchemaField parentField = schemaField.getParentField();
+            else if(node instanceof SchemaValue && ((SchemaValue)node).type != Types.Object) {
+                SchemaValue schemaField = (SchemaValue) node;
+                SchemaValue parentField = schemaField.getParentField();
                 if(csonElement != null) {
                     Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
                     setValueTargetFromCSONObject(obj, schemaField, csonElement, key);
@@ -435,7 +435,7 @@ public class CSONSerializer {
         return targetObject;
     }
 
-    private static Object getOrCreateParentObject(SchemaField parentSchemaField, HashMap<Integer, Object> parentObjMap, Object root) {
+    private static Object getOrCreateParentObject(SchemaValue parentSchemaField, HashMap<Integer, Object> parentObjMap, Object root) {
         return getOrCreateParentObject(parentSchemaField, parentObjMap, root, false);
     }
 
@@ -472,7 +472,7 @@ public class CSONSerializer {
 
     }
 
-    private static void setValueTargetFromCSONObject(Object parents, SchemaField schemaField, CSONElement cson, Object key) {
+    private static void setValueTargetFromCSONObject(Object parents, SchemaValue schemaField, CSONElement cson, Object key) {
         boolean isArrayType = cson instanceof CSONArray;
 
         /*Object value = isArrayType ? ((CSONArray) cson).opt((int)key) : ((CSONObject)cson).opt((String)key);
