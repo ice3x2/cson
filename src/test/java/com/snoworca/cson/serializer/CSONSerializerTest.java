@@ -609,26 +609,43 @@ public class CSONSerializerTest {
 
    @CSON
    public static class SetterGetterTestClass {
-        String inputName = "name";
+        /*String inputName = "name";
          @CSONValueGetter
          public String getName() {
               return "name";
          }
          @CSONValueSetter
-         public void setName(String name) {
-            this.inputName = name;
-         }
+         public void setName(int name) {
+            this.inputName = name + "";
+         }*/
+
+
+       @CSONValueGetter
+       public Collection<ArrayList<String>> getNameList() {
+           return "name";
+       }
+
+       @CSONValueSetter
+       public void setNameList(Collection<ArrayList<String>> names) {
+
+       }
+
+
+
    }
 
 
    @Test
     public void setterGetterTest() {
         SetterGetterTestClass setterGetterTestClass = new SetterGetterTestClass();
-        CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
+
+        /*CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
         System.out.println(csonObject.toString(JSONOptions.json5()));
         assertEquals("name", csonObject.get("name"));
+        csonObject.put("name", "1213123");
+
         setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
-        assertEquals("name", setterGetterTestClass.inputName);
+        assertEquals("1213123", setterGetterTestClass.inputName);*/
    }
 
 

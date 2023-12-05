@@ -72,7 +72,7 @@ public abstract class SchemaField extends SchemaValue {
 
 
     @Override
-    Object getValue(Object parent) {
+    Object onGetValue(Object parent) {
         try {
             return field.get(parent);
         } catch (IllegalAccessException e) {
@@ -81,95 +81,77 @@ public abstract class SchemaField extends SchemaValue {
         }
     }
     @Override
-    Object setValue(Object parent, Object value) {
+    void onSetValue(Object parent, Object value) {
         try {
             field.set(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
 
     @Override
-    Object setValue(Object parent, short value) {
+    void onSetValue(Object parent, short value) {
         try {
             field.setShort(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
     @Override
-    Object setValue(Object parent, int value) {
+    void onSetValue(Object parent, int value) {
         try {
             field.setInt(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
     @Override
-    Object setValue(Object parent, long value) {
+    void onSetValue(Object parent, long value) {
         try {
             field.setLong(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
     @Override
-    Object setValue(Object parent, float value) {
+    void onSetValue(Object parent, float value) {
         try {
             field.setFloat(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
     @Override
-    Object setValue(Object parent, double value) {
+    void onSetValue(Object parent, double value) {
         try {
             field.setDouble(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
     @Override
-    Object setValue(Object parent, boolean value) {
+    void onSetValue(Object parent, boolean value) {
         try {
             field.setBoolean(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
     @Override
-    Object setValue(Object parent, char value) {
+    void onSetValue(Object parent, char value) {
         try {
             field.setChar(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
 
     @Override
-    Object setValue(Object parent, byte value) {
+    void onSetValue(Object parent, byte value) {
         try {
             field.setByte(parent, value);
-            return value;
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            return null;
         }
     }
 

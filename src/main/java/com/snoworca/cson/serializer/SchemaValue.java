@@ -1,11 +1,9 @@
 package com.snoworca.cson.serializer;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class SchemaValue implements SchemaNode {
@@ -25,7 +23,9 @@ abstract class SchemaValue implements SchemaNode {
     //private final boolean isMapField;
 
     private SchemaValue parentFieldRack;
-    final Class<?>  valueType;
+    final Class<?> valueTypeClass;
+
+    private ArrayList<SchemaValue> duplicatedSchemaValueList = null;
 
 
     static SchemaValue of(TypeElement typeElement, Field field) {
@@ -53,23 +53,38 @@ abstract class SchemaValue implements SchemaNode {
     }
 
 
-    SchemaValue(TypeElement parentsTypeElement, String path, Class<?> valueType) {
+    boolean appendDuplicatedSchemaValue(SchemaValue node) {
+        if(node.parentsTypeElement != this.parentsTypeElement) return false;
+        if(this.duplicatedSchemaValueList == null) {
+            this.duplicatedSchemaValueList = new ArrayList<>();
+        }
+        this.duplicatedSchemaValueList.add(node);
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    <T extends SchemaValue> List<T> getDuplicatedSchemaValueList() {
+        return (List<T>) this.duplicatedSchemaValueList;
+    }
+
+
+    SchemaValue(TypeElement parentsTypeElement, String path, Class<?> valueTypeClass) {
 
         this.path = path;
-        this.valueType = valueType;
+        this.valueTypeClass = valueTypeClass;
         this.parentsTypeElement = parentsTypeElement;
-        this.type = Types.of(valueType);
+        this.type = Types.of(valueTypeClass);
 
 
 
         if(this.type == Types.Object) {
-            this.objectTypeElement = TypeElements.getInstance().getTypeInfo(valueType);
+            this.objectTypeElement = TypeElements.getInstance().getTypeInfo(valueTypeClass);
         }
         else {
             this.objectTypeElement = null;
         }
 
-        this.isPrimitive = valueType.isPrimitive();
+        this.isPrimitive = valueTypeClass.isPrimitive();
     }
 
     protected static void assertValueType(Class<?> valueType, String parentPath) {
@@ -118,8 +133,8 @@ abstract class SchemaValue implements SchemaNode {
         return path;
     }
 
-    final Class<?> getValueType() {
-        return valueType;
+    final Class<?> getValueTypeClass() {
+        return valueTypeClass;
     }
 
     @SuppressWarnings("unchecked")
@@ -134,40 +149,80 @@ abstract class SchemaValue implements SchemaNode {
     }
 
 
-    abstract Object getValue(Object parent);
+    final Object getValue(Object parent) {
+        Object value = null;
+        if(this.duplicatedSchemaValueList != null) {
+            value = null;
+            int index = this.duplicatedSchemaValueList.size() - 1;
+            while(value == null && index > -1) {
+                SchemaValue duplicatedSchemaValue = this.duplicatedSchemaValueList.get(index);
+                value = duplicatedSchemaValue.onGetValue(parent);
+                if(duplicatedSchemaValue.valueTypeClass != this.valueTypeClass) {
+                    value = Utils.convertValue(value, duplicatedSchemaValue.type);
+                }
+                index--;
 
-    abstract Object setValue(Object parent, Object value);
+            }
+            if(value != null) {
+                return value;
+            }
+        }
+        value = onGetValue(parent);
+        return value;
 
-    Object setValue(Object parent, short value) {
-        return setValue(parent, Short.valueOf(value));
     }
 
-    Object setValue(Object parent, int value) {
-        return setValue(parent, Integer.valueOf(value));
+    final void setValue(Object parent, Object value) {
+        if(this.duplicatedSchemaValueList != null) {
+            for(SchemaValue duplicatedSchemaValue : this.duplicatedSchemaValueList) {
+                Object setValue = value;
+                if(duplicatedSchemaValue.valueTypeClass != this.valueTypeClass) {
+                    setValue = Utils.convertValue(value, duplicatedSchemaValue.type);
+                }
+                duplicatedSchemaValue.onSetValue(parent, setValue);
+            }
+        }
+        onSetValue(parent, value);
     }
 
-    Object setValue(Object parent, long value) {
-        return setValue(parent, Long.valueOf(value));
+
+    abstract Object onGetValue(Object parent);
+
+    abstract void onSetValue(Object parent, Object value);
+
+
+
+
+    void onSetValue(Object parent, short value) {
+        onSetValue(parent, Short.valueOf(value));
     }
 
-    Object setValue(Object parent, float value) {
-        return setValue(parent, Float.valueOf(value));
+    void onSetValue(Object parent, int value) {
+         onSetValue(parent, Integer.valueOf(value));
     }
 
-    Object setValue(Object parent, double value) {
-        return setValue(parent,Double.valueOf(value));
+    void onSetValue(Object parent, long value) {
+         onSetValue(parent, Long.valueOf(value));
     }
 
-    Object setValue(Object parent, boolean value) {
-        return setValue(parent,Boolean.valueOf(value));
+    void onSetValue(Object parent, float value) {
+         setValue(parent, Float.valueOf(value));
     }
 
-    Object setValue(Object parent, char value) {
-        return setValue(parent,Character.valueOf(value));
+    void onSetValue(Object parent, double value) {
+         onSetValue(parent,Double.valueOf(value));
     }
 
-    Object setValue(Object parent, byte value) {
-        return setValue(parent,Byte.valueOf(value));
+    void onSetValue(Object parent, boolean value) {
+         onSetValue(parent,Boolean.valueOf(value));
+    }
+
+    void onSetValue(Object parent, char value) {
+         onSetValue(parent,Character.valueOf(value));
+    }
+
+    void onSetValue(Object parent, byte value) {
+         onSetValue(parent,Byte.valueOf(value));
     }
 
 
@@ -187,14 +242,6 @@ abstract class SchemaValue implements SchemaNode {
                 '}';*/
     }
 
-
-    static boolean isSchemaMethodGetter(SchemaNode schemaValue) {
-        return schemaValue instanceof SchemaMethod && ((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Getter;
-    }
-
-    static boolean isSchemaMethodSetter(SchemaNode schemaValue) {
-        return schemaValue instanceof SchemaMethod && ((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Setter;
-    }
 
 
 

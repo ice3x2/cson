@@ -91,6 +91,8 @@ class SchemaMethod extends SchemaValue {
     static enum MethodType {
         Getter,
         Setter,
+        Both
+
 
     }
 
@@ -109,29 +111,69 @@ class SchemaMethod extends SchemaValue {
     }
 
 
-    private final MethodType methodType;
-    private final Method method;
+    private MethodType methodType = null;
+    private Method methodSetter;
+    private Method methodGetter;
 
-    private final String comment;
-    private final String afterComment;
+    private String comment = null;
+    private String afterComment = null;
 
     SchemaMethod(TypeElement parentsTypeElement, Method method) {
         super(parentsTypeElement,getPath(method),  getValueType(method));
-        this.method = method;
-        this.method.setAccessible(true);
-        this.methodType = getMethodType(method);
-        assertValueType(getValueType(), method.getDeclaringClass().getName() + "." + method.getName());
-        if(this.methodType == MethodType.Getter) {
-            CSONValueGetter csonValueGetter = method.getAnnotation(CSONValueGetter.class);
-            String comment = csonValueGetter.comment();
-            String afterComment = csonValueGetter.commentAfterKey();
-            this.comment = comment.isEmpty() ? null : comment;
-            this.afterComment = afterComment.isEmpty() ? null : afterComment;
-        } else {
-            this.comment = null;
-            this.afterComment = null;
+        method.setAccessible(true);
+        MethodType methodType = getMethodType(method);
+        assertValueType(getValueTypeClass(), method.getDeclaringClass().getName() + "." + method.getName());
+        if(methodType == MethodType.Getter) {
+            setGetter(method);
+        }
+        else if(methodType == MethodType.Setter) {
+            setSetter(method);
         }
     }
+
+    private void setGetter(Method method) {
+        CSONValueGetter csonValueGetter = method.getAnnotation(CSONValueGetter.class);
+        String comment = csonValueGetter.comment();
+        String afterComment = csonValueGetter.commentAfterKey();
+        this.comment = comment.isEmpty() ? null : comment;
+        this.afterComment = afterComment.isEmpty() ? null : afterComment;
+        methodGetter = method;
+        if(methodType == MethodType.Setter) {
+            this.methodType = MethodType.Both;
+        } else {
+            this.methodType = MethodType.Getter;
+        }
+    }
+
+    private void setSetter(Method method) {
+        methodSetter = method;
+        if(methodType == MethodType.Getter) {
+            this.methodType = MethodType.Both;
+        } else {
+            this.methodType = MethodType.Setter;
+        }
+
+    }
+
+
+    @Override
+    boolean appendDuplicatedSchemaValue(SchemaValue node) {
+        if(this.methodType != MethodType.Both &&
+                node instanceof SchemaMethod && this.parentsTypeElement == node.parentsTypeElement && this.valueTypeClass == node.valueTypeClass) {
+            SchemaMethod schemaMethod = (SchemaMethod) node;
+            if(schemaMethod.methodType == MethodType.Getter && this.methodType == MethodType.Setter) {
+                setGetter(schemaMethod.methodGetter);
+                return true;
+            } else if(schemaMethod.methodType == MethodType.Setter && this.methodType == MethodType.Getter) {
+                setSetter(schemaMethod.methodSetter);
+                return true;
+            }
+        }
+
+        return super.appendDuplicatedSchemaValue(node);
+    }
+
+
 
     public MethodType getMethodType() {
         return methodType;
@@ -139,7 +181,7 @@ class SchemaMethod extends SchemaValue {
 
     @Override
     public SchemaNode copyNode() {
-        return new SchemaMethod(parentsTypeElement, method);
+        return new SchemaMethod(parentsTypeElement, methodSetter);
     }
 
     @Override
@@ -153,22 +195,31 @@ class SchemaMethod extends SchemaValue {
     }
 
     @Override
-    Object getValue(Object parent) {
+    Object onGetValue(Object parent) {
+        if(methodGetter == null) return null;
         try {
-            return method.invoke(parent);
+            return methodGetter.invoke(parent);
         } catch (Exception e) {
-            throw new CSONSerializerException("Failed to invoke method " + method.getDeclaringClass().getName() + "." + method.getName(), e);
+            throw new CSONSerializerException("Failed to invoke method " + methodSetter.getDeclaringClass().getName() + "." + methodSetter.getName(), e);
         }
     }
 
     @Override
-    Object setValue(Object parent, Object value) {
+    void onSetValue(Object parent, Object value) {
+        if(methodSetter == null) return;
         try {
-            return method.invoke(parent, value);
+            methodSetter.invoke(parent, value);
         } catch (Exception e) {
-            throw new CSONSerializerException("Failed to invoke method " + method.getDeclaringClass().getName() + "." + method.getName(), e);
+            throw new CSONSerializerException("Failed to invoke method " + methodSetter.getDeclaringClass().getName() + "." + methodSetter.getName(), e);
         }
     }
+
+
+
+    static boolean isSchemaMethodGetter(SchemaNode schemaValue) {
+        return schemaValue instanceof SchemaMethod && (((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Getter  || ((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Both);
+    }
+
 
 
 }

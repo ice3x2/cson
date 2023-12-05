@@ -13,6 +13,7 @@ enum Types {
     ByteArray,
     Object,
     Map,
+    BigDecimal,
     Collection;
 
 
@@ -22,7 +23,7 @@ enum Types {
     }
 
     static boolean isSingleType(Types type) {
-        return type == Byte || type == Short || type == Integer || type == Long || type == Float || type == Double || type == Boolean || type == Character || type == String || type == ByteArray;
+        return type == Byte || type == Short || type == Integer || type == Long || type == Float || type == Double || type == Boolean || type == Character || type == String || type == ByteArray || type == BigDecimal;
     }
 
 
@@ -41,7 +42,10 @@ enum Types {
             return Float;
         } else if(type == double.class || type == Double.class) {
             return Double;
-        } else if(type == boolean.class || type == Boolean.class) {
+        } else if(type == java.math.BigDecimal.class) {
+            return BigDecimal;
+        }
+        else if(type == boolean.class || type == Boolean.class) {
             return Boolean;
         } else if(java.util.Map.class.isAssignableFrom(type)) {
             return Map;

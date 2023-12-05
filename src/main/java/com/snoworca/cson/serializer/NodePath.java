@@ -27,7 +27,7 @@ public class NodePath {
             fieldRack.setParentFiled(parentFieldRack);
             String path = fieldRack.getPath();
             if(fieldRack.getType() == Types.Object) {
-                TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getValueType());
+                TypeElement typeElement = TypeElements.getInstance().getTypeInfo(fieldRack.getValueTypeClass());
                 SchemaObjectNode childTree = makeSchema(typeElement,fieldRack);
                 childTree.setComment(fieldRack.getComment());
                 childTree.setAfterComment(fieldRack.getAfterComment());
@@ -170,7 +170,6 @@ public class NodePath {
     }
 
 
-// TODO
     public static SchemaElementNode makeSubTree(String path, SchemaNode value) {
         List<PathItem> list = PathItem.parseMultiPath2(path);
         SchemaElementNode rootNode = new SchemaObjectNode();

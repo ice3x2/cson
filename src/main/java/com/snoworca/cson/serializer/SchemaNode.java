@@ -1,6 +1,7 @@
 package com.snoworca.cson.serializer;
 
-public interface SchemaNode {
+interface SchemaNode {
+
 
     SchemaNode copyNode();
 
