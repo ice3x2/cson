@@ -1,7 +1,9 @@
 package com.snoworca.cson;
 
 @SuppressWarnings("UnusedReturnValue")
-public class JSONOptions {
+public class JSONOptions implements StringFormatOption {
+
+        private StringFormatType formatType = StringFormatType.JSON;
 
         private JSONOptions() {
         }
@@ -23,7 +25,9 @@ public class JSONOptions {
             jsonOptions.setLeadingZeroOmission(false);
             jsonOptions.setAllowCharacter(false);
             jsonOptions.setAllowTrailingComma(false);
+            jsonOptions.formatType = StringFormatType.JSON;
             return jsonOptions;
+
         }
 
 
@@ -45,6 +49,7 @@ public class JSONOptions {
             jsonOptions.setAllowCharacter(true);
             jsonOptions.setAllowTrailingComma(true);
             jsonOptions.setAllowBreakLine(true);
+            jsonOptions.formatType = StringFormatType.JSON5;
             return jsonOptions;
         }
 
@@ -249,6 +254,8 @@ public class JSONOptions {
         }
 
 
-
-
+    @Override
+    public StringFormatType getFormatType() {
+        return formatType;
+    }
 }

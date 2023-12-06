@@ -1,7 +1,7 @@
 package com.snoworca.cson;
 
 
-class CSONParseIterator implements CSONBufferReader.ParseCallback {
+class BinaryCSONParseIterator implements BinaryCSONBufferReader.ParseCallback {
 	String selectKey = null;
 	CSONElement currentElement;
 	CSONElement root;

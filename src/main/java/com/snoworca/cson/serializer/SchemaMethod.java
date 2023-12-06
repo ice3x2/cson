@@ -1,6 +1,7 @@
 package com.snoworca.cson.serializer;
 
 
+import javax.xml.validation.Schema;
 import java.lang.reflect.Method;
 
 
@@ -11,22 +12,30 @@ class SchemaMethod extends SchemaValueAbs {
     private static Class<?> getValueType(Method method) {
         CSONValueGetter csonValueGetter = method.getAnnotation(CSONValueGetter.class);
         CSONValueSetter csonValueSetter = method.getAnnotation(CSONValueSetter.class);
+
+        Class<?>[] types =  method.getParameterTypes();
+        if(csonValueSetter != null && csonValueGetter != null) {
+            throw new CSONSerializerException("Method " + method.getDeclaringClass().getName() + "." + method.getName() + "(..) must be annotated with @CSONValueGetter or @CSONValueSetter, not both");
+        }
+
         if(csonValueSetter != null) {
-            Class<?>[] types =  method.getParameterTypes();
             if(types.length != 1) {
-                throw new CSONSerializerException("Setter method " + method.getDeclaringClass().getName() + "." + method.getName() + " must have only one parameter");
+                throw new CSONSerializerException("Setter method " + method.getDeclaringClass().getName() + "." + method.getName() + "(..) must have only one parameter");
             }
             return types[0];
         }
         else if(csonValueGetter != null) {
             Class<?> returnType = method.getReturnType();
             if(returnType == void.class || returnType == Void.class || returnType == null) {
-                throw new CSONSerializerException("Getter method " + method.getDeclaringClass().getName() + "." + method.getName() + " must have return type");
+                throw new CSONSerializerException("Getter method " + method.getDeclaringClass().getName() + "." + method.getName() + "(..) must have return type");
+            }
+            if(types.length != 0) {
+                throw new CSONSerializerException("Getter method " + method.getDeclaringClass().getName() + "." + method.getName() + "(..) must have no parameter");
             }
             return returnType;
         }
         else {
-            throw new CSONSerializerException("Method " + method.getDeclaringClass().getName() + "." + method.getName() + " must be annotated with @CSONValueGetter or @CSONValueSetter");
+            throw new CSONSerializerException("Method " + method.getDeclaringClass().getName() + "." + method.getName() + "(..) must be annotated with @CSONValueGetter or @CSONValueSetter");
         }
     }
 
@@ -93,12 +102,14 @@ class SchemaMethod extends SchemaValueAbs {
         Setter,
         Both
 
-
     }
+
+    private final String methodPath;
 
     private static MethodType getMethodType(Method method) {
         CSONValueGetter csonValueGetter = method.getAnnotation(CSONValueGetter.class);
         CSONValueSetter csonValueSetter = method.getAnnotation(CSONValueSetter.class);
+
         if(csonValueSetter != null) {
             return MethodType.Setter;
         }
@@ -122,7 +133,18 @@ class SchemaMethod extends SchemaValueAbs {
         super(parentsTypeElement,getPath(method),  getValueType(method));
         method.setAccessible(true);
         MethodType methodType = getMethodType(method);
-        assertValueType(getValueTypeClass(), method.getDeclaringClass().getName() + "." + method.getName());
+
+        boolean isGetter = methodType == MethodType.Getter;
+        String methodPath = method.getDeclaringClass().getName() + "." + method.getName();
+        if(isGetter) {
+            methodPath += "() <return: " + method.getReturnType().getName() + ">";
+        }
+        else {
+            methodPath += "(" + method.getParameterTypes()[0].getName() + ") <return: " + method.getReturnType().getName() + ">";
+        }
+        this.methodPath = methodPath;
+
+        ISchemaValue.assertValueType(getValueTypeClass(), method.getDeclaringClass().getName() + "." + method.getName());
         if(methodType == MethodType.Getter) {
             setGetter(method);
         }
@@ -160,7 +182,22 @@ class SchemaMethod extends SchemaValueAbs {
     @Override
     boolean appendDuplicatedSchemaValue(SchemaValueAbs node) {
         if(this.methodType != MethodType.Both &&
-                node instanceof SchemaMethod && this.parentsTypeElement == node.parentsTypeElement && this.valueTypeClass == node.valueTypeClass) {
+                node instanceof SchemaMethod &&
+                this.parentsTypeElement == node.parentsTypeElement &&
+                this.valueTypeClass == node.valueTypeClass) {
+
+            if(node instanceof SchemaMethodForMapType &&
+                    this instanceof SchemaMethodForMapType &&
+                    !((SchemaMethodForMapType) node).getElementType().equals(((SchemaMethodForMapType) this).getElementType())
+            ) {
+                return super.appendDuplicatedSchemaValue(node);
+            } else if(node instanceof SchemaMethodForArrayType &&
+                    this instanceof SchemaMethodForArrayType &&
+                    !((SchemaMethodForArrayType) node).equalsValueType(this))
+             {
+                return super.appendDuplicatedSchemaValue(node);
+            }
+
             SchemaMethod schemaMethod = (SchemaMethod) node;
             if(schemaMethod.methodType == MethodType.Getter && this.methodType == MethodType.Setter) {
                 setGetter(schemaMethod.methodGetter);
@@ -181,7 +218,7 @@ class SchemaMethod extends SchemaValueAbs {
     }
 
     @Override
-    public SchemaNode copyNode() {
+    public ISchemaNode copyNode() {
         return new SchemaMethod(parentsTypeElement, methodSetter);
     }
 
@@ -201,7 +238,7 @@ class SchemaMethod extends SchemaValueAbs {
         try {
             return methodGetter.invoke(parent);
         } catch (Exception e) {
-            throw new CSONSerializerException("Failed to invoke method " + methodSetter.getDeclaringClass().getName() + "." + methodSetter.getName(), e);
+            throw new CSONSerializerException("Failed to invoke method " + this.methodPath, e);
         }
     }
 
@@ -211,7 +248,7 @@ class SchemaMethod extends SchemaValueAbs {
         try {
             methodSetter.invoke(parent, value);
         } catch (Exception e) {
-            throw new CSONSerializerException("Failed to invoke method " + methodSetter.getDeclaringClass().getName() + "." + methodSetter.getName(), e);
+            throw new CSONSerializerException("Failed to invoke method " + this.methodPath, e);
         }
     }
 
@@ -219,7 +256,7 @@ class SchemaMethod extends SchemaValueAbs {
 
 
 
-    static boolean isSchemaMethodGetter(SchemaNode schemaValue) {
+    static boolean isSchemaMethodGetter(ISchemaNode schemaValue) {
         return schemaValue.getClass() == SchemaMethod.class && (((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Getter  || ((SchemaMethod)schemaValue).getMethodType() == SchemaMethod.MethodType.Both);
     }
 

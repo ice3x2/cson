@@ -1,13 +1,12 @@
 package com.snoworca.cson.serializer;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
+abstract class SchemaValueAbs implements ISchemaNode, ISchemaValue {
 
     private static final AtomicInteger LAST_ID = new AtomicInteger(1);
 
@@ -26,7 +25,7 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
     private SchemaValueAbs parentFieldRack;
     final Class<?> valueTypeClass;
 
-    private ArrayList<SchemaValueAbs> duplicatedSchemaValueAbsList = null;
+    private final ArrayList<SchemaValueAbs> allSchemaValueAbsList = new ArrayList<>();
 
 
     static SchemaValueAbs of(TypeElement typeElement, Field field) {
@@ -53,6 +52,9 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
         if(SchemaMethodForArrayType.isCollectionTypeParameterOrReturns(method)) {
             return new SchemaMethodForArrayType(typeElement, method);
         }
+        else if(SchemaMethodForMapType.isMapTypeParameterOrReturns(method)) {
+            return new SchemaMethodForMapType(typeElement, method);
+        }
         return new SchemaMethod(typeElement, method);
     }
 
@@ -61,31 +63,28 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
         if(node.parentsTypeElement != this.parentsTypeElement) {
             return false;
         }
-        else if(node instanceof SchemaArrayValue && !(this instanceof SchemaArrayValue) ||
-                !(node instanceof SchemaArrayValue) && this instanceof SchemaArrayValue) {
+        else if(node instanceof ISchemaArrayValue && !(this instanceof ISchemaArrayValue) ||
+                !(node instanceof ISchemaArrayValue) && this instanceof ISchemaArrayValue) {
             //TODO 예외 발생 시켜야한다.
             return false;
         }
-        else if(node instanceof SchemaArrayValue && this instanceof SchemaArrayValue) {
-            SchemaArrayValue nodeArray = (SchemaArrayValue) node;
-            SchemaArrayValue thisArray = (SchemaArrayValue) this;
+        else if(node instanceof ISchemaArrayValue && this instanceof ISchemaArrayValue) {
+            ISchemaArrayValue nodeArray = (ISchemaArrayValue) node;
+            ISchemaArrayValue thisArray = (ISchemaArrayValue) this;
             if(nodeArray.getCollectionItems().size() != thisArray.getCollectionItems().size()) {
                 //TODO 예외 발생 시켜야한다.
             }
         }
 
-       
 
-        if(this.duplicatedSchemaValueAbsList == null) {
-            this.duplicatedSchemaValueAbsList = new ArrayList<>();
-        }
-        this.duplicatedSchemaValueAbsList.add(node);
+        this.allSchemaValueAbsList.add(node);
         return true;
     }
 
     @SuppressWarnings("unchecked")
-    <T extends SchemaValueAbs> List<T> getDuplicatedSchemaValueList() {
-        return (List<T>) this.duplicatedSchemaValueAbsList;
+    <T extends SchemaValueAbs> List<T> getAllSchemaValueList() {
+
+        return (List<T>) this.allSchemaValueAbsList;
     }
 
 
@@ -97,7 +96,6 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
         this.type = Types.of(valueTypeClass);
 
 
-
         if(this.type == Types.Object) {
             this.objectTypeElement = TypeElements.getInstance().getTypeInfo(valueTypeClass);
         }
@@ -106,24 +104,7 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
         }
 
         this.isPrimitive = valueTypeClass.isPrimitive();
-    }
-
-    protected static void assertValueType(Class<?> valueType, String parentPath) {
-        Types type = Types.of(valueType);
-        if(valueType.isArray() && type != Types.ByteArray) {
-            if(parentPath != null) {
-                throw new CSONObjectException("Array type '" + valueType.getName() + "' is not supported");
-            } else  {
-                throw new CSONObjectException("Array type '" + valueType.getName() + "' of field '" + parentPath + "' is not supported");
-            }
-        }
-        if(type == Types.Object && valueType.getAnnotation(CSON.class) == null)  {
-            if(parentPath != null) {
-                throw new CSONObjectException("Object type '" + valueType.getName() + "' is not annotated with @CSON");
-            } else  {
-                throw new CSONObjectException("Object type '" + valueType.getName() + "' of field '" + parentPath + "' is not annotated with @CSON");
-            }
-        }
+        this.allSchemaValueAbsList.add(this);
     }
 
 
@@ -169,63 +150,28 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
     @Override
     public Object getValue(Object parent) {
         Object value = null;
-        if(this.duplicatedSchemaValueAbsList != null) {
-            value = null;
-            int index = this.duplicatedSchemaValueAbsList.size() - 1;
-            while(value == null && index > -1) {
-                SchemaValueAbs duplicatedSchemaValueAbs = this.duplicatedSchemaValueAbsList.get(index);
-                value = duplicatedSchemaValueAbs.onGetValue(parent);
-                if(!this.equalsValueType(duplicatedSchemaValueAbs)) {
-                    if(this instanceof SchemaArrayValue) {
-                        SchemaArrayValue schemaArrayValue = (SchemaArrayValue) duplicatedSchemaValueAbs;
-                        try {
-                            value = Utils.convertCollectionValue(value, schemaArrayValue.getCollectionItems(),schemaArrayValue.getValueType());
-                            if(value != null) {
-                                return value;
-                            }
-                        } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                            value = null;
-                        }
-                    } else {
-                        value = Utils.convertValue(value, duplicatedSchemaValueAbs.type);
-                    }
+        int index = this.allSchemaValueAbsList.size() - 1;
+        while(value == null && index > -1) {
+            SchemaValueAbs duplicatedSchemaValueAbs = this.allSchemaValueAbsList.get(index);
+            value = duplicatedSchemaValueAbs.onGetValue(parent);
+            if(value == null) {
+                index--;
+                continue;
+            }
+            if(!this.equalsValueType(duplicatedSchemaValueAbs)) {
+                if(this instanceof ISchemaArrayValue || this instanceof ISchemaMapValue) {
+                    return value;
+                } else {
                     value = Utils.convertValue(value, duplicatedSchemaValueAbs.type);
                 }
-                index--;
-
             }
-            if(value != null) {
-                return value;
-            }
-        }
-        value = onGetValue(parent);
-        if(value == null) {
-            return null;
+            index--;
         }
         return value;
-
     }
 
     @Override
     public void setValue(Object parent, Object value) {
-        if(this.duplicatedSchemaValueAbsList != null) {
-            for(SchemaValueAbs duplicatedSchemaValueAbs : this.duplicatedSchemaValueAbsList) {
-                Object setValue = value;
-                if(!this.equalsValueType(duplicatedSchemaValueAbs)) {
-                    if(this instanceof SchemaArrayValue) {
-                        SchemaArrayValue schemaArrayValue = (SchemaArrayValue) duplicatedSchemaValueAbs;
-                        try {
-                            setValue = Utils.convertCollectionValue(value, schemaArrayValue.getCollectionItems(),schemaArrayValue.getValueType());
-                        } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                            setValue = null;
-                        }
-                    } else {
-                        setValue = Utils.convertValue(value, duplicatedSchemaValueAbs.type);
-                    }
-                }
-                duplicatedSchemaValueAbs.setValue(parent, setValue);
-            }
-        }
         onSetValue(parent, value);
     }
 
@@ -271,7 +217,8 @@ abstract class SchemaValueAbs implements SchemaNode, SchemaValue {
 
 
     boolean equalsValueType(SchemaValueAbs schemaValueAbs) {
-        return schemaValueAbs.getValueTypeClass() == this.valueTypeClass;
+        if(this.valueTypeClass == null) return false;
+        return this.valueTypeClass.equals(schemaValueAbs.getValueTypeClass());
     }
 
 

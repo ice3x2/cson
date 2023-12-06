@@ -2,18 +2,16 @@ package com.snoworca.cson;
 
 import java.nio.ByteBuffer;
 
-class CSONDataType {
+class BinaryCSONDataType {
 
 	protected final static byte PREFIX = 'C';
 
-	protected final static byte[] VER_RAW;
+	public final static byte[] VER_RAW;
 	protected final static short VER = 901;
 
 	static {
         VER_RAW = ByteBuffer.wrap(new byte[2]).putShort(VER).array();
 	}
-
-
 
 
 

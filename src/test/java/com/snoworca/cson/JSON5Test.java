@@ -1,6 +1,7 @@
 package com.snoworca.cson;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -118,6 +119,10 @@ public class JSON5Test {
         assertTrue(Double.isInfinite(csonArray.getDouble(18)));
         assertTrue(Double.isNaN(csonArray.getDouble(19)));
 
+
+
+
+
     }
 
 
@@ -200,6 +205,27 @@ public class JSON5Test {
 
 
         assertEquals(origin.toString(JSONOptions.json5()), new CSONObject(csonObject.toString(JSONOptions.json5()), JSONOptions.json5()).toString(JSONOptions.json5()));
+
+
+
+        String obj = origin.toString(JSONOptions.json());
+        long start = System.currentTimeMillis();
+        JSONObject jsonObject = new JSONObject(obj);
+        for(int i = 0; i < 1000000; ++i) {
+            jsonObject.toString();
+             String aaa = "";
+             aaa.trim();
+        }
+        System.out.println("json : " + (System.currentTimeMillis() - start));
+        start = System.currentTimeMillis();
+        CSONObject csonObjects = new CSONObject(obj);
+        for(int i = 0; i < 1000000; ++i) {
+            csonObjects.toString();
+            String aaa = "";
+            aaa.trim();
+        }
+
+        System.out.println("cson : " + (System.currentTimeMillis() - start));
 
 
     }

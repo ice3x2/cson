@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class SchemaElementNode implements SchemaNode {
-    private SchemaNode parent;
+public abstract class SchemaElementNode implements ISchemaNode {
+    private ISchemaNode parent;
     private List<SchemaValueAbs> parentSchemaFieldList = new ArrayList<>();
 
     /**
@@ -30,7 +30,7 @@ public abstract class SchemaElementNode implements SchemaNode {
 
     SchemaElementNode() {}
 
-    SchemaNode getParent() {
+    ISchemaNode getParent() {
         return parent;
     }
 
@@ -38,7 +38,7 @@ public abstract class SchemaElementNode implements SchemaNode {
     protected abstract void onBranchNode(boolean branchNode);
 
 
-    public SchemaElementNode setParent(SchemaNode parent) {
+    public SchemaElementNode setParent(ISchemaNode parent) {
         this.parent = parent;
         return this;
     }

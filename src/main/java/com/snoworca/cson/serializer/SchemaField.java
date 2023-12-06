@@ -24,33 +24,10 @@ public abstract class SchemaField extends SchemaValueAbs {
         this.comment = comment.isEmpty() ? null : comment;
         this.afterComment = afterComment.isEmpty() ? null : afterComment;
 
-
-        /*if(this.field.getType().isArray() && this.type != Types.ByteArray) {
-            throw new CSONObjectException("Array type '" + this.field.getName() + "' is not supported");
-        }
-        if(this.type == Types.Object && this.field.getType().getAnnotation(CSON.class) == null)  {
-            throw new CSONObjectException("Object field '" + this.field.getName() + "' is not annotated with @CSON");
-        }*/
-        assertValueType(field.getType(), field.getDeclaringClass().getName() + "." + field.getName() );
+        ISchemaValue.assertValueType(field.getType(), field.getDeclaringClass().getName() + "." + field.getName() );
     }
 
-    protected static void assertValueType(Class<?> valueType, String parentPath) {
-        Types type = Types.of(valueType);
-        if(valueType.isArray() && type != Types.ByteArray) {
-            if(parentPath != null) {
-                throw new CSONObjectException("Array type '" + valueType.getName() + "' is not supported");
-            } else  {
-                throw new CSONObjectException("Array type '" + valueType.getName() + "' of field '" + parentPath + "' is not supported");
-            }
-        }
-        if(type == Types.Object && valueType.getAnnotation(CSON.class) == null)  {
-            if(parentPath != null) {
-                throw new CSONObjectException("Object type '" + valueType.getName() + "' is not annotated with @CSON");
-            } else  {
-                throw new CSONObjectException("Object type '" + valueType.getName() + "' of field '" + parentPath + "' is not annotated with @CSON");
-            }
-        }
-    }
+
 
 
 

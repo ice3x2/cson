@@ -20,9 +20,9 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 
 
-	public CSONObject(byte[] buffer) {
+	public CSONObject(byte[] binaryCSON) {
 		super(ElementType.Object);
-		CSONObject csonObject = (CSONObject)CSONParser.parse(buffer);
+		CSONObject csonObject = (CSONObject) BinaryCSONParser.parse(binaryCSON);
 		this.dataMap = csonObject.dataMap;
 	}
 
@@ -30,7 +30,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	public CSONObject(byte[] buffer, int offset, int length) {
 		super(ElementType.Object);
-		CSONObject csonObject = (CSONObject)CSONParser.parse(buffer, offset, length);
+		CSONObject csonObject = (CSONObject) BinaryCSONParser.parse(buffer, offset, length);
 		this.dataMap = csonObject.dataMap;
 	}
 
@@ -75,6 +75,7 @@ public class CSONObject extends CSONElement implements Cloneable {
 	public CSONObject(Reader jsonStringReader, JSONOptions options) {
 		this(new JSONTokener(jsonStringReader, options));
 	}
+
 
 	public CSONObject() {
 		super(ElementType.Object);
@@ -596,13 +597,21 @@ public class CSONObject extends CSONElement implements Cloneable {
 		return jsonWriter.toString();
 	}
 
+	@Deprecated
+	/**
+	 * @Deprecated use toBytes() instead
+	 */
 	public byte[] toBytes() {
-		CSONWriter writer = new CSONWriter();
+		return toBinary();
+	}
+
+	public byte[] toBinary() {
+		BinaryCSONWriter writer = new BinaryCSONWriter();
 		write(writer);
 		return writer.toByteArray();
 	}
 
-	protected void write(CSONWriter writer) {
+	protected void write(BinaryCSONWriter writer) {
 		Iterator<Entry<String, Object>> iter = dataMap.entrySet().iterator();
 		writer.openObject();
 		while(iter.hasNext()) {

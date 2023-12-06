@@ -10,51 +10,52 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-public class SchemaFieldMap extends SchemaField {
+class SchemaFieldMap extends SchemaField implements ISchemaMapValue {
 
     private final Constructor<?> constructorMap;
     private final Class<?> elementClass;
     SchemaFieldMap(TypeElement parentsTypeElement, Field field, String path) {
         super(parentsTypeElement, field, path);
 
-        Map.Entry<Class<?>, Class<?>> entry = readKeyValueGenericType(field);
+        String fieldPath = field.getDeclaringClass().getName() + "." + field.getName() + "<type: " + field.getType().getName() + ">";
+        Type genericType = field.getGenericType();
+        Map.Entry<Class<?>, Class<?>> entry = ISchemaMapValue.readKeyValueGenericType(genericType, fieldPath);
         Class<?> keyClass = entry.getKey();
         this.elementClass = entry.getValue();
         if(elementClass != null) {
-            assertValueType(elementClass, field.getDeclaringClass().getName() + "." + field.getName());
+            ISchemaValue.assertValueType(elementClass, fieldPath);
         }
-        assertCollectionOrMapValue(elementClass);
-
+        ISchemaMapValue.assertCollectionOrMapValue(elementClass,fieldPath);
 
 
         if(!String.class.isAssignableFrom(keyClass)) {
-            throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is not String key. Please use String key.");
+            throw new CSONObjectException("Map field '" + fieldPath + "' is not String key. Please use String key.");
         }
-        constructorMap = constructorOfMap(field.getType());
+        constructorMap = ISchemaMapValue.constructorOfMap(field.getType());
+    }
+
+
+    @Override
+    boolean equalsValueType(SchemaValueAbs schemaValueAbs) {
+        if(!(schemaValueAbs instanceof ISchemaMapValue)) {
+            return false;
+        }
+        ISchemaMapValue mapValue = (ISchemaMapValue)schemaValueAbs;
+        if(elementClass != null && !elementClass.equals( mapValue.getElementType())) {
+            return false;
+        }
+        return super.equalsValueType(schemaValueAbs);
     }
 
 
 
-
-
-
-
-
-    private void assertCollectionOrMapValue(Class<?> type) {
-        if(type == null) return;
-        if(Map.class.isAssignableFrom(type)) {
-            throw new CSONObjectException("The java.util.Map type cannot be directly used as a value element of a Map. Please create a class that wraps your Map and use it as a value element of the Map of field. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
-        } else if(Collection.class.isAssignableFrom(type)) {
-            throw new CSONObjectException("The java.util.Collection type cannot be directly used as a value element of a Map. Please create a class that wraps your Collection and use it as a value element of the Map  of field. (Field path: " + field.getDeclaringClass().getName() + "." + field.getName() + ")");
-        }
-    }
-
-    Class<?> getElementType() {
+    @Override
+    public Class<?> getElementType() {
         return elementClass;
     }
 
     @Override
-    Object newInstance() {
+    public Object newInstance() {
         try {
             return constructorMap.newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -62,51 +63,13 @@ public class SchemaFieldMap extends SchemaField {
         }
     }
 
-    Map.Entry<Class<?>, Class<?>> readKeyValueGenericType(Field field) {
-        Type genericFieldType = field.getGenericType();
-        if (genericFieldType instanceof java.lang.reflect.ParameterizedType) {
-            java.lang.reflect.ParameterizedType aType = (java.lang.reflect.ParameterizedType) genericFieldType;
-            Type[] fieldArgTypes = aType.getActualTypeArguments();
-            if(fieldArgTypes.length != 2) {
-                throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is Raw type. Please use generic type.");
-            }
-            if(fieldArgTypes[0] instanceof Class<?> && fieldArgTypes[1] instanceof Class<?>) {
-                return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], (Class<?>)fieldArgTypes[1]);
-            } else if(fieldArgTypes[1] instanceof  java.lang.reflect.ParameterizedType) {
-                return new AbstractMap.SimpleEntry<>((Class<?>)fieldArgTypes[0], (Class<?>)((java.lang.reflect.ParameterizedType)fieldArgTypes[1]).getRawType());
-            }
-            else {
-                throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is Raw type. Please use generic type.");
-            }
-        } else  {
-            throw new CSONObjectException("Map field '" + field.getDeclaringClass() + "."  + field.getName() + "' is Raw type. Please use generic type.");
-        }
-    }
-
 
     @SuppressWarnings("unchecked")
-    private static Constructor<?> constructorOfMap(Class<?> type) {
-        try {
-            if (type.isInterface() && Map.class.isAssignableFrom(type)) {
-                return HashMap.class.getConstructor();
-            } else if(type.isInterface() && SortedMap.class.isAssignableFrom(type)) {
-                return TreeMap.class.getConstructor();
-            } else if(type.isInterface() && NavigableMap.class.isAssignableFrom(type)) {
-                return TreeMap.class.getConstructor();
-            } else if(type.isInterface() && ConcurrentMap.class.isAssignableFrom(type)) {
-                return ConcurrentHashMap.class.getConstructor();
-            } else if(type.isInterface() && ConcurrentNavigableMap.class.isAssignableFrom(type)) {
-                return ConcurrentSkipListMap.class.getConstructor();
-            }
-            return type.getConstructor();
-        } catch (NoSuchMethodException e) {
-            throw new CSONObjectException("Map type " + type.getName() + " has no default constructor.");
-        }
-    }
+
 
 
     @Override
-    public SchemaNode copyNode() {
+    public ISchemaNode copyNode() {
         return new SchemaFieldMap(parentsTypeElement, field, path);
     }
 }

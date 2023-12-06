@@ -36,12 +36,12 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 	public CSONArray(byte[] buffer) {
 		super(ElementType.Array);
-		this.list = ((CSONArray)CSONParser.parse(buffer)).list;
+		this.list = ((CSONArray) BinaryCSONParser.parse(buffer)).list;
 	}
 
 	public CSONArray(byte[] buffer,int offset, int len) {
 		super(ElementType.Array);
-		this.list = ((CSONArray)CSONParser.parse(buffer, offset, len)).list;
+		this.list = ((CSONArray) BinaryCSONParser.parse(buffer, offset, len)).list;
 	}
 	
 	@Override
@@ -753,13 +753,13 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	}
 	
 	public byte[] toByteArray() {
-		CSONWriter writer = new CSONWriter();
+		BinaryCSONWriter writer = new BinaryCSONWriter();
 		write(writer);
 		return writer.toByteArray();
 	}
 	
 	@SuppressWarnings("ForLoopReplaceableByForEach")
-	protected void write(CSONWriter writer) {
+	protected void write(BinaryCSONWriter writer) {
 		writer.openArray();
 		for(int i = 0, n = list.size(); i < n; ++i) {
 			Object obj = list.get(i);

@@ -1,5 +1,6 @@
 package com.snoworca.cson;
 
+
 import java.nio.ByteBuffer;
 import java.util.regex.Pattern;
 
@@ -105,15 +106,15 @@ public abstract  class CSONElement {
 	public enum ElementType { Object, Array;};
 
 	private CSONElement mParents = null;
-	private byte[] versionRaw = CSONDataType.VER_RAW;
+	private byte[] versionRaw = BinaryCSONDataType.VER_RAW;
 	private final ElementType mType;
 
 
-	protected void setParents(CSONElement parents) {
+	public void setParents(CSONElement parents) {
 		mParents = parents;
 	}
 
-	CSONElement(ElementType type) {
+	protected CSONElement(ElementType type) {
 		this.mType = type;
 	}
 

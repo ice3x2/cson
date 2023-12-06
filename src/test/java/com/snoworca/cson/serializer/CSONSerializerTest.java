@@ -6,7 +6,6 @@ import com.snoworca.cson.JSONOptions;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static junit.framework.TestCase.*;
@@ -610,18 +609,17 @@ public class CSONSerializerTest {
 
    @CSON
    public static class SetterGetterTestClass {
-        /*String inputName = "name";
-         @CSONValueGetter
-         public String getName() {
-              return "name";
-         }
-         @CSONValueSetter
-         public void setName(int name) {
-            this.inputName = name + "";
-         }*/
+
+        Map<String, String> nameAgeMap = null;
+        Map<String, Integer> nameAgeMapInteger = null;
+
 
 
        Collection<ArrayList<LinkedList<String>>> nameList = null;
+       ArrayDeque<LinkedList<HashSet<Integer>>> nameTypeChangedList = null;
+
+       @CSONValue("nameList")
+       Collection<Collection<Collection<Short>>> nameShortList = null;
 
        @CSONValueGetter
        public Collection<ArrayList<LinkedList<String>>> getNameList() {
@@ -633,7 +631,7 @@ public class CSONSerializerTest {
                    LinkedList<String> list = new LinkedList<>();
                    for(int k = 0; k < 10; k++) {
                        ++x;
-                       list.add("Value" + x);
+                       list.add( x + "");
                    }
                    arrayList.add(list);
                }
@@ -654,11 +652,41 @@ public class CSONSerializerTest {
 
 
        @CSONValueSetter(key = "nameList")
-       public void setNameHashSet(ArrayDeque<LinkedList<HashSet<String>>> names) {
-           ArrayDeque<LinkedList<HashSet<String>>> value = names;
-
+       public void setNameHashSet(ArrayDeque<LinkedList<HashSet<Integer>>> names) {
+           nameTypeChangedList = names;
        }
 
+
+       @CSONValueGetter
+       public Map<String, String> getNameAgeMap() {
+              Map<String, String> map = new HashMap<>();
+              for(int i = 0; i < 10; i++) {
+                  map.put("name" + i, i + "");
+              }
+              return map;
+       }
+
+       @CSONValueSetter(key = "nameAgeMap")
+       public String setNameAgeMapInteger(Map<String, Integer> map) {
+           nameAgeMapInteger = map;
+           return "OK" ;
+       }
+
+       @CSONValueSetter(key = "nameAgeMap")
+       public String setNameAgeMap(Map<String, String> map) {
+          nameAgeMap = map;
+          return "OK" ;
+       }
+
+       String inputName = "name";
+       @CSONValueGetter
+       public String getName() {
+           return "name";
+       }
+       @CSONValueSetter
+       public void setName(String name) {
+           this.inputName = name;
+       }
 
 
    }
@@ -666,38 +694,68 @@ public class CSONSerializerTest {
 
    @Test
     public void setterGetterTest() {
-        SetterGetterTestClass setterGetterTestClass = new SetterGetterTestClass();
+        for(int count = 0; count < 1; ++count) {
 
-        CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
-        System.out.println(csonObject.toString(JSONOptions.json5()));
 
-        setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
+            SetterGetterTestClass setterGetterTestClass = new SetterGetterTestClass();
 
-        assertEquals(setterGetterTestClass.nameList.size(), 10);
-        Iterator<ArrayList<LinkedList<String>>> iter = setterGetterTestClass.nameList.iterator();
-        int x = 0;
-        for(int i = 0; i < 10; i++) {
-            ArrayList<LinkedList<String>> arrayList = iter.next();
-            assertEquals(arrayList.size(), 10);
-            Iterator<LinkedList<String>> iter2 = arrayList.iterator();
-            for(int j = 0; j < 10; j++) {
-                LinkedList<String> list = iter2.next();
-                assertEquals(list.size(), 10);
-                Iterator<String> iter3 = list.iterator();
-                for(int k = 0; k < 10; k++) {
-                    ++x;
-                    assertEquals("Value" + x, iter3.next());
+            CSONObject csonObject = CSONSerializer.toCSONObject(setterGetterTestClass);
+            System.out.println(csonObject.toString(JSONOptions.json5()));
+
+            setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
+
+            assertEquals(setterGetterTestClass.nameList.size(), 10);
+            Iterator<ArrayList<LinkedList<String>>> iter = setterGetterTestClass.nameList.iterator();
+            int x = 0;
+            for (int i = 0; i < 10; i++) {
+                ArrayList<LinkedList<String>> arrayList = iter.next();
+                assertEquals(arrayList.size(), 10);
+                Iterator<LinkedList<String>> iter2 = arrayList.iterator();
+                for (int j = 0; j < 10; j++) {
+                    LinkedList<String> list = iter2.next();
+                    assertEquals(list.size(), 10);
+                    Iterator<String> iter3 = list.iterator();
+                    for (int k = 0; k < 10; k++) {
+                        ++x;
+                        assertEquals(x + "", iter3.next());
+                    }
                 }
             }
+
+            assertTrue(setterGetterTestClass.nameTypeChangedList instanceof  ArrayDeque);
+            assertEquals(setterGetterTestClass.nameTypeChangedList.size(), 10);
+            Iterator<LinkedList<HashSet<Integer>>> iter4 = setterGetterTestClass.nameTypeChangedList.iterator();
+            x = 0;
+            for (int i = 0; i < 10; i++) {
+                LinkedList<HashSet<Integer>> arrayList = iter4.next();
+                assertEquals(arrayList.size(), 10);
+                Iterator<HashSet<Integer>> iter5 = arrayList.iterator();
+                for (int j = 0; j < 10; j++) {
+                    HashSet<Integer> list = iter5.next();
+                    assertEquals(list.size(), 10);
+                    SortedSet<Integer> sortedSet = new TreeSet<>(list);
+                    Iterator<Integer> iter6 = sortedSet.iterator();
+                    for (int k = 0; k < 10; k++) {
+                        ++x;
+                        assertEquals(Integer.valueOf(x), iter6.next());
+                    }
+                }
+            }
+
+            assertEquals(setterGetterTestClass.nameAgeMap.size(), 10);
+            for(int i = 0; i < 10; i++) {
+                assertEquals(setterGetterTestClass.nameAgeMap.get("name" + i), i + "");
+                assertEquals(setterGetterTestClass.nameAgeMapInteger.get("name" + i),Integer.valueOf(i) );
+            }
+
+
+            System.out.println(csonObject.toString(JSONOptions.json5()));
+            assertEquals("name", csonObject.get("name"));
+            csonObject.put("name", "1213123");
+
+            setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
+            assertEquals("1213123", setterGetterTestClass.inputName);
         }
-
-
-        /*System.out.println(csonObject.toString(JSONOptions.json5()));
-        assertEquals("name", csonObject.get("name"));
-        csonObject.put("name", "1213123");
-
-        setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
-        assertEquals("1213123", setterGetterTestClass.inputName);*/
    }
 
 
