@@ -8,7 +8,7 @@ import java.util.ArrayDeque;
 
 
 @SuppressWarnings("UnusedReturnValue")
-class CSONWriter {
+class BinaryCSONWriter {
 	
 	private final static int DEFAULT_BUFFER_SIZE = 4096;
 	
@@ -18,11 +18,11 @@ class CSONWriter {
 	
 	
 
-	CSONWriter() {
+	BinaryCSONWriter() {
 		mTypeStack.addLast(ObjectType.None);
 		try {
-			mBufferStream.write(CSONDataType.PREFIX);
-			mBufferStream.write(CSONDataType.VER_RAW);
+			mBufferStream.write(BinaryCSONDataType.PREFIX);
+			mBufferStream.write(BinaryCSONDataType.VER_RAW);
 		} catch (IOException ignored) {}
 	}
 
@@ -33,7 +33,7 @@ class CSONWriter {
 		// 총 16 개 버퍼 저장 가능. 1바이트 사용.
 		if(buffer.length < 16) { 
 			
-			byte typeAndLen = (byte)(CSONDataType.TYPE_STRING_SHORT | buffer.length);
+			byte typeAndLen = (byte)(BinaryCSONDataType.TYPE_STRING_SHORT | buffer.length);
 			mBufferStream.write(typeAndLen);
 			if(buffer.length == 0) {
 				return;
@@ -41,7 +41,7 @@ class CSONWriter {
 		}
 		else if(buffer.length < 4095) {
 			// 총 4094 개 버퍼 저장 가능. 2바이트 사용.
-			byte typeAndLen = (byte)(CSONDataType.TYPE_STRING_MIDDLE | ((buffer.length & 0x00000F00) >> 8));
+			byte typeAndLen = (byte)(BinaryCSONDataType.TYPE_STRING_MIDDLE | ((buffer.length & 0x00000F00) >> 8));
 			byte lenNext = (byte)(buffer.length & 0x000000FF);
 			
 			mBufferStream.write(typeAndLen);
@@ -52,7 +52,7 @@ class CSONWriter {
 			//int size = (lenFirst | (int)(lenNext & 0xFF));
 		} else {
 			// 총 1048574 개의 버퍼 저장 가능. 총 3바이트 사용.
-			byte typeAndLen = (byte)(CSONDataType.TYPE_STRING_LONG | ((buffer.length & 0x000F0000) >> 16));
+			byte typeAndLen = (byte)(BinaryCSONDataType.TYPE_STRING_LONG | ((buffer.length & 0x000F0000) >> 16));
 			byte lenNextA = (byte)((buffer.length & 0x0000FF00) >> 8);
 			byte lenNextB = (byte)(buffer.length & 0x000000FF);
 			
@@ -70,7 +70,7 @@ class CSONWriter {
 		// 총 16 개 버퍼 저장 가능. 1바이트 사용.
 		if(buffer.length < 4095) {
 			// 총 4094 개 버퍼 저장 가능. 2바이트 사용.
-			byte typeAndLen = (byte)(CSONDataType.TYPE_RAW_MIDDLE | ((buffer.length & 0x00000F00) >> 8));
+			byte typeAndLen = (byte)(BinaryCSONDataType.TYPE_RAW_MIDDLE | ((buffer.length & 0x00000F00) >> 8));
 			byte lenNext = (byte)(buffer.length & 0x000000FF);
 			
 			mBufferStream.write(typeAndLen);
@@ -85,7 +85,7 @@ class CSONWriter {
 			//int size = (lenFirst | (int)(lenNext & 0xFF));
 		} else if(buffer.length < 1048574) {
 			// 총 1048574 개의 버퍼 저장 가능. 총 3바이트 사용.
-			byte typeAndLen = (byte)(CSONDataType.TYPE_RAW_LONG | ((buffer.length & 0x000F0000) >> 16));
+			byte typeAndLen = (byte)(BinaryCSONDataType.TYPE_RAW_LONG | ((buffer.length & 0x000F0000) >> 16));
 			byte lenNextA = (byte)((buffer.length & 0x0000FF00) >> 8);
 			byte lenNextB = (byte)(buffer.length & 0x000000FF);
 			
@@ -98,7 +98,7 @@ class CSONWriter {
 		}
 		else  {
 				// 총 4G 저장 가능 총. 5바이트 사용.
-				byte type = CSONDataType.TYPE_RAW_WILD;
+				byte type = BinaryCSONDataType.TYPE_RAW_WILD;
 				writeInt(buffer.length);				
 				mBufferStream.write(type);
 		}
@@ -144,7 +144,7 @@ class CSONWriter {
 	
 
 	@SuppressWarnings("unused")
-	CSONWriter key(char key) {
+	BinaryCSONWriter key(char key) {
 		if(mTypeStack.getLast() != ObjectType.Object) {
 			throw new CSONWriteException();
 		}
@@ -153,7 +153,7 @@ class CSONWriter {
 		return this;
 	 }
 	
-	 CSONWriter key(String key) {
+	 BinaryCSONWriter key(String key) {
 		 if(mTypeStack.getLast() != ObjectType.Object) {
 			 throw new CSONWriteException();
 		 }
@@ -163,16 +163,16 @@ class CSONWriter {
 	 }
 	 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter nullValue() {
+	 BinaryCSONWriter nullValue() {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_NULL);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_NULL);
 		 return this;
 	 }
 	 
-	 CSONWriter value(String value) {
+	 BinaryCSONWriter value(String value) {
 		 if(value== null) {
 			 nullValue();
 			 return this;
@@ -186,7 +186,7 @@ class CSONWriter {
 		 return this;
 	 }
 	 
-	 CSONWriter value(byte[] value) {
+	 BinaryCSONWriter value(byte[] value) {
 		 if(value== null) {
 			 nullValue();
 			 return this;
@@ -199,7 +199,7 @@ class CSONWriter {
 		 return this;
 	 }
 
-	CSONWriter value(BigDecimal value) {
+	BinaryCSONWriter value(BigDecimal value) {
 		if(value== null) {
 			nullValue();
 			return this;
@@ -208,103 +208,103 @@ class CSONWriter {
 			throw new CSONWriteException();
 		}
 		mTypeStack.removeLast();
-		mBufferStream.write(CSONDataType.TYPE_BIGDECIMAL);
+		mBufferStream.write(BinaryCSONDataType.TYPE_BIGDECIMAL);
 		writeString(value.toString().getBytes(StandardCharsets.UTF_8));
 		return this;
 	}
 	 
-	 CSONWriter value(byte value) {
+	 BinaryCSONWriter value(byte value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_BYTE);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_BYTE);
 		 mBufferStream.write(value);
 		 return this;
 	 }
 	 
-	 CSONWriter value(int value) {
+	 BinaryCSONWriter value(int value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_INT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_INT);
 		 writeInt(value);
 		 return this;
 	 }
 	 
-	 CSONWriter value(long value) {
+	 BinaryCSONWriter value(long value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_LONG);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_LONG);
 		 writeLong(value);
 		 return this;
 	 }
 	 
-	 CSONWriter value(short value) {
+	 BinaryCSONWriter value(short value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_SHORT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_SHORT);
 		 writeShort(value);
 		 return this;
 	 }
 	 
-	 CSONWriter value(boolean value) {
+	 BinaryCSONWriter value(boolean value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_BOOLEAN);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_BOOLEAN);
 		 mBufferStream.write(value ? 1 : 0);
 		 return this;
 	 }
 	 
-	 CSONWriter value(char value) {
+	 BinaryCSONWriter value(char value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_CHAR);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_CHAR);
 		 writeShort((short)value);
 		 return this;
 	 }
 	 
-	 CSONWriter value(float value) {
+	 BinaryCSONWriter value(float value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_FLOAT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_FLOAT);
 		 writeFloat(value);
 		 return this;
 	 }
 	 
-	 CSONWriter value(double value) {
+	 BinaryCSONWriter value(double value) {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.removeLast();
-		 mBufferStream.write(CSONDataType.TYPE_DOUBLE);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_DOUBLE);
 		 writeDouble(value);
 		 return this;
 	 }
 
 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter addNull() {
+	 BinaryCSONWriter addNull() {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_NULL);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_NULL);
 		 return this;
 	 }
 	 
-	 CSONWriter add(String value) {
+	 BinaryCSONWriter add(String value) {
 		 if(value== null) {
 			 addNull();
 			 return this;
@@ -316,7 +316,7 @@ class CSONWriter {
 		 return this;
 	 }
 	 
-	 CSONWriter add(byte[] value) {
+	 BinaryCSONWriter add(byte[] value) {
 		 if(value== null) {
 			 addNull();
 			 return this;
@@ -329,7 +329,7 @@ class CSONWriter {
 	 }
 
 	@SuppressWarnings("unused")
-	CSONWriter add(BigDecimal value) {
+	BinaryCSONWriter add(BigDecimal value) {
 		if(value== null) {
 			addNull();
 			return this;
@@ -337,93 +337,93 @@ class CSONWriter {
 		if(mTypeStack.getLast() != ObjectType.Array) {
 			throw new CSONWriteException();
 		}
-		mBufferStream.write(CSONDataType.TYPE_BIGDECIMAL);
+		mBufferStream.write(BinaryCSONDataType.TYPE_BIGDECIMAL);
 		writeString(value.toString().getBytes(StandardCharsets.UTF_8));
 		return this;
 	}
 	 
 	 
-	 CSONWriter add(byte value) {
+	 BinaryCSONWriter add(byte value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_BYTE);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_BYTE);
 		 mBufferStream.write(value);
 		 return this;
 	 }
 	 
-	 CSONWriter add(int value) {
+	 BinaryCSONWriter add(int value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_INT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_INT);
 		 writeInt(value);
 		 return this;
 	 }
 	 
-	 CSONWriter add(long value) {
+	 BinaryCSONWriter add(long value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_LONG);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_LONG);
 		 writeLong(value);
 		 return this;
 	 }
 	 
-	 CSONWriter add(short value) {
+	 BinaryCSONWriter add(short value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_SHORT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_SHORT);
 		 writeShort(value);
 		 return this;
 	 }
 	 
-	 CSONWriter add(boolean value) {
+	 BinaryCSONWriter add(boolean value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_BOOLEAN);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_BOOLEAN);
 		 mBufferStream.write(value ? 1 : 0);
 		 return this;
 	 }
 	 
 	 @SuppressWarnings("unused")
-	 CSONWriter add(CSONWriter writer) {
+	 BinaryCSONWriter add(BinaryCSONWriter writer) {
 		 if(mTypeStack.getLast() != ObjectType.Array && writer.mTypeStack.getLast() != ObjectType.None) {
 			 throw new CSONWriteException();
 		 }
 		 byte[] buffer = writer.toByteArray(); 
-		 int headerSize = 1/*prefix size*/ + CSONDataType.VER_RAW.length;
+		 int headerSize = 1/*prefix size*/ + BinaryCSONDataType.VER_RAW.length;
 		 mBufferStream.write(buffer, headerSize, buffer.length - headerSize);
 		 return this;
 	 }
 	 
-	 CSONWriter add(char value) {
+	 BinaryCSONWriter add(char value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_CHAR);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_CHAR);
 		 writeShort((short)value);
 		 return this;
 	 }
 	 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter add(float value) {
+	 BinaryCSONWriter add(float value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_FLOAT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_FLOAT);
 		 writeFloat(value);
 		 return this;
 	 }
 
 	@SuppressWarnings("UnusedReturnValue")
-	 CSONWriter add(double value) {
+	BinaryCSONWriter add(double value) {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_DOUBLE);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_DOUBLE);
 		 writeDouble(value);
 		 return this;
 	 }
@@ -431,17 +431,17 @@ class CSONWriter {
 	 
 	 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter openArray() {
+	 BinaryCSONWriter openArray() {
 		 if(mTypeStack.getLast() != ObjectType.ObjectKey && mTypeStack.getLast() != ObjectType.Array && mTypeStack.getLast() != ObjectType.None) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.addLast(ObjectType.Array);
-		 mBufferStream.write(CSONDataType.TYPE_OPEN_ARRAY);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_OPEN_ARRAY);
 		 return this;
 	 }
 	 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter closeArray() {
+	 BinaryCSONWriter closeArray() {
 		 if(mTypeStack.getLast() != ObjectType.Array) {
 			 throw new CSONWriteException();
 		 }
@@ -450,22 +450,22 @@ class CSONWriter {
 		 if(mTypeStack.getLast() == ObjectType.ObjectKey) {
 			 mTypeStack.removeLast();	 
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_CLOSE_ARRAY);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_CLOSE_ARRAY);
 		 return this;
 	 }
 	 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter openObject() {
+	 BinaryCSONWriter openObject() {
 		 if(mTypeStack.getLast() == ObjectType.Object) {
 			 throw new CSONWriteException();
 		 }
 		 mTypeStack.addLast(ObjectType.Object);
-		 mBufferStream.write(CSONDataType.TYPE_OPEN_OBJECT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_OPEN_OBJECT);
 		 return this;
 	 }
 	 
 	 @SuppressWarnings("UnusedReturnValue")
-	 CSONWriter closeObject() {
+	 BinaryCSONWriter closeObject() {
 		 if(mTypeStack.getLast() != ObjectType.Object) {
 			 throw new CSONWriteException();
 		 }
@@ -473,7 +473,7 @@ class CSONWriter {
 		 if(mTypeStack.getLast() == ObjectType.ObjectKey) {
 			 mTypeStack.removeLast();	 
 		 }
-		 mBufferStream.write(CSONDataType.TYPE_CLOSE_OBJECT);
+		 mBufferStream.write(BinaryCSONDataType.TYPE_CLOSE_OBJECT);
 		 return this;
 	 }
 	 

@@ -151,7 +151,7 @@ public class NodePath {
 
 
 
-    private static void putNode(SchemaNode Node, PathItem pathItem, SchemaNode value) {
+    private static void putNode(ISchemaNode Node, PathItem pathItem, ISchemaNode value) {
         if(pathItem.isInArray()) {
             if(pathItem.isObject()) {
                 int index = pathItem.getIndex();
@@ -170,7 +170,7 @@ public class NodePath {
     }
 
 
-    public static SchemaElementNode makeSubTree(String path, SchemaNode value) {
+    public static SchemaElementNode makeSubTree(String path, ISchemaNode value) {
         List<PathItem> list = PathItem.parseMultiPath2(path);
         SchemaElementNode rootNode = new SchemaObjectNode();
         SchemaElementNode schemaNode = rootNode;

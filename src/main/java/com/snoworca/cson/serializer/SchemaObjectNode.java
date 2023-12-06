@@ -9,7 +9,7 @@ import java.util.Set;
 
 class SchemaObjectNode extends SchemaElementNode {
 
-    private final Map<Object, SchemaNode> map = new LinkedHashMap<>();
+    private final Map<Object, ISchemaNode> map = new LinkedHashMap<>();
 
     private SchemaFieldNormal fieldRack;
 
@@ -36,12 +36,12 @@ class SchemaObjectNode extends SchemaElementNode {
 
 
 
-    SchemaNode get(Object key) {
+    ISchemaNode get(Object key) {
         return map.get(key);
     }
 
 
-    void put(Object key, SchemaNode value) {
+    void put(Object key, ISchemaNode value) {
         if(value instanceof SchemaElementNode) {
             ((SchemaElementNode) value).setParent(this);
         }
@@ -49,7 +49,7 @@ class SchemaObjectNode extends SchemaElementNode {
     }
 
 
-    Map<Object, SchemaNode> getMap() {
+    Map<Object, ISchemaNode> getMap() {
         return map;
     }
 
@@ -64,8 +64,8 @@ class SchemaObjectNode extends SchemaElementNode {
     @Override
     public SchemaObjectNode copyNode() {
         SchemaObjectNode objectNode = new SchemaObjectNode();
-        for(Map.Entry<Object, SchemaNode> entry : map.entrySet()) {
-            SchemaNode node = entry.getValue().copyNode();
+        for(Map.Entry<Object, ISchemaNode> entry : map.entrySet()) {
+            ISchemaNode node = entry.getValue().copyNode();
             if(node instanceof SchemaElementNode) {
                 ((SchemaElementNode) node).setParentSchemaFieldList(getParentSchemaFieldList());
             }
@@ -100,11 +100,11 @@ class SchemaObjectNode extends SchemaElementNode {
     public void merge(SchemaElementNode schemaElementNode) {
         if(schemaElementNode instanceof SchemaObjectNode) {
             SchemaObjectNode objectNode = (SchemaObjectNode) schemaElementNode;
-            Set<Map.Entry<Object, SchemaNode>> entrySet = objectNode.map.entrySet();
-            for(Map.Entry<Object, SchemaNode> entry : entrySet) {
+            Set<Map.Entry<Object, ISchemaNode>> entrySet = objectNode.map.entrySet();
+            for(Map.Entry<Object, ISchemaNode> entry : entrySet) {
                 Object key = entry.getKey();
-                SchemaNode node = entry.getValue();
-                SchemaNode thisNode = map.get(key);
+                ISchemaNode node = entry.getValue();
+                ISchemaNode thisNode = map.get(key);
                 if(thisNode instanceof  SchemaObjectNode && node instanceof SchemaObjectNode) {
                     ((SchemaObjectNode) thisNode).merge((SchemaObjectNode) node);
                 } else if(thisNode instanceof SchemaValueAbs && node instanceof SchemaValueAbs) {
@@ -140,8 +140,8 @@ class SchemaObjectNode extends SchemaElementNode {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("{");
-        Set<Map.Entry<Object, SchemaNode>> entrySet = map.entrySet();
-        for(Map.Entry<Object, SchemaNode> entry : entrySet) {
+        Set<Map.Entry<Object, ISchemaNode>> entrySet = map.entrySet();
+        for(Map.Entry<Object, ISchemaNode> entry : entrySet) {
             int branchMode = entry.getValue() instanceof SchemaElementNode ? ((SchemaElementNode) entry.getValue()).isBranchNode() ? 1 : 0 : -1;
             stringBuilder.append(entry.getKey()).append(branchMode > 0 ? "(b)" : "").append(":").append(entry.getValue().toString()).append(",");
         }

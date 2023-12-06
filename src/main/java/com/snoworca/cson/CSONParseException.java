@@ -5,7 +5,7 @@ public class CSONParseException  extends RuntimeException {
         super(message);
     }
 
-    CSONParseException() {
+    public CSONParseException() {
         super();
     }
 

@@ -46,7 +46,7 @@ public class CSONSerializer {
 
         while(iter.hasNext()) {
             Object key = iter.next();
-            SchemaNode node = schemaNode.get(key);
+            ISchemaNode node = schemaNode.get(key);
             if(node instanceof SchemaObjectNode) {
                 schemaNode = (SchemaObjectNode)node;
                 iter = schemaNode.keySet().iterator();
@@ -120,38 +120,38 @@ public class CSONSerializer {
                     Object value = schemaValueAbs.getValue(parent);
                     putValueInCSONElement(csonElement, schemaValueAbs, key, value);
                 }
-            } else if(node instanceof SchemaFieldMap) {
-                SchemaFieldMap schemaFieldMap = (SchemaFieldMap)node;
-                Object parent = obtainParentObjects(parentObjMap, schemaFieldMap, rootObject);
+            } else if(node instanceof ISchemaMapValue) {
+                SchemaValueAbs schemaMap = (SchemaValueAbs)node;
+                Object parent = obtainParentObjects(parentObjMap, schemaMap, rootObject);
                 if(parent != null) {
-                    Object value = schemaFieldMap.getValue(parent);
+                    Object value = schemaMap.getValue(parent);
                     if(value != null) {
                         @SuppressWarnings("unchecked")
-                        CSONObject csonObject = mapObjectToCSONObject((Map<String, ?>) value, schemaFieldMap.getElementType());
-                        putValueInCSONElement(csonElement, schemaFieldMap, key, csonObject);
+                        CSONObject csonObject = mapObjectToCSONObject((Map<String, ?>) value, ((ISchemaMapValue)schemaMap).getElementType());
+                        putValueInCSONElement(csonElement, schemaMap, key, csonObject);
                     } else {
-                        putValueInCSONElement(csonElement, schemaFieldMap, key, null);
+                        putValueInCSONElement(csonElement, schemaMap, key, null);
                     }
                 }
 
             }
-            else if(node instanceof SchemaArrayValue) {
-                SchemaArrayValue schemaArrayValue = (SchemaArrayValue)node;
-                Object parent = obtainParentObjects(parentObjMap, (SchemaValueAbs) schemaArrayValue, rootObject);
+            else if(node instanceof ISchemaArrayValue) {
+                ISchemaArrayValue ISchemaArrayValue = (ISchemaArrayValue)node;
+                Object parent = obtainParentObjects(parentObjMap, (SchemaValueAbs) ISchemaArrayValue, rootObject);
                 if(parent != null) {
-                    Object value = schemaArrayValue.getValue(parent);
+                    Object value = ISchemaArrayValue.getValue(parent);
                     if(value != null) {
-                        CSONArray csonArray = collectionObjectToSONArrayKnownSchema((Collection<?>)value, schemaArrayValue);
-                        putValueInCSONElement(csonElement, schemaArrayValue, key, csonArray);
+                        CSONArray csonArray = collectionObjectToSONArrayKnownSchema((Collection<?>)value, ISchemaArrayValue);
+                        putValueInCSONElement(csonElement, ISchemaArrayValue, key, csonArray);
                     } else {
-                        putValueInCSONElement(csonElement, schemaArrayValue, key, null);
+                        putValueInCSONElement(csonElement, ISchemaArrayValue, key, null);
                     }
                 }
             }
             while(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
                 ObjectSerializeDequeueItem objectSerializeDequeueItem = objectSerializeDequeueItems.getFirst();
                 iter = objectSerializeDequeueItem.keyIterator;
-                schemaNode = (SchemaObjectNode) objectSerializeDequeueItem.schemaNode;
+                schemaNode = (SchemaObjectNode) objectSerializeDequeueItem.ISchemaNode;
                 csonElement = objectSerializeDequeueItem.resultElement;
                 if(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
                     objectSerializeDequeueItems.removeFirst();
@@ -161,17 +161,17 @@ public class CSONSerializer {
         return root;
     }
 
-    private static void putValueInCSONElement(CSONElement csonElement, SchemaValue schemaValueAbs, Object key, Object value) {
+    private static void putValueInCSONElement(CSONElement csonElement, ISchemaValue ISchemaValueAbs, Object key, Object value) {
         if(key instanceof String) {
             ((CSONObject) csonElement).put((String) key, value);
-            ((CSONObject) csonElement).setCommentForKey((String) key, schemaValueAbs.getComment());
-            ((CSONObject) csonElement).setCommentAfterKey((String) key, schemaValueAbs.getAfterComment());
+            ((CSONObject) csonElement).setCommentForKey((String) key, ISchemaValueAbs.getComment());
+            ((CSONObject) csonElement).setCommentAfterKey((String) key, ISchemaValueAbs.getAfterComment());
         }
         else {
             assert csonElement instanceof CSONArray;
             ((CSONArray)csonElement).set((int)key, value);
-            ((CSONArray)csonElement).setCommentForValue((int)key, schemaValueAbs.getComment()) ;
-            ((CSONArray)csonElement).setCommentAfterValue((int)key, schemaValueAbs.getAfterComment());
+            ((CSONArray)csonElement).setCommentForValue((int)key, ISchemaValueAbs.getComment()) ;
+            ((CSONArray)csonElement).setCommentAfterValue((int)key, ISchemaValueAbs.getAfterComment());
         }
     }
 
@@ -193,7 +193,7 @@ public class CSONSerializer {
             String key = entry.getKey();
             if(value != null && valueType == null) {
                 valueType = value.getClass();
-                SchemaField.assertValueType(valueType, null);
+                ISchemaValue.assertValueType(valueType, null);
                 types = Types.of(valueType);
                 //noinspection DataFlowIssue
                 if(!(key instanceof String)) {
@@ -245,11 +245,11 @@ public class CSONSerializer {
 
 
 
-    private static CSONArray collectionObjectToSONArrayKnownSchema(Collection<?> collection, SchemaArrayValue SchemaArrayValue) {
+    private static CSONArray collectionObjectToSONArrayKnownSchema(Collection<?> collection, ISchemaArrayValue ISchemaArrayValue) {
         CSONArray resultCsonArray  = new CSONArray();
         CSONArray csonArray = resultCsonArray;
         Iterator<?> iter = collection.iterator();
-        TypeElement objectValueTypeElement = SchemaArrayValue.getObjectValueTypeElement();
+        TypeElement objectValueTypeElement = ISchemaArrayValue.getObjectValueTypeElement();
         Deque<ArraySerializeDequeueItem> arraySerializeDequeueItems = new ArrayDeque<>();
         ArraySerializeDequeueItem currentArraySerializeDequeueItem = new ArraySerializeDequeueItem(iter, csonArray);
         arraySerializeDequeueItems.add(currentArraySerializeDequeueItem);
@@ -377,7 +377,7 @@ public class CSONSerializer {
         objectSerializeDequeueItems.add(currentObjectSerializeDequeueItem);
         while(iter.hasNext()) {
             Object key = iter.next();
-            SchemaNode node = schemaNode.get(key);
+            ISchemaNode node = schemaNode.get(key);
             if(node instanceof SchemaElementNode) {
                 boolean nullValue = false;
                 CSONElement childElement = getChildElement((SchemaElementNode) node, csonElement, key);
@@ -417,13 +417,13 @@ public class CSONSerializer {
                 SchemaValueAbs parentField = schemaField.getParentField();
                 if(csonElement != null) {
                     Object obj = getOrCreateParentObject(parentField, parentObjMap, targetObject);
-                    setValueTargetFromCSONObject(obj, schemaField, csonElement, key);
+                    setValueTargetFromCSONObjects(obj, schemaField, csonElement, key);
                 }
             }
             while(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
                 ObjectSerializeDequeueItem objectSerializeDequeueItem = objectSerializeDequeueItems.getFirst();
                 iter = objectSerializeDequeueItem.keyIterator;
-                schemaNode = (SchemaObjectNode) objectSerializeDequeueItem.schemaNode;
+                schemaNode = (SchemaObjectNode) objectSerializeDequeueItem.ISchemaNode;
                 csonElement = objectSerializeDequeueItem.resultElement;
                 if(!iter.hasNext() && !objectSerializeDequeueItems.isEmpty()) {
                     objectSerializeDequeueItems.removeFirst();
@@ -470,6 +470,14 @@ public class CSONSerializer {
 
     }
 
+
+    private static void setValueTargetFromCSONObjects(Object parents, SchemaValueAbs schemaField, CSONElement cson, Object key) {
+        List<SchemaValueAbs> schemaValueAbsList = schemaField.getAllSchemaValueList();
+        for(SchemaValueAbs schemaValueAbs : schemaValueAbsList) {
+            setValueTargetFromCSONObject(parents, schemaValueAbs, cson, key);
+        }
+    }
+
     private static void setValueTargetFromCSONObject(Object parents, SchemaValueAbs schemaField, CSONElement cson, Object key) {
         boolean isArrayType = cson instanceof CSONArray;
 
@@ -491,7 +499,7 @@ public class CSONSerializer {
         } else if(Types.Collection == valueType) {
             CSONArray csonArray = isArrayType ? ((CSONArray) cson).optArray((int)key) : ((CSONObject)cson).optArray((String)key);
             if(csonArray != null) {
-                csonArrayToCollectionObject(csonArray, (SchemaArrayValue)schemaField, parents);
+                csonArrayToCollectionObject(csonArray, (ISchemaArrayValue)schemaField, parents);
             } else if(isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key)) {
                 try {
                     schemaField.setValue(parents, null);
@@ -510,7 +518,7 @@ public class CSONSerializer {
             CSONObject csonObj = isArrayType ? ((CSONArray) cson).optObject((int)key) : ((CSONObject)cson).optObject((String)key);
             if(csonObj != null) {
                 Object target = schemaField.newInstance();
-                Class<?> type = ((SchemaFieldMap)schemaField).getElementType();
+                Class<?> type = ((ISchemaMapValue)schemaField).getElementType();
                 fromCSONObjectToMap((Map<?,?>)target,csonObj,type);
                 schemaField.setValue(parents, target);
             } else if(isArrayType ? ((CSONArray) cson).isNull((int)key) : ((CSONObject)cson).isNull((String)key)) {
@@ -526,11 +534,11 @@ public class CSONSerializer {
     }
 
 
-    private static Object optValueInCSONArray(CSONArray csonArray, int index, SchemaArrayValue SchemaArrayValue) {
+    private static Object optValueInCSONArray(CSONArray csonArray, int index, ISchemaArrayValue ISchemaArrayValue) {
 
 
 
-        switch (SchemaArrayValue.getValueType()) {
+        switch (ISchemaArrayValue.getEndpointValueType()) {
             case Byte:
                 return csonArray.optByte(index);
             case Short:
@@ -552,7 +560,7 @@ public class CSONSerializer {
             case Object:
                 CSONObject csonObject = csonArray.optObject(index);
                 if(csonObject != null) {
-                    Object target = SchemaArrayValue.getObjectValueTypeElement().newInstance();
+                    Object target = ISchemaArrayValue.getObjectValueTypeElement().newInstance();
                     fromCSONObject(csonObject, target);
                     return target;
                 }
@@ -564,8 +572,8 @@ public class CSONSerializer {
 
 
     @SuppressWarnings({"rawtypes", "ReassignedVariable", "unchecked"})
-    private static void csonArrayToCollectionObject(CSONArray csonArray, SchemaArrayValue SchemaArrayValue, Object parent) {
-        List<CollectionItems> collectionItems = SchemaArrayValue.getCollectionItems();
+    private static void csonArrayToCollectionObject(CSONArray csonArray, ISchemaArrayValue ISchemaArrayValue, Object parent) {
+        List<CollectionItems> collectionItems = ISchemaArrayValue.getCollectionItems();
         int collectionItemIndex = 0;
         final int collectionItemSize = collectionItems.size();
         if(collectionItemSize == 0) {
@@ -580,7 +588,7 @@ public class CSONSerializer {
         for(int index = 0; index <= end; ++index) {
             objectItem.setArrayIndex(index);
             if (collectionItem.valueClass != null) {
-                Object value = optValueInCSONArray(objectItem.csonArray, index, SchemaArrayValue);
+                Object value = optValueInCSONArray(objectItem.csonArray, index, ISchemaArrayValue);
                 objectItem.collectionObject.add(value);
             } else {
                 CSONArray inArray = objectItem.csonArray.optArray(index);
@@ -610,7 +618,7 @@ public class CSONSerializer {
             }
         }
 
-        SchemaArrayValue.setValue(parent, objectItem.collectionObject);
+        ISchemaArrayValue.setValue(parent, objectItem.collectionObject);
 
     }
 
@@ -656,12 +664,12 @@ public class CSONSerializer {
 
     private static class ObjectSerializeDequeueItem {
         Iterator<Object> keyIterator;
-        SchemaNode schemaNode;
+        ISchemaNode ISchemaNode;
         CSONElement resultElement;
 
-        private ObjectSerializeDequeueItem(Iterator<Object> keyIterator, SchemaNode schemaNode, CSONElement resultElement) {
+        private ObjectSerializeDequeueItem(Iterator<Object> keyIterator, ISchemaNode ISchemaNode, CSONElement resultElement) {
             this.keyIterator = keyIterator;
-            this.schemaNode = schemaNode;
+            this.ISchemaNode = ISchemaNode;
             this.resultElement = resultElement;
         }
     }

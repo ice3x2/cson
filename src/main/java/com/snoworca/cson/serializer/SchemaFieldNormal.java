@@ -1,7 +1,6 @@
 package com.snoworca.cson.serializer;
 
 
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 
 public class SchemaFieldNormal extends SchemaField {
@@ -25,7 +24,7 @@ public class SchemaFieldNormal extends SchemaField {
 
 
     @Override
-    public SchemaNode copyNode() {
+    public ISchemaNode copyNode() {
         SchemaFieldNormal fieldRack = copy();
         return fieldRack;
     }
