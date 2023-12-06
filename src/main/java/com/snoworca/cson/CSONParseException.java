@@ -5,6 +5,10 @@ public class CSONParseException  extends RuntimeException {
         super(message);
     }
 
+    public CSONParseException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     public CSONParseException() {
         super();
     }
