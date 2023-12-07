@@ -4,6 +4,8 @@
   - Data structures that can be represented in JSON can be serialized(or deserialized) in binary format. The binary structure can have a smaller data size than the json string type, and has a performance advantage in parsing.
   - Supports [JSON5](https://json5.org/) format. Comments are parsed alongside the data..
   - Provides object serialization and deserialization using Java annotations. In addition to this, Collection and Map can also be used for JSON type serialization and deserialization.
+  - Provides a way to access specific values in a CSON object. This is similar to XPath for XML.
+  
 
 ## Usage (gradle)
 ```groovy
@@ -97,7 +99,7 @@ dependencies {
     CSONObject parsed = new CSONObject(bytes, 0, bytes.length);
     ```
 ## CSON Path
- * CSONPath is a way to access specific values in a CSON object. This is similar to XPath for XML. Or equivalent to Javascript syntax.
+ * CSONPath is a way to access specific values in a CSON object. This is similar to XPath for XML.
    ```java
     String json5 = "{user: { name: 'John',  age: 25,  friends: [ 'Nancy', 'Mary', 'Tom', 'Jerry' ], addr: { city: 'seoul', zipCode: '06164'  } }}";
     CSONObject user = new CSONObject(json5, JSONOptions.json5());
@@ -115,19 +117,185 @@ dependencies {
     // {"user":{"name":"John","age":25,"friends":["Nancy","Mary","Tom","Jerry","Suji"],"addr":{"city":"Incheon","zipCode":"06164"}}}
    ```
 ## Object serialization/deserialization
-  * You can use the annotation to serialize and deserialize the object. 
-  ```java
-    @CS
-  ```
-  * However, there are some conditions.
-    1. Should have a default constructor 'if possible'. It doesn’t matter if it’s private.
-    2. Collection and Map cannot use RAW type. You must use generics.
-    3. You can nest a Collection within a Collection. However, Map cannot be placed inside Collection. If you want to put a map inside a Collection, put a class that wraps Map.
-    4. The Key of Map must be of 'String' type. Collection and MAP cannot be used as values. If you need to put a Collection in a Map, create a class that wraps the Collection.
-    5. Beware of circular references. For example, if classes A and B both declare fields of each other's types, you could end up in an infinite loop!!
-    6. @CSONValueSetter can return anything. But it must have one parameter.
-    7. @CSONValueGetter must have no parameters. But it must have a return value.
-    8. Object serialization/deserialization also includes values from parent classes. Use with caution.
+   * You can use the annotation to serialize and deserialize the object. 
+     ```java
+     @CSON
+     public static class Addr {
+         @CSONValue
+         private String city;
+         @CSONValue
+         private String zipCode;
+     }
+    
+     @CSON
+     public static class User {
+         @CSONValue
+         private String name;
+         @CSONValue
+         private int age;
+         @CSONValue
+         private List<String> friends;
+         @CSONValue
+         private Addr addr;
+    
+         private User() {}
+         public User(String name, int age, String... friends) {
+             this.name = name;
+             this.age = age;
+             this.friends = Arrays.asList(friends);
+         }
+    
+         public void setAddr(String city, String zipCode) {
+             this.addr = new Addr();
+             this.addr.city = city;
+             this.addr.zipCode = zipCode;
+         }
+     }
+    
+     @CSON(comment = "Users", commentAfter = "Users end.")
+     public static class Users {
+         @CSONValue(key = "users", comment = "key: user id, value: user object")
+         private HashMap<String, User> idUserMap = new HashMap<>();
+     }
+     ```
+   * Serialization
+     ```java
+     Users users = new Users();
+     User user1 = new User("MinJun", 28, "YoungSeok", "JiHye", "JiHyeon", "MinSu");
+     user1.setAddr("Seoul", "04528");
+     User user2 = new User("JiHye", 27, "JiHyeon","Yeongseok","Minseo");
+     user2.setAddr("Cheonan", "31232");
+     users.idUserMap.put("qwrd", user1);
+     users.idUserMap.put("ffff", user2);
+
+     CSONObject csonObject = CSONSerializer.toCSONObject(users);
+     csonObject.setStringFormatOption(StringFormatOption.json5());
+     System.out.println(csonObject);
+     // Output
+     /*
+          //Users
+          {
+              //key: user id, value: user object
+              users:{
+               qwrd:{
+                   name:'MinJun',
+                   age:28,
+                   friends:['YoungSeok','JiHye','JiHyeon','MinSu'],
+                   addr:{
+                       city:'Seoul',
+                       zipCode:'04528'
+                   }
+               },
+               ffff:{
+                   name:'JiHye',
+                   age:27,
+                   friends:['JiHyeon','Yeongseok','Minseo'],
+                   addr:{
+                       city:'Cheonan',
+                       zipCode:'31232'
+                   }
+               }
+              }
+          }
+          //Users end.
+      */
+
+
+     // Deserialization 
+     // Option 1.
+     Users parsedUsers = CSONSerializer.fromCSONObject(csonObject, Users.class);
+
+     // Option 2. Can be used even without a default constructor.
+     //Users parsedUsers = new Users();
+     //CSONSerializer.fromCSONObject(csonObject, parsedUsers);
+     ```
+   * However, there are some conditions.
+     1. Should have a default constructor 'if possible'. It doesn’t matter if it’s private.
+        ```java
+        @CSON
+        public class User {
+           public User(String name) {}
+           // Create a default constructor regardless of Java accessors.
+           private User() {} 
+        }
+        ```
+     2. Collection and Map cannot use RAW type. You must use generics.
+        ```java
+        // Error
+        @CSONValue
+        Map idUserMap = new HashMap();
+        @CSONValue
+        ArrayList names = new ArrayList();
+        // OK
+        @CSONValue
+        ArrayList<User> users = new ArrayList<>();
+        ```
+     3. You can nest a Collection within a Collection. However, Map cannot be placed inside Collection. If you want to put a map inside a Collection, put a class that wraps Map.
+           ```java
+           // OK
+           @CSONValue
+           List<HashSet<User>> users = new ArrayList<>();
+           // Error
+           @CSONValue
+           List<HashMap<String, User>> users = new ArrayList<>();
+           ```
+     4. The Key of Map must be of 'String' type. Collection and MAP cannot be used as values. If you need to put a Collection in a Map, create a class that wraps the Collection.
+           ```java
+           // OK
+           @CSONValue
+           Map<String, User> idUserMap = new HashMap<>();
+           // Error
+           @CSONValue
+           Map<User, String> userAddrMap = new HashMap<>();
+           @CSONValue
+           Map<String, List<User>> userListMap = new HashMap<>();
+           ```
+     5. Beware of circular references. For example, if classes A and B both declare fields of each other's types, you could end up in an infinite loop!!
+           ```java 
+           // Error. Circular reference (StackOverflowError) 
+           @CSON
+           public class A {
+               @CSONValue
+               private B b;
+           }
+           @CSON
+           public class B {
+               @CSONValue
+               private A a;
+           }
+           ```
+     6. @CSONValueSetter can return anything. But it must have one parameter. @CSONValueGetter must have no parameters. But it must have a return value.
+           ```java
+           import java.util.ArrayList;import java.util.List;@CSON
+           public class User {
+            
+               private List<String> friends;
+        
+        
+               // Setter starts with 'set'. Any name other than 'set' becomes the key value.  
+               @CSONValueSetter
+               public User setFriends(List<String> friends) {
+                   this.friends = friends;
+                   return this; 
+               }
+   
+               // Getter starts with 'get' or 'is'.
+               @CSONValueGetter
+               public List<String> getFriends() {
+                   return friends;
+               }
+   
+               // 'set Friends(List<String> friends) method defined earlier.' Can be used with methods.  
+               @CSONValueSetter("friends")
+               public User setFriendsAndRemoveDuplicate(Set<String> friends) {
+                 this.friends = new ArrayList<>(friends);
+                 return this;
+               }
+           }
+           ```
+        8. Object serialization/deserialization also includes values from parent classes. 
+        9. Arrays are not supported. Use collections. However, byte[] is converted to Base64 String.
+          
 
 
 

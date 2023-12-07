@@ -696,7 +696,7 @@ public class CSONSerializerTest {
     public void setterGetterTest() {
 
         // You can change the default options. (It will be applied to all CSONObject and CONSArray)
-        CSONObject.setDefaultJSONOptions(StringFormatOption.json5());
+        CSONObject.setDefaultStringFormatOption(StringFormatOption.json5());
         for(int count = 0; count < 1; ++count) {
 
 
@@ -764,30 +764,102 @@ public class CSONSerializerTest {
    }
 
 
+
+   @CSON
+   public static class Addr {
+        @CSONValue
+        private String city;
+        @CSONValue
+        private String zipCode;
+   }
+
+
    @CSON
    public static class User {
        @CSONValue
        private String name;
        @CSONValue
        private int age;
+       @CSONValue
+       private List<String> friends;
+       @CSONValue
+       private Addr addr;
+
+       private User() {}
+       public User(String name, int age, String... friends) {
+           this.name = name;
+           this.age = age;
+           this.friends = Arrays.asList(friends);
+       }
+
+       public void setAddr(String city, String zipCode) {
+          this.addr = new Addr();
+          this.addr.city = city;
+          this.addr.zipCode = zipCode;
+       }
+
    }
+
+   @CSON(comment = "Users", commentAfter = "Users end.")
+   public static class Users {
+        @CSONValue(key = "users", comment = "key: user id, value: user object")
+        private HashMap<String, User> idUserMap = new HashMap<>();
+   }
+
 
    @Test
    public void exampleTest() {
-       String json5 = "{user: { name: 'John',  age: 25,  friends: [ 'Nancy', 'Mary', 'Tom', 'Jerry' ], addr: { city: 'seoul', zipCode: '06164'  } }}";
-       CSONObject user = new CSONObject(json5, JSONOptions.json5());
-       String firstFriend = user.getCsonPath().optString("user.friends[0]");
-       String city = user.getCsonPath().optString("user.addr.city");
-       System.out.println("firstFriend: "  + firstFriend);
-       System.out.println("city: "  + city);
-       // firstFriend: Nancy
-      // city: seoul
+       Users users = new Users();
 
-       user.getCsonPath().put("user.friends[4]", "Suji");
-       user.getCsonPath().put("user.addr.city", "Incheon");
+       User user1 = new User("MinJun", 28, "YoungSeok", "JiHye", "JiHyeon", "MinSu");
+       user1.setAddr("Seoul", "04528");
+       User user2 = new User("JiHye", 27, "JiHyeon","Yeongseok","Minseo");
+       user2.setAddr("Cheonan", "31232");
+       users.idUserMap.put("qwrd", user1);
+       users.idUserMap.put("ffff", user2);
 
-       System.out.println(user);
-       // {"user":{"name":"John","age":25,"friends":["Nancy","Mary","Tom","Jerry","Suji"],"addr":{"city":"Incheon","zipCode":"06164"}}}
+       CSONObject csonObject = CSONSerializer.toCSONObject(users);
+       csonObject.setStringFormatOption(StringFormatOption.json5());
+       System.out.println(csonObject);
+       // Output
+       /*
+            //Users
+            {
+                //key: user id, value: user object
+                users:{
+                    qwrd:{
+                        name:'MinJun',
+                        age:28,
+                        friends:['YoungSeok','JiHye','JiHyeon','MinSu'],
+                        addr:{
+                            city:'Seoul',
+                            zipCode:'04528'
+                        }
+                    },
+                    ffff:{
+                        name:'JiHye',
+                        age:27,
+                        friends:['JiHyeon','Yeongseok','Minseo'],
+                        addr:{
+                            city:'Cheonan',
+                            zipCode:'31232'
+                        }
+                    }
+                }
+            }
+            //Users end.
+        */
+
+
+       //  Parse CSONObject to Users
+       // Option 1.
+       Users parsedUsers = CSONSerializer.fromCSONObject(csonObject, Users.class);
+
+       // Option 2. Can be used even without a default constructor.
+       //Users parsedUsers = new Users();
+       //CSONSerializer.fromCSONObject(csonObject, parsedUsers);
+
+
 
 
 

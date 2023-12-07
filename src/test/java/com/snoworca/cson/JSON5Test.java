@@ -1,12 +1,9 @@
 package com.snoworca.cson;
 
-import com.snoworca.cson.util.NoSynchronizedStringReader;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.StringReader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -172,7 +169,7 @@ public class JSON5Test {
                 "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
                 " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */";
 
-        CSONObject.setDefaultJSONOptions(JSONOptions.json5());
+        CSONObject.setDefaultStringFormatOption(JSONOptions.json5());
         //System.out.println(json5Str);
         CSONObject origin = new CSONObject(json5Str , JSONOptions.json5().setKeyQuote(""));
         CSONObject  csonObject = new CSONObject(json5Str , JSONOptions.json5());
