@@ -255,6 +255,15 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		return this;
 	}
 
+	public CSONArray put(Object... e) {
+		for(Object obj : e) {
+			if(!add(obj)) {
+				throw new CSONException("put error. can't put " + obj.getClass() + " to CSONArray.");
+			}
+		}
+		return this;
+	}
+
 	@SuppressWarnings("unused")
 	public CSONArray putAll(Object e) {
 		if(e instanceof  Collection) {

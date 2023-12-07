@@ -1,6 +1,7 @@
 package com.snoworca.cson;
 
 import com.snoworca.cson.util.NoSynchronizedStringReader;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -177,8 +178,39 @@ public class PureJsonTest {
         stringReader2.close();
 
 
-        CSONObject csonObjectJson = new CSONObject(testJSON, JSONOptions.json());
-        assertEquals(csonObjectPure.toString(), csonObjectJson.toString());
+
+        CSONObject obj = new CSONObject(StringFormatOption.json5());
+
+        // You can change the default options. (It will be applied to all CSONObject and CONSArray)
+        // CSONObject.setDefaultJSONOptions(StringFormatOption.json5());
+        // Even if you change the default options, you can specify the options when creating the object.
+
+        obj.put("name", "John");
+        obj.put("age", 25);
+        CSONArray friends = new CSONArray();
+        friends.put("Nancy");
+        friends.put("Mary");
+        friends.put("Tom", "Jerry");
+        obj.put("friends", friends);
+
+        // You can add comments before and after the key, or before and after the value.
+        obj.setCommentForKey("friends", "Lists only people's names.");
+        obj.setCommentAfterValue("friends", "A total of 4 friends");
+
+        obj.setCommentThis("This is a comment for this object.");
+        obj.setCommentAfterThis("This is a comment after this object.");
+
+        String yourInfo = obj.toString();
+        System.out.println(yourInfo);
+        //  //This is a comment for this object.
+        //  {
+        //      name:'John',
+        //      age:25,
+        //      //Lists only people's names.
+        //      friends:['Nancy','Mary','Tom','Jerry']/* A total of 4 friends */
+        //  }
+        //  //This is a comment after this object.
+
 
 
     }

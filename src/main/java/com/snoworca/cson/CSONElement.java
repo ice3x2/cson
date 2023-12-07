@@ -45,7 +45,7 @@ public abstract  class CSONElement {
 	}
 
 	@SuppressWarnings("unused")
-	public static void setDefaultJSONOptions(JSONOptions defaultJSONOptions) {
+	public static void setDefaultJSONOptions(StringFormatOption defaultJSONOptions) {
 		DefaultJSONOptions = defaultJSONOptions;
 	}
 

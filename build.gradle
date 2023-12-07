@@ -49,6 +49,8 @@ dependencies {
 
 }
 
+test.onlyIf { !project.hasProperty("skipTests") }
+
 test {
     //useJUnitPlatform()
 }

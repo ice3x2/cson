@@ -105,7 +105,7 @@ public class JSONWriter {
 			isPretty = true;
 		}
 		if(jsonOptions.isUnprettyArray()) {
-			isUnprettyArray = false;
+			isUnprettyArray = true;
 		}
 		if(jsonOptions.getDepthSpace() != null) {
 			depthSpace = jsonOptions.getDepthSpace();

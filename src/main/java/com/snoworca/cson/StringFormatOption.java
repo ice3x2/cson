@@ -7,11 +7,11 @@ public interface StringFormatOption {
     StringFormatType getFormatType();
 
 
-    public static StringFormatOption json() {
+    public static JSONOptions json() {
         return JSONOptions.json();
     }
 
-    public static StringFormatOption json5() {
+    public static JSONOptions json5() {
         return JSONOptions.json5();
     }
 

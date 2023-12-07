@@ -29,6 +29,8 @@ public class JSON5Test {
         assertTrue(Double.isInfinite(array.getDouble(10)));
         assertTrue(Double.isNaN(array.getDouble(11)));
 
+
+
     }
 
     @Test

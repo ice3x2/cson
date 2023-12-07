@@ -1,8 +1,6 @@
 package com.snoworca.cson.serializer;
 
-import com.snoworca.cson.CSONArray;
-import com.snoworca.cson.CSONObject;
-import com.snoworca.cson.JSONOptions;
+import com.snoworca.cson.*;
 import org.junit.Test;
 
 import java.util.*;
@@ -615,6 +613,8 @@ public class CSONSerializerTest {
 
 
 
+
+
        Collection<ArrayList<LinkedList<String>>> nameList = null;
        ArrayDeque<LinkedList<HashSet<Integer>>> nameTypeChangedList = null;
 
@@ -694,6 +694,9 @@ public class CSONSerializerTest {
 
    @Test
     public void setterGetterTest() {
+
+        // You can change the default options. (It will be applied to all CSONObject and CONSArray)
+        CSONObject.setDefaultJSONOptions(StringFormatOption.json5());
         for(int count = 0; count < 1; ++count) {
 
 
@@ -758,6 +761,37 @@ public class CSONSerializerTest {
 
 
         }
+   }
+
+
+   @CSON
+   public static class User {
+       @CSONValue
+       private String name;
+       @CSONValue
+       private int age;
+   }
+
+   @Test
+   public void exampleTest() {
+       String json5 = "{user: { name: 'John',  age: 25,  friends: [ 'Nancy', 'Mary', 'Tom', 'Jerry' ], addr: { city: 'seoul', zipCode: '06164'  } }}";
+       CSONObject user = new CSONObject(json5, JSONOptions.json5());
+       String firstFriend = user.getCsonPath().optString("user.friends[0]");
+       String city = user.getCsonPath().optString("user.addr.city");
+       System.out.println("firstFriend: "  + firstFriend);
+       System.out.println("city: "  + city);
+       // firstFriend: Nancy
+      // city: seoul
+
+       user.getCsonPath().put("user.friends[4]", "Suji");
+       user.getCsonPath().put("user.addr.city", "Incheon");
+
+       System.out.println(user);
+       // {"user":{"name":"John","age":25,"friends":["Nancy","Mary","Tom","Jerry","Suji"],"addr":{"city":"Incheon","zipCode":"06164"}}}
+
+
+
+
    }
 
 
