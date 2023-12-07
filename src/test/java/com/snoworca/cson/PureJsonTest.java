@@ -1,8 +1,6 @@
 package com.snoworca.cson;
 
 import com.snoworca.cson.util.NoSynchronizedStringReader;
-import com.clipsoft.org.json.simple.parser.JSONParser;
-import com.clipsoft.org.json.simple.parser.ParseException;
 import org.json.JSONObject;
 import org.junit.Test;
 
@@ -182,94 +180,6 @@ public class PureJsonTest {
         CSONObject csonObjectJson = new CSONObject(testJSON, JSONOptions.json());
         assertEquals(csonObjectPure.toString(), csonObjectJson.toString());
 
-
-
-
-        System.out.println("워밍업");
-
-        for(int i = 0; i < 100000; ++i) {
-            try {
-                com.clipsoft.org.json.simple.JSONObject jsonObject = (com.clipsoft.org.json.simple.JSONObject) new JSONParser().parse(testJSON);
-                jsonObject.toJSONString();
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            }
-            //jsonObject.toString();
-            String aaa = "";
-            aaa.trim();
-        }
-        for(int i = 0; i < 100000; ++i) {
-            JSONObject jsonObject = new JSONObject(testJSON);
-            String aaa = "";
-            aaa.trim();
-        }
-        for(int i = 0; i < 100000; ++i) {
-            NoSynchronizedStringReader stringReader = new NoSynchronizedStringReader(testJSON);
-            csonObject = (CSONObject)PureJSONParser.parsePureJSON(stringReader);
-            stringReader.close();
-            String aaa = "";
-            aaa.trim();
-        }
-        System.out.println("워밍업완료");
-
-
-
-        long peekMemoryForJSON = 0;
-        long useMemoryForJSON = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        long startjson = System.currentTimeMillis();
-        for(int i = 0; i < 1000000; ++i) {
-            useMemoryForJSON = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-            JSONObject jsonObject = new JSONObject(testJSON);
-            jsonObject.toString();
-            //long memory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - useMemoryForJSON;
-           // if(peekMemoryForJSON < memory) {
-           //     peekMemoryForJSON = memory;
-           // }
-
-            String aaa = "";
-            aaa.trim();
-        }
-        System.out.println("json : " + (System.currentTimeMillis() - startjson));
-
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        long peekMemoryForCSON = 0;
-        long  useMemoryForCSON = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        long startcson = System.currentTimeMillis();
-        for(int i = 0; i < 1000000; ++i) {
-            useMemoryForCSON = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-            CSONObject ss = new CSONObject(testJSON, StringFormatOption.jsonPure());
-            ss.toString(JSONOptions.json());
-            //long memory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - useMemoryForCSON;
-            //if(peekMemoryForCSON < memory) {
-             //   peekMemoryForCSON = memory;
-            //}
-            String aaa = "";
-            aaa.trim();
-        }
-        System.out.println("cson : " + (System.currentTimeMillis() - startcson));
-        //////////////////////////////////////////////////////////////////////////////////////////////
-
-
-        long peekMemoryForSimple = 0;
-        long useMemoryForSimple = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        long jsonSimple = System.currentTimeMillis();
-        for(int i = 0; i < 1000000; ++i) {
-            useMemoryForSimple = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-            try {
-                com.clipsoft.org.json.simple.JSONObject jsonObject = (com.clipsoft.org.json.simple.JSONObject) new JSONParser().parse(testJSON);
-                jsonObject.toJSONString();
-            } catch (ParseException e) {
-                throw new RuntimeException(e);
-            }
-            //long memory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() - useMemoryForSimple;
-            //if(peekMemoryForSimple < memory) {
-             //   peekMemoryForSimple = memory;
-            //}
-            //jsonObject.toString();
-            String aaa = "";
-            aaa.trim();
-        }
-        System.out.println("jsonSimple : " + (System.currentTimeMillis() - jsonSimple));
 
     }
 
