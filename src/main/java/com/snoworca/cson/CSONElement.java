@@ -8,7 +8,7 @@ public abstract  class CSONElement {
 
 
 
-	private static JSONOptions DefaultJSONOptions = JSONOptions.json();
+	private static StringFormatOption DefaultJSONOptions = StringFormatOption.json();
 	private final static Pattern BASE64_PREFIX_REPLACE_PATTERN = Pattern.compile("(?i)^base64,");
 	private final static Pattern BASE64_PREFIX_PATTERN = Pattern.compile("^((?i)base64,)([a-zA-Z0-9+/]*={0,2})$");
 	private CommentObject commentAfterElement = null;
@@ -16,7 +16,7 @@ public abstract  class CSONElement {
 	private CSONPath csonPath = null;
 
 
-	JSONOptions defaultJSONOptions = DefaultJSONOptions;
+	StringFormatOption defaultJSONOptions = DefaultJSONOptions;
 
 	private boolean allowRawValue = false;
 	private boolean unknownObjectToString = false;
@@ -40,7 +40,7 @@ public abstract  class CSONElement {
 
 
 	@SuppressWarnings("unused")
-	public static JSONOptions getDefaultJSONOptions() {
+	public static StringFormatOption getDefaultStringFormatOption() {
 		return DefaultJSONOptions;
 	}
 
@@ -110,7 +110,7 @@ public abstract  class CSONElement {
 	private final ElementType mType;
 
 
-	public void setParents(CSONElement parents) {
+	protected void setParents(CSONElement parents) {
 		mParents = parents;
 	}
 

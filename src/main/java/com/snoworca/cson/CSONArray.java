@@ -2,6 +2,8 @@ package com.snoworca.cson;
 
 
 
+import com.snoworca.cson.util.NoSynchronizedStringReader;
+
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -19,10 +21,37 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 		super(ElementType.Array);
 	}
 
+
+	public CSONArray(StringFormatOption stringFormatOption) {
+		super(ElementType.Object);
+		this.defaultJSONOptions = stringFormatOption;
+	}
+
+
+	protected CSONArray(JSONTokener x) {
+		super(ElementType.Array);
+		this.defaultJSONOptions = x.getJsonOption();
+		new JSONParser(x).parseArray(this);
+	}
+
 	public CSONArray(JSONOptions jsonOptions) {
 		super(ElementType.Array);
 		this.defaultJSONOptions = jsonOptions;
 	}
+
+
+	private void parse(Reader stringReader, StringFormatOption options) {
+		StringFormatType type = options.getFormatType();
+		if(type == StringFormatType.PureJSON) {
+			PureJSONParser.parsePureJSON(stringReader, this);
+		} else {
+			new JSONParser(new JSONTokener(stringReader, (JSONOptions)options)).parseArray(this);
+		}
+	}
+
+
+
+
 
 	public CSONArray(int size) {
 		super(ElementType.Array);
@@ -176,11 +205,6 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 
 
-	protected CSONArray(JSONTokener x) throws CSONException {
-		super(ElementType.Array);
-		this.defaultJSONOptions = x.getJsonOption();
-		new JSONParser(x).parseArray(this);
-	}
 
 	protected void addAtJSONParsing(Object value) {
 		if(value instanceof String && CSONElement.isBase64String((String)value)) {
@@ -200,20 +224,28 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 
 
 	public CSONArray(Reader stringSource) throws CSONException {
-		this(new JSONTokener(stringSource,JSONOptions.json5()));
+		super(ElementType.Array);
+		parse(stringSource, defaultJSONOptions);
 	}
 
-	public CSONArray(Reader stringSource, JSONOptions options) throws CSONException {
-		this(new JSONTokener(stringSource,options));
+	public CSONArray(Reader source, StringFormatOption options) throws CSONException {
+		super(ElementType.Array);
+		parse(source, options);
 	}
 
 
 	public CSONArray(String source) throws CSONException {
-		this(new JSONTokener(source,JSONOptions.json5()));
+		super(ElementType.Array);
+		NoSynchronizedStringReader noSynchronizedStringReader = new NoSynchronizedStringReader(source);
+		parse(noSynchronizedStringReader, defaultJSONOptions);
+		noSynchronizedStringReader.close();;
 	}
 
-	public CSONArray(String source, JSONOptions options) throws CSONException {
-		this(new JSONTokener(source,options));
+	public CSONArray(String source, StringFormatOption options) throws CSONException {
+		super(ElementType.Array);
+		NoSynchronizedStringReader noSynchronizedStringReader = new NoSynchronizedStringReader(source);
+		parse(noSynchronizedStringReader, options);
+		noSynchronizedStringReader.close();;
 	}
 	
 	public CSONArray put(Object e) {
@@ -827,15 +859,16 @@ public class CSONArray  extends CSONElement  implements Collection<Object>, Clon
 	
 	@Override
 	public String toString() {
-		JSONWriter jsonWriter  = new JSONWriter(defaultJSONOptions);
-		write(jsonWriter, true);
-		return jsonWriter.toString();
+		return toString(defaultJSONOptions);
 	}
 
-	public String toString(JSONOptions jsonOptions) {
-		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
-		write(jsonWriter, true);
-		return jsonWriter.toString();
+	public String toString(StringFormatOption stringFormatOption) {
+		if(stringFormatOption instanceof JSONOptions) {
+			JSONWriter jsonWriter  = new JSONWriter((JSONOptions) stringFormatOption);
+			write(jsonWriter, true);
+			return jsonWriter.toString();
+		}
+		return this.toString(StringFormatOption.json());
 	}
 
 

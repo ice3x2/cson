@@ -755,6 +755,8 @@ public class CSONSerializerTest {
 
             setterGetterTestClass = CSONSerializer.fromCSONObject(csonObject, SetterGetterTestClass.class);
             assertEquals("1213123", setterGetterTestClass.inputName);
+
+
         }
    }
 

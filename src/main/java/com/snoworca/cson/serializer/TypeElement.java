@@ -41,7 +41,7 @@ class TypeElement {
             }
             return constructor.newInstance();
         } catch (Exception e) {
-            throw new CSONObjectException("Failed to create instance of " + type.getName(), e);
+            throw new CSONSerializerException("Failed to create instance of " + type.getName(), e);
         }
 
     }
@@ -76,7 +76,7 @@ class TypeElement {
     private static void checkCSONAnnotation(Class<?> type) {
          Annotation a = type.getAnnotation(CSON.class);
          if(a == null) {
-             throw new CSONObjectException("Type " + type.getName() + " is not annotated with @CSON");
+             throw new CSONSerializerException("Type " + type.getName() + " is not annotated with @CSON");
          }
 
     }
@@ -86,10 +86,10 @@ class TypeElement {
         try {
             constructor = type.getDeclaredConstructor();
             if(constructor == null) {
-                throw new CSONObjectException("Type " + type.getName() + " has no default constructor");
+                throw new CSONSerializerException("Type " + type.getName() + " has no default constructor");
             }
         } catch (NoSuchMethodException e) {
-            throw new CSONObjectException("Type " + type.getName() + " has invalid default constructor");
+            throw new CSONSerializerException("Type " + type.getName() + " has invalid default constructor");
         }
 
     }

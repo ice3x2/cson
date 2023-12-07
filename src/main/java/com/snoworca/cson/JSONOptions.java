@@ -25,10 +25,9 @@ public class JSONOptions implements StringFormatOption {
             jsonOptions.setLeadingZeroOmission(false);
             jsonOptions.setAllowCharacter(false);
             jsonOptions.setAllowTrailingComma(false);
-            jsonOptions.formatType = StringFormatType.JSON;
             return jsonOptions;
-
         }
+
 
 
         public static JSONOptions json5() {
@@ -118,6 +117,7 @@ public class JSONOptions implements StringFormatOption {
         }
 
         public JSONOptions setAllowTrailingComma(boolean allowTrailingComma) {
+
             this.allowTrailingComma = allowTrailingComma;
             return this;
         }

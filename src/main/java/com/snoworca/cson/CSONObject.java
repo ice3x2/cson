@@ -3,6 +3,8 @@ package com.snoworca.cson;
 
 
 
+import com.snoworca.cson.util.NoSynchronizedStringReader;
+
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -66,15 +68,47 @@ public class CSONObject extends CSONElement implements Cloneable {
 	}
 
 	public CSONObject(String json) {
-		this(new JSONTokener(json, JSONOptions.json5()));
+		super(ElementType.Object);
+		NoSynchronizedStringReader reader =  new NoSynchronizedStringReader(json);
+		parse(reader, defaultJSONOptions);
+		reader.close();
 	}
 
-	public CSONObject(String json, JSONOptions options) {
-		this(new JSONTokener(json, options));
+	public CSONObject(StringFormatOption stringFormatOption) {
+		super(ElementType.Object);
+		this.defaultJSONOptions = stringFormatOption;
 	}
-	public CSONObject(Reader jsonStringReader, JSONOptions options) {
-		this(new JSONTokener(jsonStringReader, options));
+
+
+
+	public CSONObject(String json, StringFormatOption options) {
+		super(ElementType.Object);
+		NoSynchronizedStringReader reader =  new NoSynchronizedStringReader(json);
+		parse(reader, options);
+		reader.close();
 	}
+	public CSONObject(Reader reader, StringFormatOption options) {
+		super(ElementType.Object);
+		parse(reader, options);
+	}
+
+	private void parse(Reader stringReader, StringFormatOption options) {
+		StringFormatType type = options.getFormatType();
+		if(type == StringFormatType.PureJSON) {
+			PureJSONParser.parsePureJSON(stringReader, this);
+		} else {
+			new JSONParser(new JSONTokener(stringReader, (JSONOptions)options)).parseObject(this);
+		}
+	}
+
+
+
+	protected CSONObject(JSONTokener x) throws CSONException {
+		super(ElementType.Object);
+		defaultJSONOptions = x.getJsonOption();
+		new JSONParser(x).parseObject(this);
+	}
+
 
 
 	public CSONObject() {
@@ -435,11 +469,8 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 
 
-	protected CSONObject(JSONTokener x) throws CSONException {
-		super(ElementType.Object);
-		this.defaultJSONOptions = x.getJsonOption();
-		new JSONParser(x).parseObject(this);
-	}
+
+
 
 
 
@@ -586,15 +617,17 @@ public class CSONObject extends CSONElement implements Cloneable {
 
 	@Override
 	public String toString() {
-		JSONWriter jsonWriter  = new JSONWriter(defaultJSONOptions);
-		write(jsonWriter, true);
-		return jsonWriter.toString();
+		return toString(defaultJSONOptions);
 	}
 
-	public String toString(JSONOptions jsonOptions) {
-		JSONWriter jsonWriter  = new JSONWriter(jsonOptions);
-		write(jsonWriter, true);
-		return jsonWriter.toString();
+	public String toString(StringFormatOption stringFormatOption) {
+		if(stringFormatOption instanceof  JSONOptions) {
+			JSONWriter jsonWriter = new JSONWriter((JSONOptions) stringFormatOption);
+			write(jsonWriter, true);
+			return jsonWriter.toString();
+		}
+		return toString(JSONOptions.json());
+
 	}
 
 	@Deprecated

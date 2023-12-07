@@ -29,7 +29,7 @@ class SchemaFieldMap extends SchemaField implements ISchemaMapValue {
 
 
         if(!String.class.isAssignableFrom(keyClass)) {
-            throw new CSONObjectException("Map field '" + fieldPath + "' is not String key. Please use String key.");
+            throw new CSONSerializerException("Map field '" + fieldPath + "' is not String key. Please use String key.");
         }
         constructorMap = ISchemaMapValue.constructorOfMap(field.getType());
     }
@@ -59,7 +59,7 @@ class SchemaFieldMap extends SchemaField implements ISchemaMapValue {
         try {
             return constructorMap.newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new CSONObjectException("Map type " + field.getDeclaringClass().getName() + "." + field.getType().getName() + " has no default constructor.", e);
+            throw new CSONSerializerException("Map type " + field.getDeclaringClass().getName() + "." + field.getType().getName() + " has no default constructor.", e);
         }
     }
 

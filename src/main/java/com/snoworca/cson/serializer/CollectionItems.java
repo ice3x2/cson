@@ -24,7 +24,7 @@ class CollectionItems {
             }
             return type.getConstructor();
         } catch (NoSuchMethodException e) {
-            throw new CSONObjectException("Collection field '" + type.getName() + "' has no default constructor");
+            throw new CSONSerializerException("Collection field '" + type.getName() + "' has no default constructor");
         }
     }
 
@@ -49,7 +49,7 @@ class CollectionItems {
         try {
             return collectionConstructor.newInstance();
         } catch (Exception e) {
-            throw new CSONObjectException("Collection field '" + collectionType.getName() + "' has no default constructor");
+            throw new CSONSerializerException("Collection field '" + collectionType.getName() + "' has no default constructor");
         }
     }
 }

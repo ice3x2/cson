@@ -20,7 +20,7 @@ public class CSONSerializer {
     private static CSONObject serializeTypeElement(TypeElement typeElement, final Object rootObject) {
         Class<?> type = typeElement.getType();
         if(rootObject.getClass() != type) {
-            throw new CSONObjectException("Type mismatch error. " + type.getName() + "!=" + rootObject.getClass().getName());
+            throw new CSONSerializerException("Type mismatch error. " + type.getName() + "!=" + rootObject.getClass().getName());
         }
         else if(rootObject == null) {
             return null;
@@ -197,7 +197,7 @@ public class CSONSerializer {
                 types = Types.of(valueType);
                 //noinspection DataFlowIssue
                 if(!(key instanceof String)) {
-                    throw new CSONObjectException("Map key type is not String. Please use String key.");
+                    throw new CSONSerializerException("Map key type is not String. Please use String key.");
                 }
             }
             if(value instanceof Collection<?>) {
@@ -301,13 +301,13 @@ public class CSONSerializer {
     public static <T> Map<String, T> fromCSONObjectToMap(CSONObject csonObject, Class<T> valueType) {
         Types types = Types.of(valueType);
         if(valueType.isPrimitive()) {
-            throw new CSONObjectException("valueType is primitive type. valueType=" + valueType.getName());
+            throw new CSONSerializerException("valueType is primitive type. valueType=" + valueType.getName());
         } else if(Collection.class.isAssignableFrom(valueType)) {
-            throw new CSONObjectException("valueType is java.util.Collection type. Use a class that wraps your Collection.  valueType=" + valueType.getName());
+            throw new CSONSerializerException("valueType is java.util.Collection type. Use a class that wraps your Collection.  valueType=" + valueType.getName());
         }  else if(Collection.class.isAssignableFrom(valueType)) {
-            throw new CSONObjectException("valueType is java.util.Map type. Use a class that wraps your Map.  valueType=" + valueType.getName());
+            throw new CSONSerializerException("valueType is java.util.Map type. Use a class that wraps your Map.  valueType=" + valueType.getName());
         } else if(valueType.isArray() && Types.ByteArray != types) {
-            throw new CSONObjectException("valueType is Array type. ArrayType cannot be used. valueType=" + valueType.getName());
+            throw new CSONSerializerException("valueType is Array type. ArrayType cannot be used. valueType=" + valueType.getName());
         }
         return (Map<String, T>) fromCSONObjectToMap(null, csonObject, valueType);
 

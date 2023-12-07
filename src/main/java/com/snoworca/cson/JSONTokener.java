@@ -2,6 +2,9 @@
 package com.snoworca.cson;
 
 
+import com.snoworca.cson.util.NoSynchronizedBufferReader;
+import com.snoworca.cson.util.NoSynchronizedStringReader;
+
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -43,7 +46,7 @@ class JSONTokener {
     JSONTokener(Reader reader, JSONOptions jsonOptions) {
         this.reader = reader.markSupported()
                 ? reader
-                : new BufferedReader(reader);
+                : new NoSynchronizedBufferReader(reader);
         this.eof = false;
         this.usePrevious = false;
         this.previous = 0;
@@ -62,7 +65,7 @@ class JSONTokener {
 
 
     JSONTokener(String s,JSONOptions jsonOptions) {
-        this(new StringReader(s), jsonOptions);
+        this(new NoSynchronizedStringReader(s), jsonOptions);
     }
 
 

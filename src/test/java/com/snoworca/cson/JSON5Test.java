@@ -1,8 +1,12 @@
 package com.snoworca.cson;
 
+import com.snoworca.cson.util.NoSynchronizedStringReader;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.io.StringReader;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -13,7 +17,7 @@ public class JSON5Test {
     public void test() {
         CSONObject csonObject = new CSONObject("{key: \"value\", key 2: \"value2\", key3: 'value3'," +
                 " key4: value4 ," +
-                " 'key5': \"value5!\\\r\n\tbreak line\", object: {key: value,}, 'byte[]': [+1,+2,+3,+4,5,6,7,8,9,10,Infinity,NaN,],  }");
+                " 'key5': \"value5!\\\r\n\tbreak line\", object: {key: value,}, 'byte[]': [+1,+2,+3,+4,5,6,7,8,9,10,Infinity,NaN,],  }", JSONOptions.json5());
 
         assertEquals("value",csonObject.get("key"));
         assertEquals("value2",csonObject.get("key 2"));
@@ -158,7 +162,7 @@ public class JSON5Test {
     }
 
     @Test
-    public void testKeyComment() {
+    public void testKeyComment() throws IOException {
 
         String json5Str = "{ \n" +
                 "/* 코멘트입니다. */\n //222 \n " +
@@ -166,6 +170,7 @@ public class JSON5Test {
                 "// 오브젝트 코멘트 \n: /* 오브젝트 값 이전 코멘트 */ { p : 'ok' \n, // 이곳은? \n } // 오브젝트 코멘트 엔드 \n  , // key3comment \n 'key3'" +
                 " /*이상한 코멘트*/: // 값 앞 코멘트 \n 'value3' // 값 뒤 코멘트 \n /*123 */,\"LFARRAY\":[\"sdfasdf \\\n123\"]  ,  \n /*123*/ } /* 꼬리 다음 코멘트 */";
 
+        CSONObject.setDefaultJSONOptions(JSONOptions.json5());
         //System.out.println(json5Str);
         CSONObject origin = new CSONObject(json5Str , JSONOptions.json5().setKeyQuote(""));
         CSONObject  csonObject = new CSONObject(json5Str , JSONOptions.json5());
@@ -208,24 +213,28 @@ public class JSON5Test {
 
 
 
+
         String obj = origin.toString(JSONOptions.json());
+        System.out.println(obj);
         long start = System.currentTimeMillis();
-        JSONObject jsonObject = new JSONObject(obj);
+        /*start = System.currentTimeMillis();
+        CSONObject csonObjects = null;// = new CSONObject(obj);
         for(int i = 0; i < 1000000; ++i) {
-            jsonObject.toString();
-             String aaa = "";
-             aaa.trim();
-        }
-        System.out.println("json : " + (System.currentTimeMillis() - start));
-        start = System.currentTimeMillis();
-        CSONObject csonObjects = new CSONObject(obj);
-        for(int i = 0; i < 1000000; ++i) {
-            csonObjects.toString();
+            NoSynchronizedStringReader stringReader = new NoSynchronizedStringReader(obj);
+            csonObjects = (CSONObject) PureJSONParser.parsePureJSON(stringReader);
+            stringReader.close();
+            //CSONObject csonObjects = new CSONObject(obj);
+            //csonObjects.toString();
             String aaa = "";
             aaa.trim();
         }
+        System.out.println("cson : " + csonObjects.toString());
 
         System.out.println("cson : " + (System.currentTimeMillis() - start));
+*/
+
+
+
 
 
     }

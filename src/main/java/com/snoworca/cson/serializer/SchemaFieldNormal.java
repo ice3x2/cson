@@ -10,7 +10,7 @@ public class SchemaFieldNormal extends SchemaField {
         super(typeElement, field, path);
 
         if(this.type == Types.Object && getField().getType().getAnnotation(CSON.class) == null)  {
-            throw new CSONObjectException("Object type " + this.field.getType().getName() + " is not annotated with @CSON");
+            throw new CSONSerializerException("Object type " + this.field.getType().getName() + " is not annotated with @CSON");
         }
     }
 
